@@ -1,0 +1,135 @@
+.notebook-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffeaf3 0%, #fff5f7 100%);
+  padding: 32px;
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-top: 48px;
+
+    .page-title {
+      font-size: 48px;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-subtitle {
+      font-size: 28px;
+      color: #999;
+      display: block;
+    }
+  }
+
+  .add-btn {
+    background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+    color: #fff;
+    border-radius: 24px;
+    padding: 24px;
+    font-size: 32px;
+    font-weight: 600;
+    border: none;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+
+    &::after {
+      border: none;
+    }
+
+    .add-icon {
+      font-size: 40px;
+    }
+  }
+
+  .note-list {
+    height: calc(100vh - 380px);
+
+    .note-item {
+      background: #fff;
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(255, 107, 157, 0.08);
+
+      .note-header {
+        margin-bottom: 20px;
+
+        .note-title-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 12px;
+
+          .note-mood {
+            font-size: 40px;
+          }
+
+          .note-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+          }
+        }
+
+        .note-date {
+          font-size: 24px;
+          color: #999;
+          display: block;
+        }
+      }
+
+      .note-content {
+        font-size: 28px;
+        color: #666;
+        line-height: 1.6;
+        display: block;
+        margin-bottom: 24px;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .note-actions {
+        display: flex;
+        justify-content: flex-end;
+
+        .delete-btn {
+          padding: 12px 32px;
+          background: #ff4757;
+          color: #fff;
+          border-radius: 12px;
+          font-size: 24px;
+        }
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 120px 0;
+
+      .empty-icon {
+        font-size: 120px;
+        display: block;
+        margin-bottom: 32px;
+      }
+
+      .empty-text {
+        font-size: 28px;
+        color: #999;
+        display: block;
+      }
+    }
+  }
+}
+

@@ -1,0 +1,269 @@
+.menstrual-add-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffeaf3 0%, #fff5f7 100%);
+  padding-bottom: 160px;
+
+  .page-header {
+    text-align: center;
+    padding: 48px 32px 32px;
+
+    .page-title {
+      font-size: 48px;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-subtitle {
+      font-size: 28px;
+      color: #999;
+      display: block;
+    }
+  }
+
+  .form-container {
+    padding: 0 32px 24px;
+
+    .form-section {
+      background: #fff;
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(255, 107, 157, 0.08);
+
+      .section-title {
+        font-size: 32px;
+        font-weight: 600;
+        color: #333;
+        display: block;
+        margin-bottom: 16px;
+      }
+
+      .section-desc {
+        font-size: 24px;
+        color: #999;
+        display: block;
+        margin-bottom: 24px;
+      }
+
+      .form-item {
+        margin-bottom: 24px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .item-label {
+          display: flex;
+          align-items: center;
+          margin-bottom: 16px;
+
+          .label-text {
+            font-size: 28px;
+            color: #333;
+            font-weight: 500;
+          }
+
+          .required {
+            color: #ff4757;
+            font-size: 28px;
+            margin-left: 8px;
+          }
+
+          .optional {
+            color: #999;
+            font-size: 24px;
+            margin-left: 8px;
+          }
+        }
+
+        .picker-value {
+          background: #f8f9fa;
+          border-radius: 16px;
+          padding: 24px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .value-text {
+            font-size: 28px;
+            color: #333;
+          }
+
+          .placeholder-text {
+            font-size: 28px;
+            color: #999;
+          }
+
+          .arrow {
+            font-size: 40px;
+            color: #999;
+            font-weight: 300;
+          }
+        }
+      }
+
+      .duration-tip {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 24px;
+        background: linear-gradient(135deg, #FFE5F1 0%, #FFF0F7 100%);
+        border-radius: 12px;
+        margin-top: 16px;
+
+        .tip-icon {
+          font-size: 28px;
+        }
+
+        .tip-text {
+          font-size: 26px;
+          color: #FF6B9D;
+          font-weight: 500;
+        }
+      }
+
+      .symptoms-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 16px;
+
+        .symptom-item {
+          position: relative;
+          background: #f8f9fa;
+          border-radius: 16px;
+          padding: 24px 16px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          border: 2px solid transparent;
+          transition: all 0.3s ease;
+
+          .symptom-icon {
+            font-size: 36px;
+          }
+
+          .symptom-name {
+            font-size: 22px;
+            color: #666;
+            text-align: center;
+          }
+
+          .check-icon {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+            border-radius: 50%;
+            color: #fff;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+          }
+
+          &.selected {
+            background: linear-gradient(135deg, #FFE5F1 0%, #FFF0F7 100%);
+            border-color: #FF6B9D;
+
+            .symptom-name {
+              color: #FF6B9D;
+              font-weight: 500;
+            }
+          }
+        }
+      }
+
+      .selected-count {
+        text-align: center;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 12px;
+
+        .count-text {
+          font-size: 24px;
+          color: #666;
+        }
+      }
+
+      .note-input {
+        background: #f8f9fa;
+        border-radius: 16px;
+        padding: 24px;
+        font-size: 28px;
+        line-height: 1.6;
+        min-height: 200px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .note-placeholder {
+        color: #999;
+        font-size: 28px;
+      }
+
+      .char-count {
+        font-size: 24px;
+        color: #999;
+        display: block;
+        text-align: right;
+        margin-top: 12px;
+      }
+    }
+  }
+
+  .bottom-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 24px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    display: flex;
+    gap: 16px;
+
+    .cancel-btn {
+      flex: 1;
+      background: #f8f9fa;
+      color: #666;
+      border-radius: 16px;
+      font-size: 32px;
+      font-weight: 600;
+      border: none;
+
+      &::after {
+        border: none;
+      }
+    }
+
+    .submit-btn {
+      flex: 2;
+      background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+      color: #fff;
+      border-radius: 16px;
+      font-size: 32px;
+      font-weight: 600;
+      border: none;
+
+      &::after {
+        border: none;
+      }
+
+      &[disabled] {
+        opacity: 0.6;
+      }
+    }
+  }
+}
+

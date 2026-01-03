@@ -1,0 +1,136 @@
+.anniversary-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffeaf3 0%, #fff5f7 100%);
+  padding: 32px;
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-top: 48px;
+
+    .page-title {
+      font-size: 48px;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-subtitle {
+      font-size: 28px;
+      color: #999;
+      display: block;
+    }
+  }
+
+  .add-btn {
+    background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+    color: #fff;
+    border-radius: 24px;
+    padding: 24px;
+    font-size: 32px;
+    font-weight: 600;
+    border: none;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+
+    &::after {
+      border: none;
+    }
+
+    .add-icon {
+      font-size: 40px;
+    }
+  }
+
+  .anniversary-list {
+    height: calc(100vh - 380px);
+
+    .anniversary-item {
+      background: #fff;
+      border-radius: 24px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(255, 107, 157, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 24px;
+
+      .item-icon {
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #FFE5F1 0%, #FFF0F7 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        .icon {
+          font-size: 56px;
+        }
+      }
+
+      .item-content {
+        flex: 1;
+
+        .item-title {
+          font-size: 32px;
+          font-weight: 600;
+          color: #333;
+          display: block;
+          margin-bottom: 12px;
+        }
+
+        .item-date {
+          font-size: 24px;
+          color: #666;
+          display: block;
+          margin-bottom: 8px;
+        }
+
+        .item-countdown {
+          .countdown-text {
+            font-size: 26px;
+            color: #FF6B9D;
+            font-weight: 600;
+          }
+        }
+      }
+
+      .item-actions {
+        .delete-btn {
+          padding: 12px 24px;
+          background: #ff4757;
+          color: #fff;
+          border-radius: 12px;
+          font-size: 24px;
+        }
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 120px 0;
+
+      .empty-icon {
+        font-size: 120px;
+        display: block;
+        margin-bottom: 32px;
+      }
+
+      .empty-text {
+        font-size: 28px;
+        color: #999;
+        display: block;
+      }
+    }
+  }
+}
+

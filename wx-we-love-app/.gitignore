@@ -1,0 +1,15 @@
+dist/
+node_modules/
+.DS_Store
+*.log
+.temp/
+.rn_temp/
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.settings/
+.vscode/
+.history/
+

@@ -1,0 +1,312 @@
+.index-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffeaf3 0%, #fff5f7 100%);
+  padding-bottom: 120px;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 44px 32px 20px;
+  z-index: 100;
+  box-shadow: 0 2px 20px rgba(255, 107, 157, 0.08);
+
+  .topbar-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    .heart-icon {
+      font-size: 48px;
+      margin-right: 16px;
+      animation: heartBeat 1.5s ease-in-out infinite;
+    }
+
+    .title {
+      font-size: 32px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+}
+
+.content {
+  padding: 32px 32px 0;
+}
+
+.date-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #fff 0%, #fff 100%);
+  border-radius: 32px;
+  padding: 20px 48px;
+  margin-bottom: 32px;
+  box-shadow: 0 8px 32px rgba(255, 107, 157, 0.12);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    background: linear-gradient(135deg, #FFE5F1 0%, #FFF0F7 100%);
+    border-radius: 50%;
+    opacity: 0.5;
+  }
+
+  .date-main {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    position: relative;
+    z-index: 1;
+
+    .date-day {
+      font-size: 120px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #FF6B9D 0%, #C06C84 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .date-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .date-year {
+        font-size: 28px;
+        color: #333;
+        font-weight: 500;
+      }
+
+      .date-week {
+        font-size: 24px;
+        color: #666;
+      }
+    }
+  }
+
+  .weather-icon {
+    .emoji {
+      font-size: 96px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+  }
+}
+
+.love-days-section {
+  background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+  border-radius: 32px;
+  padding: 24px 0px;
+  margin-bottom: 32px;
+  box-shadow: 0 8px 32px rgba(255, 107, 157, 0.25);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    left: -10%;
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -20%;
+    right: -5%;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+  }
+
+  .love-days-content {
+    margin-bottom: 32px;
+    position: relative;
+    z-index: 1;
+
+    .love-text-container {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+
+      .love-text {
+        font-size: 32px;
+        color: #fff;
+        font-weight: 500;
+      }
+
+      .days-number {
+        font-size: 72px;
+        color: #fff;
+        font-weight: 700;
+        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+    }
+  }
+
+  .love-animation {
+    position: relative;
+    z-index: 1;
+
+    .bear-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+
+      .bear {
+        font-size: 64px;
+        animation: sway 2s ease-in-out infinite;
+      }
+
+      .bear-left {
+        animation-delay: 0s;
+      }
+
+      .bear-right {
+        animation-delay: 0.5s;
+      }
+
+      .heart-beat {
+        font-size: 48px;
+        animation: heartBeat 1s ease-in-out infinite;
+      }
+    }
+  }
+}
+
+.function-section {
+  .function-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+
+    .function-item {
+      background: #fff;
+      border-radius: 24px;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 4px 20px rgba(255, 107, 157, 0.08);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      &.shaking {
+        animation: shake 0.3s ease-in-out infinite;
+      }
+
+      .function-icon-wrapper {
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #FFE5F1 0%, #FFF0F7 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+
+        .function-icon {
+          font-size: 56px;
+        }
+      }
+
+      .function-name {
+        font-size: 26px;
+        color: #333;
+        font-weight: 500;
+      }
+
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 32px rgba(255, 107, 157, 0.15);
+
+        .function-icon-wrapper {
+          transform: scale(1.1);
+          background: linear-gradient(135deg, #FFD6E8 0%, #FFE5F1 100%);
+        }
+      }
+    }
+  }
+
+  .drag-tip {
+    text-align: center;
+    padding: 16px;
+    color: #FF6B9D;
+    font-size: 24px;
+  }
+}
+
+@keyframes heartBeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  10%, 30% {
+    transform: scale(1.1);
+  }
+  20%, 40% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes sway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
