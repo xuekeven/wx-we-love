@@ -1,7 +1,7 @@
 import { View, Text } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
-import { getWeekDay, getDaysDiff } from '../../utils/date'
+import { getWeekDay, getDaysDiff, getWeekOfYear } from '../../utils/date'
 import { get } from '../../utils/request'
 import './index.scss'
 
@@ -17,8 +17,8 @@ export default function Index() {
     { id: '2', name: '约会记录', icon: '🌹', path: '/pages/date-record/index', order: 2 },
     { id: '3', name: '纪念日', icon: '🎂', path: '/pages/anniversary/index', order: 3 },
     { id: '4', name: '记事本', icon: '📝', path: '/pages/notebook/index', order: 4 },
-    { id: '5', name: '存钱罐', icon: '🐷', path: '/pages/piggy-bank/index', order: 5 },
-    { id: '6', name: '经期记录', icon: '🌸', path: '/pages/menstrual/index', order: 6 }
+    { id: '6', name: '经期记录', icon: '🌸', path: '/pages/menstrual/index', order: 5 },
+    { id: '5', name: '存钱罐', icon: '🐷', path: '/pages/piggy-bank/index', order: 6 },
   ])
   const [longPressItem, setLongPressItem] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -98,8 +98,12 @@ export default function Index() {
           <View className='date-main'>
             <Text className='date-day'>{currentDate.getDate()}</Text>
             <View className='date-info'>
-              <Text className='date-year'>{currentDate.getFullYear()}年{String(currentDate.getMonth() + 1).padStart(2, '0')}月</Text>
-              <Text className='date-week'>{getWeekDay(currentDate)}</Text>
+              <Text className='date-solar'>
+                {currentDate.getFullYear()}年{String(currentDate.getMonth() + 1).padStart(2, '0')}月{String(currentDate.getDate()).padStart(2, '0')}日
+              </Text>
+              <Text className='date-week'>
+                第{getWeekOfYear(currentDate)}周 {getWeekDay(currentDate)}
+              </Text>
             </View>
           </View>
           <View className='weather-icon'>

@@ -35,6 +35,39 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// 重新计算所有记录的周期
+async function recalculateCycles() {
+  try {
+    // 获取所有记录，按开始日期升序排序
+    const allRecords = await Menstrual.findAll({
+      order: [['startDate', 'ASC']]
+    });
+
+    // 重新计算每条记录的周期
+    for (let i = 0; i < allRecords.length; i++) {
+      let cycleLength = null;
+      
+      // 找到当前记录之前最近的一条记录（按日期）
+      if (i > 0) {
+        const prevRecord = allRecords[i - 1];
+        const prevDate = new Date(prevRecord.startDate);
+        const currentDate = new Date(allRecords[i].startDate);
+        const daysDiff = Math.round((currentDate - prevDate) / (1000 * 60 * 60 * 24));
+        
+        // 只保存合理的周期（15-60天之间）
+        if (daysDiff > 0 && daysDiff <= 60) {
+          cycleLength = daysDiff;
+        }
+      }
+      
+      // 更新记录的周期
+      await allRecords[i].update({ cycleLength });
+    }
+  } catch (error) {
+    console.error('重新计算周期失败:', error);
+  }
+}
+
 // 添加经期记录
 router.post('/', async (req, res) => {
   try {
@@ -44,26 +77,20 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ success: false, message: '请提供开始日期' });
     }
 
-    // 计算周期长度
-    let cycleLength = null;
-    const lastRecord = await Menstrual.findOne({
-      order: [['startDate', 'DESC']]
-    });
-    
-    if (lastRecord) {
-      const lastDate = new Date(lastRecord.startDate);
-      const currentDate = new Date(startDate);
-      cycleLength = Math.round((currentDate - lastDate) / (1000 * 60 * 60 * 24));
-    }
-
     const newRecord = await Menstrual.create({
-      startDate, endDate, cycleLength, symptoms, note
+      startDate, endDate, cycleLength: null, symptoms, note
     });
+
+    // 添加记录后，重新计算所有记录的周期
+    await recalculateCycles();
+
+    // 重新获取更新后的记录
+    const updatedRecord = await Menstrual.findByPk(newRecord.id);
 
     res.json({
       success: true,
       message: '添加成功',
-      data: newRecord
+      data: updatedRecord
     });
   } catch (error) {
     res.status(500).json({ success: false, message: '服务器错误' });
@@ -83,10 +110,16 @@ router.put('/:id', async (req, res) => {
     
     await record.update({ startDate, endDate, symptoms, note });
     
+    // 更新记录后，重新计算所有记录的周期
+    await recalculateCycles();
+    
+    // 重新获取更新后的记录
+    const updatedRecord = await Menstrual.findByPk(id);
+    
     res.json({
       success: true,
       message: '更新成功',
-      data: record
+      data: updatedRecord
     });
   } catch (error) {
     res.status(500).json({ success: false, message: '服务器错误' });
@@ -101,6 +134,10 @@ router.delete('/:id', async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ success: false, message: '记录不存在' });
     }
+    
+    // 删除记录后，重新计算所有记录的周期
+    await recalculateCycles();
+    
     res.json({
       success: true,
       message: '删除成功'

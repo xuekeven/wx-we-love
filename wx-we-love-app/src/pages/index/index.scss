@@ -70,17 +70,19 @@
     .date-info {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
 
-      .date-year {
+      .date-solar {
         font-size: 26px;
         color: #2D2D2D;
         font-weight: 500;
+        line-height: 1.4;
       }
 
       .date-week {
         font-size: 22px;
         color: #8E8E93;
+        line-height: 1.4;
       }
     }
   }

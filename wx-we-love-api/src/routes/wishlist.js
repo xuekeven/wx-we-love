@@ -32,6 +32,29 @@ router.post('/', async (req, res) => {
   }
 });
 
+// 更新心愿内容
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    
+    const wish = await Wishlist.findByPk(id);
+    if (!wish) {
+      return res.status(404).json({ success: false, message: '心愿不存在' });
+    }
+    
+    await wish.update({ content });
+    
+    res.json({
+      success: true,
+      message: '更新成功',
+      data: wish
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
 // 更新心愿状态
 router.post('/:id/status', async (req, res) => {
   try {

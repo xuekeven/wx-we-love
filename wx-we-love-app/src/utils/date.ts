@@ -6,8 +6,22 @@ export const formatDate = (date) => {
 }
 
 export const getWeekDay = (date) => {
-  const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+  const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
   return weekDays[date.getDay()]
+}
+
+// 计算当年第几周（从1月1日开始计算）
+export const getWeekOfYear = (date) => {
+  const year = date.getFullYear()
+  const firstDay = new Date(year, 0, 1) // 当年1月1日
+  
+  // 计算从1月1日到当前日期的天数
+  const days = Math.floor((date.getTime() - firstDay.getTime()) / (1000 * 60 * 60 * 24))
+  
+  // 计算是第几周（从1月1日开始，每7天为一周）
+  const weekNumber = Math.floor(days / 7) + 1
+  
+  return weekNumber
 }
 
 export const getDaysDiff = (startDate) => {

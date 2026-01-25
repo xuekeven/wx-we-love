@@ -1,6 +1,7 @@
 import { View, Text, Button, ScrollView, Picker } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
+import { useDidShow } from '@tarojs/taro'
 import { get, post, del } from '../../utils/request'
 import { formatDate } from '../../utils/date'
 import './index.scss'
@@ -16,6 +17,11 @@ export default function Menstrual() {
   useEffect(() => {
     loadRecords()
   }, [])
+
+  // 页面显示时刷新数据（从添加/编辑页面返回时）
+  useDidShow(() => {
+    loadRecords()
+  })
 
   useEffect(() => {
     if (records.length > 0) {

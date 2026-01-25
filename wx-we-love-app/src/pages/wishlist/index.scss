@@ -144,6 +144,22 @@
       .wish-actions {
         display: flex;
         justify-content: flex-end;
+        gap: 12px;
+
+        .edit-btn {
+          padding: 10px 24px;
+          background: #FF6B9D;
+          color: #fff;
+          border-radius: 12px;
+          font-size: 24px;
+          font-weight: 500;
+          transition: all 0.2s ease;
+
+          &:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+          }
+        }
 
         .delete-btn {
           padding: 10px 24px;
@@ -157,6 +173,60 @@
           &:active {
             transform: scale(0.95);
             opacity: 0.8;
+          }
+        }
+      }
+
+      // 编辑模式样式
+      .wish-edit-mode {
+        width: 100%;
+
+        .wish-edit-input {
+          width: 100%;
+          min-height: 80px;
+          padding: 16px;
+          border-radius: 12px;
+          background: #F8F8F8;
+          border: 2px solid #FF6B9D;
+          font-size: 28px;
+          line-height: 1.5;
+          margin-bottom: 12px;
+          box-sizing: border-box;
+          color: #2D2D2D;
+
+          &:focus {
+            background: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+          }
+        }
+
+        .wish-edit-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 12px;
+
+          .edit-cancel-btn,
+          .edit-save-btn {
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+
+            &:active {
+              transform: scale(0.95);
+              opacity: 0.8;
+            }
+          }
+
+          .edit-cancel-btn {
+            background: #F8F8F8;
+            color: #2D2D2D;
+          }
+
+          .edit-save-btn {
+            background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
+            color: #fff;
           }
         }
       }

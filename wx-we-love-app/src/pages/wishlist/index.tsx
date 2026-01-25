@@ -1,7 +1,7 @@
 import { View, Text, Input, Button, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
-import { get, post, del } from '../../utils/request'
+import { get, post, put, del } from '../../utils/request'
 import './index.scss'
 
 // WishItem: { id, content, status: 'pending'|'completed', createdAt, completedAt? }
@@ -9,6 +9,8 @@ import './index.scss'
 export default function Wishlist() {
   const [wishes, setWishes] = useState([])
   const [inputValue, setInputValue] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [editingValue, setEditingValue] = useState('')
 
   useEffect(() => {
     loadWishes()
@@ -65,6 +67,37 @@ export default function Wishlist() {
     }
   }
 
+  const handleEdit = (wish) => {
+    setEditingId(wish.id)
+    setEditingValue(wish.content)
+  }
+
+  const handleSaveEdit = async (id) => {
+    if (!editingValue.trim()) {
+      Taro.showToast({ title: '心愿内容不能为空', icon: 'none' })
+      return
+    }
+
+    try {
+      const res = await put(`/api/wishlist/${id}`, { content: editingValue.trim() })
+      if (res && res.success && res.data) {
+        setWishes(wishes.map(w => w.id === id ? res.data : w))
+        setEditingId(null)
+        setEditingValue('')
+        Taro.showToast({ title: res.message || '编辑成功', icon: 'success' })
+      } else {
+        Taro.showToast({ title: res?.message || '编辑失败', icon: 'none' })
+      }
+    } catch (error) {
+      Taro.showToast({ title: '编辑失败，请重试', icon: 'none' })
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingId(null)
+    setEditingValue('')
+  }
+
   const handleDelete = async (id) => {
     Taro.showModal({
       title: '确认删除',
@@ -108,17 +141,44 @@ export default function Wishlist() {
       <ScrollView scrollY className='wish-list'>
         {wishes.map((wish) => (
           <View key={wish.id} className={`wish-item ${wish.status}`}>
-            <View className='wish-content' onClick={() => handleToggleStatus(wish.id)}>
-              <View className='checkbox'>
-                {wish.status === 'completed' && <Text className='check-icon'>✓</Text>}
+            {editingId === wish.id ? (
+              // 编辑模式
+              <View className='wish-edit-mode'>
+                <Input
+                  className='wish-edit-input'
+                  value={editingValue}
+                  onInput={(e) => setEditingValue(e.detail.value)}
+                  placeholder='输入心愿内容'
+                  autoFocus
+                />
+                <View className='wish-edit-actions'>
+                  <View className='edit-cancel-btn' onClick={handleCancelEdit}>
+                    <Text>取消</Text>
+                  </View>
+                  <View className='edit-save-btn' onClick={() => handleSaveEdit(wish.id)}>
+                    <Text>保存</Text>
+                  </View>
+                </View>
               </View>
-              <Text className='wish-text'>{wish.content}</Text>
-            </View>
-            <View className='wish-actions'>
-              <View className='delete-btn' onClick={() => handleDelete(wish.id)}>
-                <Text>删除</Text>
-              </View>
-            </View>
+            ) : (
+              // 显示模式
+              <>
+                <View className='wish-content' onClick={() => handleToggleStatus(wish.id)}>
+                  <View className='checkbox'>
+                    {wish.status === 'completed' && <Text className='check-icon'>✓</Text>}
+                  </View>
+                  <Text className='wish-text'>{wish.content}</Text>
+                </View>
+                <View className='wish-actions'>
+                  <View className='edit-btn' onClick={() => handleEdit(wish)}>
+                    <Text>编辑</Text>
+                  </View>
+                  <View className='delete-btn' onClick={() => handleDelete(wish.id)}>
+                    <Text>删除</Text>
+                  </View>
+                </View>
+              </>
+            )}
           </View>
         ))}
         {wishes.length === 0 && (
