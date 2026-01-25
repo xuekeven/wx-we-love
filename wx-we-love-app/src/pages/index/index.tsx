@@ -82,7 +82,7 @@ export default function Index() {
 
   return (
     <View className='index-page'>
-      {/* Topbar */}
+      {/* 顶部标题区域 */}
       <View className='topbar'>
         <View className='topbar-content'>
           <Text className='heart-icon'>💗</Text>
