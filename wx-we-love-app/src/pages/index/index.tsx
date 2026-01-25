@@ -86,7 +86,9 @@ export default function Index() {
       <View className='topbar'>
         <View className='topbar-content'>
           <Text className='heart-icon'>💗</Text>
-          <Text className='title'>{coupleNames.name1}和{coupleNames.name2}的恋爱空间</Text>
+          <Text className='title' numberOfLines={1}>
+            {coupleNames.name1}和{coupleNames.name2}的恋爱空间
+          </Text>
         </View>
       </View>
 

@@ -1,5 +1,5 @@
 export default {
   navigationStyle: 'custom',
-  backgroundColor: '#ffeaf3'
+  backgroundColor: '#FAF8FC'
 }
 
