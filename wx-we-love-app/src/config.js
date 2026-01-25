@@ -9,7 +9,7 @@ const ENV = 'development' // 'development' | 'production'
 // 
 // 如果使用微信开发者工具的模拟器，可以尝试使用 localhost
 // 如果使用真机调试，必须使用本机IP地址
-const LOCAL_IP = 'http://192.168.3.11/' // ⚠️ 请修改为你的本机IP地址！
+const LOCAL_IP = '192.168.3.11' // ⚠️ 请修改为你的本机IP地址（不要包含http://）
 
 const config = {
   development: {
