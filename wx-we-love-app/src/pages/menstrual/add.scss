@@ -1,6 +1,6 @@
 .menstrual-add-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #ffeaf3 0%, #fff5f7 100%);
+  background: #FAF8FC;
   padding-bottom: 160px;
 
   .page-header {
@@ -8,50 +8,48 @@
     padding: 48px 32px 32px;
 
     .page-title {
-      font-size: 48px;
+      font-size: 44px;
       font-weight: 700;
       display: block;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      margin-bottom: 12px;
+      color: #2D2D2D;
+      letter-spacing: -0.5px;
     }
 
     .page-subtitle {
-      font-size: 28px;
-      color: #999;
+      font-size: 26px;
+      color: #8E8E93;
       display: block;
     }
   }
 
   .form-container {
-    padding: 0 32px 24px;
+    padding: 0 24px 24px;
 
     .form-section {
-      background: #fff;
-      border-radius: 24px;
-      padding: 32px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 20px rgba(255, 107, 157, 0.08);
+      background: #FFFFFF;
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
       .section-title {
-        font-size: 32px;
+        font-size: 30px;
         font-weight: 600;
-        color: #333;
+        color: #2D2D2D;
         display: block;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
       }
 
       .section-desc {
         font-size: 24px;
-        color: #999;
+        color: #8E8E93;
         display: block;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
       }
 
       .form-item {
-        margin-bottom: 24px;
+        margin-bottom: 20px;
 
         &:last-child {
           margin-bottom: 0;
@@ -60,48 +58,50 @@
         .item-label {
           display: flex;
           align-items: center;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
 
           .label-text {
             font-size: 28px;
-            color: #333;
+            color: #2D2D2D;
             font-weight: 500;
           }
 
           .required {
-            color: #ff4757;
+            color: #FF4757;
             font-size: 28px;
-            margin-left: 8px;
+            margin-left: 6px;
           }
 
           .optional {
-            color: #999;
-            font-size: 24px;
-            margin-left: 8px;
+            color: #8E8E93;
+            font-size: 22px;
+            margin-left: 6px;
           }
         }
 
         .picker-value {
-          background: #f8f9fa;
+          background: #F8F8F8;
           border-radius: 16px;
-          padding: 24px;
+          padding: 20px;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          border: 1px solid #F0F0F0;
+          transition: all 0.2s ease;
 
           .value-text {
             font-size: 28px;
-            color: #333;
+            color: #2D2D2D;
           }
 
           .placeholder-text {
             font-size: 28px;
-            color: #999;
+            color: #8E8E93;
           }
 
           .arrow {
-            font-size: 40px;
-            color: #999;
+            font-size: 32px;
+            color: #C7C7CC;
             font-weight: 300;
           }
         }
@@ -110,18 +110,18 @@
       .duration-tip {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 16px 24px;
-        background: linear-gradient(135deg, #FFE5F1 0%, #FFF0F7 100%);
+        gap: 10px;
+        padding: 12px 20px;
+        background: #FFF0F5;
         border-radius: 12px;
-        margin-top: 16px;
+        margin-top: 12px;
 
         .tip-icon {
-          font-size: 28px;
+          font-size: 24px;
         }
 
         .tip-text {
-          font-size: 26px;
+          font-size: 24px;
           color: #FF6B9D;
           font-weight: 500;
         }
@@ -130,41 +130,41 @@
       .symptoms-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        margin-bottom: 16px;
+        gap: 12px;
+        margin-bottom: 12px;
 
         .symptom-item {
           position: relative;
-          background: #f8f9fa;
+          background: #F8F8F8;
           border-radius: 16px;
-          padding: 24px 16px;
+          padding: 20px 12px;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 8px;
           border: 2px solid transparent;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
 
           .symptom-icon {
-            font-size: 36px;
+            font-size: 32px;
           }
 
           .symptom-name {
             font-size: 22px;
-            color: #666;
+            color: #2D2D2D;
             text-align: center;
           }
 
           .check-icon {
             position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+            top: 6px;
+            right: 6px;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
             border-radius: 50%;
             color: #fff;
-            font-size: 20px;
+            font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -172,7 +172,7 @@
           }
 
           &.selected {
-            background: linear-gradient(135deg, #FFE5F1 0%, #FFF0F7 100%);
+            background: #FFF0F5;
             border-color: #FF6B9D;
 
             .symptom-name {
@@ -180,43 +180,55 @@
               font-weight: 500;
             }
           }
+
+          &:active {
+            transform: scale(0.98);
+          }
         }
       }
 
       .selected-count {
         text-align: center;
-        padding: 12px;
-        background: #f8f9fa;
+        padding: 10px;
+        background: #F8F8F8;
         border-radius: 12px;
 
         .count-text {
           font-size: 24px;
-          color: #666;
+          color: #8E8E93;
         }
       }
 
       .note-input {
-        background: #f8f9fa;
+        background: #F8F8F8;
         border-radius: 16px;
-        padding: 24px;
+        padding: 20px;
         font-size: 28px;
         line-height: 1.6;
-        min-height: 200px;
+        min-height: 180px;
         width: 100%;
         box-sizing: border-box;
+        border: 1px solid #F0F0F0;
+        transition: all 0.2s ease;
+
+        &:focus {
+          background: #FFFFFF;
+          border-color: #FF6B9D;
+          box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+        }
       }
 
       .note-placeholder {
-        color: #999;
+        color: #8E8E93;
         font-size: 28px;
       }
 
       .char-count {
-        font-size: 24px;
-        color: #999;
+        font-size: 22px;
+        color: #8E8E93;
         display: block;
         text-align: right;
-        margin-top: 12px;
+        margin-top: 10px;
       }
     }
   }
@@ -226,44 +238,57 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: #fff;
-    padding: 24px;
-    padding-bottom: calc(24px + env(safe-area-inset-bottom));
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    background: #FFFFFF;
+    padding: 20px 24px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
     display: flex;
-    gap: 16px;
+    gap: 12px;
+    border-top: 1px solid #F0F0F0;
 
     .cancel-btn {
       flex: 1;
-      background: #f8f9fa;
-      color: #666;
+      background: #F8F8F8;
+      color: #2D2D2D;
       border-radius: 16px;
-      font-size: 32px;
+      font-size: 30px;
       font-weight: 600;
       border: none;
+      transition: all 0.2s ease;
 
       &::after {
         border: none;
+      }
+
+      &:active {
+        background: #F0F0F0;
+        transform: scale(0.98);
       }
     }
 
     .submit-btn {
       flex: 2;
-      background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+      background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
       color: #fff;
       border-radius: 16px;
-      font-size: 32px;
+      font-size: 30px;
       font-weight: 600;
       border: none;
+      box-shadow: 0 2px 8px rgba(255, 107, 157, 0.2);
+      transition: all 0.2s ease;
 
       &::after {
         border: none;
       }
 
       &[disabled] {
-        opacity: 0.6;
+        opacity: 0.5;
+      }
+
+      &:active:not([disabled]) {
+        transform: scale(0.98);
+        box-shadow: 0 1px 4px rgba(255, 107, 157, 0.2);
       }
     }
   }
 }
-

@@ -1,90 +1,100 @@
 .date-record-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #ffeaf3 0%, #fff5f7 100%);
-  padding: 32px;
+  background: #FAF8FC;
+  padding: 24px;
 
   .page-header {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     padding-top: 48px;
 
     .page-title {
-      font-size: 48px;
+      font-size: 44px;
       font-weight: 700;
       display: block;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      margin-bottom: 12px;
+      color: #2D2D2D;
+      letter-spacing: -0.5px;
     }
 
     .page-subtitle {
-      font-size: 28px;
-      color: #999;
+      font-size: 26px;
+      color: #8E8E93;
       display: block;
     }
   }
 
   .add-btn {
-    background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+    background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
     color: #fff;
-    border-radius: 24px;
-    padding: 24px;
-    font-size: 32px;
+    border-radius: 20px;
+    padding: 20px;
+    font-size: 30px;
     font-weight: 600;
     border: none;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(255, 107, 157, 0.2);
+    transition: all 0.2s ease;
 
     &::after {
       border: none;
     }
 
+    &:active {
+      transform: scale(0.98);
+    }
+
     .add-icon {
-      font-size: 40px;
+      font-size: 36px;
     }
   }
 
   .record-list {
-    height: calc(100vh - 380px);
+    height: calc(100vh - 360px);
 
     .record-item {
-      background: #fff;
-      border-radius: 24px;
-      padding: 32px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 20px rgba(255, 107, 157, 0.08);
+      background: #FFFFFF;
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s ease;
+
+      &:active {
+        transform: scale(0.98);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
 
       .record-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 24px;
+        margin-bottom: 16px;
 
         .record-info {
           flex: 1;
 
           .record-title {
-            font-size: 32px;
+            font-size: 30px;
             font-weight: 600;
-            color: #333;
+            color: #2D2D2D;
             display: block;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
           }
 
           .record-meta {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
 
             .record-date,
             .record-location {
               font-size: 24px;
-              color: #666;
+              color: #8E8E93;
             }
           }
         }
@@ -94,30 +104,30 @@
           gap: 4px;
 
           .star {
-            font-size: 28px;
+            font-size: 24px;
           }
         }
       }
 
       .record-photos {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        display: flex;
         gap: 12px;
-        margin-bottom: 24px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
 
         .photo {
-          width: 100%;
-          height: 200px;
+          width: 120px;
+          height: 120px;
           border-radius: 12px;
+          object-fit: cover;
         }
       }
 
       .record-description {
-        font-size: 28px;
-        color: #666;
+        font-size: 26px;
+        color: #2D2D2D;
         line-height: 1.6;
-        margin-bottom: 24px;
-        display: block;
+        margin-bottom: 16px;
       }
 
       .record-actions {
@@ -125,31 +135,38 @@
         justify-content: flex-end;
 
         .delete-btn {
-          padding: 12px 32px;
-          background: #ff4757;
+          padding: 10px 24px;
+          background: #FF4757;
           color: #fff;
           border-radius: 12px;
           font-size: 24px;
+          font-weight: 500;
+          transition: all 0.2s ease;
+
+          &:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+          }
         }
       }
     }
 
     .empty-state {
       text-align: center;
-      padding: 120px 0;
+      padding: 100px 0;
 
       .empty-icon {
-        font-size: 120px;
+        font-size: 100px;
         display: block;
-        margin-bottom: 32px;
+        margin-bottom: 24px;
+        opacity: 0.5;
       }
 
       .empty-text {
-        font-size: 28px;
-        color: #999;
+        font-size: 26px;
+        color: #8E8E93;
         display: block;
       }
     }
   }
 }
-

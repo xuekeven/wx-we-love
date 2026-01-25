@@ -1,6 +1,6 @@
 .moment-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #ffeaf3 0%, #fff5f7 100%);
+  background: #FAF8FC;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,37 +10,25 @@
     padding: 80px 40px;
 
     .coming-soon-icon {
-      font-size: 160px;
+      font-size: 140px;
       display: block;
-      margin-bottom: 40px;
-      animation: pulse 2s ease-in-out infinite;
+      margin-bottom: 32px;
+      opacity: 0.6;
     }
 
     .coming-soon-text {
-      font-size: 48px;
+      font-size: 44px;
       font-weight: 700;
       display: block;
-      margin-bottom: 24px;
-      background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      margin-bottom: 20px;
+      color: #2D2D2D;
+      letter-spacing: -0.5px;
     }
 
     .coming-soon-desc {
-      font-size: 28px;
-      color: #999;
+      font-size: 26px;
+      color: #8E8E93;
       display: block;
     }
   }
 }
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-

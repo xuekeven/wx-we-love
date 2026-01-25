@@ -1,114 +1,133 @@
 .wishlist-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #ffeaf3 0%, #fff5f7 100%);
-  padding: 32px;
+  background: #FAF8FC;
+  padding: 24px;
 
   .page-header {
     text-align: center;
-    margin-bottom: 48px;
+    margin-bottom: 32px;
     padding-top: 48px;
 
     .page-title {
-      font-size: 48px;
+      font-size: 44px;
       font-weight: 700;
       display: block;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      margin-bottom: 12px;
+      color: #2D2D2D;
+      letter-spacing: -0.5px;
     }
 
     .page-subtitle {
-      font-size: 28px;
-      color: #999;
+      font-size: 26px;
+      color: #8E8E93;
       display: block;
     }
   }
 
   .add-section {
-    background: #fff;
-    border-radius: 24px;
-    padding: 24px;
-    margin-bottom: 32px;
-    box-shadow: 0 4px 20px rgba(255, 107, 157, 0.08);
+    background: #FFFFFF;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
 
     .wish-input {
       flex: 1;
       min-width: 0;
-      height: 88px;
-      padding: 0 24px;
+      height: 80px;
+      padding: 0 20px;
       border-radius: 16px;
-      background: #f8f9fa;
+      background: #F8F8F8;
+      border: 1px solid #F0F0F0;
       font-size: 28px;
-      line-height: 88px;
+      line-height: 80px;
       box-sizing: border-box;
+      transition: all 0.2s ease;
+
+      &:focus {
+        background: #FFFFFF;
+        border-color: #FF6B9D;
+        box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+      }
     }
 
     .wish-input-placeholder {
-      color: #999;
+      color: #8E8E93;
       font-size: 28px;
     }
 
     .add-btn {
-      background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C7 100%);
+      background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
       color: #fff;
       border-radius: 16px;
-      padding: 0 40px;
-      height: 88px;
-      line-height: 88px;
+      padding: 0 32px;
+      height: 80px;
+      line-height: 80px;
       font-size: 28px;
       font-weight: 600;
       border: none;
       flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(255, 107, 157, 0.2);
+      transition: all 0.2s ease;
 
       &::after {
         border: none;
+      }
+
+      &:active {
+        transform: scale(0.98);
+        box-shadow: 0 1px 4px rgba(255, 107, 157, 0.2);
       }
     }
   }
 
   .wish-list {
-    height: calc(100vh - 480px);
+    height: calc(100vh - 400px);
 
     .wish-item {
-      background: #fff;
+      background: #FFFFFF;
       border-radius: 20px;
-      padding: 32px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 20px rgba(255, 107, 157, 0.08);
-      transition: all 0.3s ease;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s ease;
+
+      &:active {
+        transform: scale(0.98);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
 
       &.completed {
         opacity: 0.6;
 
         .wish-text {
           text-decoration: line-through;
-          color: #999;
+          color: #8E8E93;
         }
       }
 
       .wish-content {
         display: flex;
         align-items: center;
-        gap: 20px;
-        margin-bottom: 16px;
+        gap: 16px;
+        margin-bottom: 12px;
 
         .checkbox {
-          width: 48px;
-          height: 48px;
-          border: 3px solid #FF6B9D;
+          width: 44px;
+          height: 44px;
+          border: 2px solid #FF6B9D;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+          transition: all 0.2s ease;
 
           .check-icon {
-            font-size: 32px;
+            font-size: 28px;
             color: #FF6B9D;
             font-weight: bold;
           }
@@ -116,8 +135,8 @@
 
         .wish-text {
           flex: 1;
-          font-size: 30px;
-          color: #333;
+          font-size: 28px;
+          color: #2D2D2D;
           line-height: 1.5;
         }
       }
@@ -127,31 +146,38 @@
         justify-content: flex-end;
 
         .delete-btn {
-          padding: 12px 32px;
-          background: #ff4757;
+          padding: 10px 24px;
+          background: #FF4757;
           color: #fff;
           border-radius: 12px;
           font-size: 24px;
+          font-weight: 500;
+          transition: all 0.2s ease;
+
+          &:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+          }
         }
       }
     }
 
     .empty-state {
       text-align: center;
-      padding: 120px 0;
+      padding: 100px 0;
 
       .empty-icon {
-        font-size: 120px;
+        font-size: 100px;
         display: block;
-        margin-bottom: 32px;
+        margin-bottom: 24px;
+        opacity: 0.5;
       }
 
       .empty-text {
-        font-size: 28px;
-        color: #999;
+        font-size: 26px;
+        color: #8E8E93;
         display: block;
       }
     }
   }
 }
-

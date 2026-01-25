@@ -1,5 +1,22 @@
+// 2025 极简优雅设计变量
+$primary-color: #FF6B9D;
+$primary-light: #FFB3D1;
+$primary-dark: #E85A8A;
+$background: #FAF8FC;
+$card-bg: #FFFFFF;
+$text-primary: #2D2D2D;
+$text-secondary: #8E8E93;
+$border-color: #F0F0F0;
+$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+$shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+$radius-sm: 12px;
+$radius-md: 20px;
+$radius-lg: 28px;
+$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
 page {
-  background: linear-gradient(135deg, #ffeaf3 0%, #fff5f7 100%);
+  background: $background;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -10,5 +27,26 @@ page {
 
 view, text, button, input, image, scroll-view {
   box-sizing: border-box;
+}
+
+// 简洁卡片样式
+.card {
+  background: $card-bg;
+  border-radius: $radius-md;
+  box-shadow: $shadow-sm;
+  transition: $transition;
+  
+  &:active {
+    transform: scale(0.98);
+    box-shadow: $shadow-md;
+  }
+}
+
+// 渐变文字
+.gradient-text {
+  background: linear-gradient(135deg, $primary-color 0%, $primary-dark 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
