@@ -12,6 +12,7 @@ export default function Index() {
   const [loveDate, setLoveDate] = useState('2025-10-11')
   const [daysTogether, setDaysTogether] = useState(0)
   const [coupleNames, setCoupleNames] = useState({ name1: '张三', name2: '李四' })
+  const [isMatched, setIsMatched] = useState(false)
   const [functions, setFunctions] = useState([
     { id: '1', name: '心愿清单', icon: '💝', path: '/pages/wishlist/index', order: 1 },
     { id: '2', name: '约会记录', icon: '🌹', path: '/pages/date-record/index', order: 2 },
@@ -42,6 +43,14 @@ export default function Index() {
       const res = await get('/api/user/info')
       if (res && res.success && res.data) {
         const userData = res.data
+        setIsMatched(userData.isMatched || false)
+        
+        // 如果未匹配，跳转到匹配页面
+        if (!userData.isMatched) {
+          Taro.redirectTo({ url: '/pages/match/index' })
+          return
+        }
+
         setLoveDate(userData.loveDate || '2025-10-11')
         setCoupleNames({
           name1: userData.name1 || '张三',
@@ -78,6 +87,27 @@ export default function Index() {
   const handleTouchEnd = () => {
     setLongPressItem(null)
     setIsDragging(false)
+  }
+
+  // 如果未匹配，显示匹配提示
+  if (!isMatched) {
+    return (
+      <View className='index-page'>
+        <View className='unmatched-container'>
+          <View className='unmatched-content'>
+            <Text className='unmatched-icon'>💑</Text>
+            <Text className='unmatched-title'>还未匹配</Text>
+            <Text className='unmatched-desc'>请先完成匹配才能使用所有功能</Text>
+            <Button
+              className='go-match-btn'
+              onClick={() => Taro.redirectTo({ url: '/pages/match/index' })}
+            >
+              去匹配
+            </Button>
+          </View>
+        </View>
+      </View>
+    )
   }
 
   return (

@@ -1,5 +1,7 @@
 export default {
   pages: [
+    'pages/login/index',
+    'pages/match/index',
     'pages/index/index',
     'pages/wishlist/index',
     'pages/date-record/index',

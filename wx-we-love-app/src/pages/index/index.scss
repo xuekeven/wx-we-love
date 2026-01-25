@@ -2,6 +2,65 @@
   min-height: 100vh;
   background: #FAF8FC;
   padding-bottom: 120px;
+
+  .unmatched-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+
+    .unmatched-content {
+      text-align: center;
+      background: #FFFFFF;
+      border-radius: 32px;
+      padding: 80px 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+
+      .unmatched-icon {
+        font-size: 120px;
+        display: block;
+        margin-bottom: 32px;
+      }
+
+      .unmatched-title {
+        font-size: 44px;
+        font-weight: 700;
+        color: #2D2D2D;
+        display: block;
+        margin-bottom: 16px;
+      }
+
+      .unmatched-desc {
+        font-size: 28px;
+        color: #8E8E93;
+        display: block;
+        margin-bottom: 48px;
+        line-height: 1.6;
+      }
+
+      .go-match-btn {
+        width: 100%;
+        max-width: 400px;
+        height: 88px;
+        background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
+        color: #fff;
+        border-radius: 20px;
+        font-size: 32px;
+        font-weight: 600;
+        border: none;
+        box-shadow: 0 8px 24px rgba(255, 107, 157, 0.3);
+
+        &::after {
+          border: none;
+        }
+
+        &:active {
+          transform: scale(0.98);
+        }
+      }
+    }
+  }
 }
 
 .topbar {

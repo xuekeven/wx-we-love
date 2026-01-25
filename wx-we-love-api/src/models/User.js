@@ -7,6 +7,42 @@ const User = sequelize.define('User', {
     primaryKey: true,
     autoIncrement: true
   },
+  openId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    comment: '微信openId'
+  },
+  nickname: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: '用户昵称'
+  },
+  avatar: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: '用户头像'
+  },
+  matchCode: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true,
+    comment: '匹配码'
+  },
+  matchedUserId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '匹配的用户ID',
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  },
+  isMatched: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: '是否已匹配'
+  },
   loveDate: {
     type: DataTypes.DATEONLY,
     allowNull: true
