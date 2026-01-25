@@ -88,7 +88,7 @@ module.exports = {
     //   - true: 监听所有文件变化，变化时自动重启
     //   - ['src', 'config']: 只监听指定目录/文件
     // 注意: 生产环境建议设为 false，避免不必要的重启
-    watch: false,
+    watch: true,
     
     // max_memory_restart: 内存限制，超过此值自动重启
     // 类型: String
