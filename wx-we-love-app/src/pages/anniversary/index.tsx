@@ -17,11 +17,15 @@ export default function Anniversary() {
   const loadAnniversaries = async () => {
     try {
       const res = await get('/api/anniversaries')
-      if (res && res.data) {
+      if (res && res.success && res.data && Array.isArray(res.data)) {
         setAnniversaries(res.data)
+      } else {
+        console.log('加载纪念日失败', res?.message || '')
+        setAnniversaries([])
       }
     } catch (error) {
-      console.log('加载纪念日失败')
+      console.log('加载纪念日失败', error)
+      setAnniversaries([])
     }
   }
 
@@ -36,11 +40,15 @@ export default function Anniversary() {
       success: async (res) => {
         if (res.confirm) {
           try {
-            await del(`/api/anniversaries/${id}`)
-            setAnniversaries(anniversaries.filter(a => a.id !== id))
-            Taro.showToast({ title: '删除成功', icon: 'success' })
+            const deleteRes = await del(`/api/anniversaries/${id}`)
+            if (deleteRes && deleteRes.success) {
+              setAnniversaries(anniversaries.filter(a => a.id !== id))
+              Taro.showToast({ title: deleteRes.message || '删除成功', icon: 'success' })
+            } else {
+              Taro.showToast({ title: deleteRes?.message || '删除失败', icon: 'none' })
+            }
           } catch (error) {
-            console.log('删除失败')
+            Taro.showToast({ title: '删除失败，请重试', icon: 'none' })
           }
         }
       }

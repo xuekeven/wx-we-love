@@ -1,57 +1,80 @@
 const express = require('express');
 const router = express.Router();
-
-// 模拟用户数据
-const mockUserData = {
-  id: 1,
-  loveDate: '2025-10-11',
-  coupleNames: {
-    name1: '薛凯',
-    name2: '沈诗怡'
-  },
-  avatar1: 'https://via.placeholder.com/150',
-  avatar2: 'https://via.placeholder.com/150',
-  functionOrder: {
-    '1': 1,
-    '2': 2,
-    '3': 3,
-    '4': 4,
-    '5': 5,
-    '6': 6
-  }
-};
+const { User } = require('../models');
 
 // 获取用户信息
-router.get('/info', (req, res) => {
-  res.json({
-    success: true,
-    data: mockUserData
-  });
+router.get('/info', async (req, res) => {
+  try {
+    let user = await User.findOne();
+    
+    // 如果没有用户，创建一个默认用户
+    if (!user) {
+      user = await User.create({
+        loveDate: '2025-10-11',
+        name1: '薛凯',
+        name2: '沈诗怡',
+        avatar1: 'https://via.placeholder.com/150',
+        avatar2: 'https://via.placeholder.com/150',
+        functionOrder: {
+          '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    console.error('获取用户信息失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
 });
 
 // 更新用户信息
-router.post('/info', (req, res) => {
-  const updates = req.body;
-  Object.assign(mockUserData, updates);
-  
-  res.json({
-    success: true,
-    message: '更新成功',
-    data: mockUserData
-  });
+router.post('/info', async (req, res) => {
+  try {
+    const updates = req.body;
+    let user = await User.findOne();
+    
+    if (user) {
+      await user.update(updates);
+    } else {
+      user = await User.create(updates);
+    }
+    
+    res.json({
+      success: true,
+      message: '更新成功',
+      data: user
+    });
+  } catch (error) {
+    console.error('更新用户信息失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
 });
 
 // 更新功能排序
-router.post('/function-order', (req, res) => {
-  const { functionOrder } = req.body;
-  mockUserData.functionOrder = functionOrder;
-  
-  res.json({
-    success: true,
-    message: '排序已更新',
-    data: mockUserData
-  });
+router.post('/function-order', async (req, res) => {
+  try {
+    const { functionOrder } = req.body;
+    let user = await User.findOne();
+    
+    if (user) {
+      await user.update({ functionOrder });
+    } else {
+      user = await User.create({ functionOrder });
+    }
+    
+    res.json({
+      success: true,
+      message: '排序已更新',
+      data: user
+    });
+  } catch (error) {
+    console.error('更新排序失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
 });
 
 module.exports = router;
-

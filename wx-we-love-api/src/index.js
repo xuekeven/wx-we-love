@@ -2,9 +2,19 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
+const { sequelize } = require('./models');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+// 数据库同步
+sequelize.sync({ alter: true })
+  .then(() => {
+    console.log('✅ Database synchronized');
+  })
+  .catch(err => {
+    console.error('❌ Database synchronization failed:', err);
+  });
 
 // 中间件
 app.use(cors());

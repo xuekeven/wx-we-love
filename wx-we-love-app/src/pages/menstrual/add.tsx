@@ -131,14 +131,20 @@ export default function MenstrualAdd() {
 
       if (res && res.success) {
         Taro.showToast({
-          title: isEditMode ? '编辑成功' : '记录成功',
+          title: res.message || (isEditMode ? '编辑成功' : '记录成功'),
           icon: 'success',
           duration: 1500
         })
 
         setTimeout(() => {
-          Taro.navigateTo({ url: '/pages/menstrual/index' })
+          Taro.navigateBack()
         }, 1500)
+      } else {
+        Taro.showToast({
+          title: res?.message || '操作失败，请重试',
+          icon: 'none'
+        })
+        setIsSubmitting(false)
       }
     } catch (error) {
       Taro.showToast({

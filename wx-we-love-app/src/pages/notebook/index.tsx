@@ -17,11 +17,15 @@ export default function Notebook() {
   const loadNotes = async () => {
     try {
       const res = await get('/api/notes')
-      if (res && res.data) {
+      if (res && res.success && res.data && Array.isArray(res.data)) {
         setNotes(res.data)
+      } else {
+        console.log('加载记事本失败', res?.message || '')
+        setNotes([])
       }
     } catch (error) {
-      console.log('加载记事本失败')
+      console.log('加载记事本失败', error)
+      setNotes([])
     }
   }
 
@@ -36,11 +40,15 @@ export default function Notebook() {
       success: async (res) => {
         if (res.confirm) {
           try {
-            await del(`/api/notes/${id}`)
-            setNotes(notes.filter(n => n.id !== id))
-            Taro.showToast({ title: '删除成功', icon: 'success' })
+            const deleteRes = await del(`/api/notes/${id}`)
+            if (deleteRes && deleteRes.success) {
+              setNotes(notes.filter(n => n.id !== id))
+              Taro.showToast({ title: deleteRes.message || '删除成功', icon: 'success' })
+            } else {
+              Taro.showToast({ title: deleteRes?.message || '删除失败', icon: 'none' })
+            }
           } catch (error) {
-            console.log('删除失败')
+            Taro.showToast({ title: '删除失败，请重试', icon: 'none' })
           }
         }
       }

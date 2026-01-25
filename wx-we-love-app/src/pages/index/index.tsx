@@ -40,20 +40,26 @@ export default function Index() {
   const loadUserData = async () => {
     try {
       const res = await get('/api/user/info')
-      if (res && res.data) {
-        setLoveDate(res.data.loveDate || '2025-10-11')
-        setCoupleNames(res.data.coupleNames || { name1: '张三', name2: '李四' })
-        if (res.data.functionOrder) {
+      if (res && res.success && res.data) {
+        const userData = res.data
+        setLoveDate(userData.loveDate || '2025-10-11')
+        setCoupleNames({
+          name1: userData.name1 || '张三',
+          name2: userData.name2 || '李四'
+        })
+        if (userData.functionOrder && typeof userData.functionOrder === 'object') {
           const sortedFunctions = [...functions].sort((a, b) => {
-            const orderA = res.data.functionOrder[a.id] || a.order
-            const orderB = res.data.functionOrder[b.id] || b.order
+            const orderA = userData.functionOrder[a.id] || a.order
+            const orderB = userData.functionOrder[b.id] || b.order
             return orderA - orderB
           })
           setFunctions(sortedFunctions)
         }
+      } else {
+        console.log('加载用户数据失败，使用默认数据', res?.message || '')
       }
     } catch (error) {
-      console.log('加载用户数据失败，使用默认数据')
+      console.log('加载用户数据失败，使用默认数据', error)
     }
   }
 

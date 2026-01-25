@@ -6,4 +6,8 @@ dist/
 coverage/
 .vscode/
 .idea/
+# 数据库文件
+*.sqlite
+*.sqlite3
+*.db
 

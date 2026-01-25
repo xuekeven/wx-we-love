@@ -17,11 +17,15 @@ export default function Wishlist() {
   const loadWishes = async () => {
     try {
       const res = await get('/api/wishlist')
-      if (res && res.data) {
+      if (res && res.success && res.data && Array.isArray(res.data)) {
         setWishes(res.data)
+      } else {
+        console.log('加载心愿清单失败', res?.message || '')
+        setWishes([])
       }
     } catch (error) {
-      console.log('加载心愿清单失败')
+      console.log('加载心愿清单失败', error)
+      setWishes([])
     }
   }
 
@@ -33,13 +37,15 @@ export default function Wishlist() {
 
     try {
       const res = await post('/api/wishlist', { content: inputValue })
-      if (res && res.data) {
+      if (res && res.success && res.data) {
         setWishes([res.data, ...wishes])
         setInputValue('')
-        Taro.showToast({ title: '添加成功', icon: 'success' })
+        Taro.showToast({ title: res.message || '添加成功', icon: 'success' })
+      } else {
+        Taro.showToast({ title: res?.message || '添加失败', icon: 'none' })
       }
     } catch (error) {
-      console.log('添加失败')
+      Taro.showToast({ title: '添加失败，请重试', icon: 'none' })
     }
   }
 
@@ -47,11 +53,15 @@ export default function Wishlist() {
     try {
       const wish = wishes.find(w => w.id === id)
       const newStatus = wish?.status === 'pending' ? 'completed' : 'pending'
-      await post(`/api/wishlist/${id}/status`, { status: newStatus })
-      setWishes(wishes.map(w => w.id === id ? { ...w, status: newStatus, completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined } : w))
-      Taro.showToast({ title: newStatus === 'completed' ? '已完成' : '取消完成', icon: 'success' })
+      const res = await post(`/api/wishlist/${id}/status`, { status: newStatus })
+      if (res && res.success && res.data) {
+        setWishes(wishes.map(w => w.id === id ? res.data : w))
+        Taro.showToast({ title: res.message || (newStatus === 'completed' ? '已完成' : '取消完成'), icon: 'success' })
+      } else {
+        Taro.showToast({ title: res?.message || '更新失败', icon: 'none' })
+      }
     } catch (error) {
-      console.log('更新状态失败')
+      Taro.showToast({ title: '更新状态失败，请重试', icon: 'none' })
     }
   }
 
@@ -62,11 +72,15 @@ export default function Wishlist() {
       success: async (res) => {
         if (res.confirm) {
           try {
-            await del(`/api/wishlist/${id}`)
-            setWishes(wishes.filter(w => w.id !== id))
-            Taro.showToast({ title: '删除成功', icon: 'success' })
+            const deleteRes = await del(`/api/wishlist/${id}`)
+            if (deleteRes && deleteRes.success) {
+              setWishes(wishes.filter(w => w.id !== id))
+              Taro.showToast({ title: deleteRes.message || '删除成功', icon: 'success' })
+            } else {
+              Taro.showToast({ title: deleteRes?.message || '删除失败', icon: 'none' })
+            }
           } catch (error) {
-            console.log('删除失败')
+            Taro.showToast({ title: '删除失败，请重试', icon: 'none' })
           }
         }
       }

@@ -1,71 +1,56 @@
 const express = require('express');
 const router = express.Router();
-
-// 模拟数据存储
-let dateRecords = [
-  {
-    id: '1',
-    title: '第一次约会',
-    date: '2025-10-11',
-    location: '星巴克咖啡',
-    description: '我们的第一次见面，虽然有点紧张，但很开心',
-    photos: [],
-    rating: 5,
-    createdAt: '2024-01-01T10:00:00Z'
-  }
-];
+const { DateRecord } = require('../models');
 
 // 获取约会记录
-router.get('/', (req, res) => {
-  res.json({
-    success: true,
-    data: dateRecords
-  });
+router.get('/', async (req, res) => {
+  try {
+    const records = await DateRecord.findAll({
+      order: [['date', 'DESC']]
+    });
+    res.json({
+      success: true,
+      data: records
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
 });
 
 // 添加约会记录
-router.post('/', (req, res) => {
-  const { title, date, location, description, photos, rating } = req.body;
-  
-  const newRecord = {
-    id: Date.now().toString(),
-    title,
-    date,
-    location,
-    description,
-    photos: photos || [],
-    rating: rating || 5,
-    createdAt: new Date().toISOString()
-  };
-  
-  dateRecords.unshift(newRecord);
-  
-  res.json({
-    success: true,
-    message: '添加成功',
-    data: newRecord
-  });
+router.post('/', async (req, res) => {
+  try {
+    const { title, date, location, description, photos, rating } = req.body;
+    const newRecord = await DateRecord.create({
+      title, date, location, description, photos, rating
+    });
+    res.json({
+      success: true,
+      message: '添加成功',
+      data: newRecord
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
 });
 
 // 删除约会记录
-router.delete('/:id', (req, res) => {
-  const { id } = req.params;
-  const index = dateRecords.findIndex(r => r.id === id);
-  
-  if (index === -1) {
-    return res.status(404).json({
-      success: false,
-      message: '记录不存在'
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await DateRecord.destroy({ where: { id } });
+    
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: '记录不存在' });
+    }
+    
+    res.json({
+      success: true,
+      message: '删除成功'
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
   }
-  
-  dateRecords.splice(index, 1);
-  
-  res.json({
-    success: true,
-    message: '删除成功'
-  });
 });
 
 module.exports = router;
-

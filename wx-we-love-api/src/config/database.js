@@ -19,7 +19,10 @@ const sequelize = process.env.DB_HOST
         }
       }
     )
-  : new Sequelize('sqlite::memory:', {
+  : new Sequelize({
+      dialect: 'sqlite',
+      // 使用文件存储（数据持久化），如果想用内存模式改为 ':memory:'
+      storage: process.env.SQLITE_STORAGE || './database.sqlite',
       logging: false
     });
 

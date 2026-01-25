@@ -17,11 +17,15 @@ export default function DateRecord() {
   const loadRecords = async () => {
     try {
       const res = await get('/api/date-records')
-      if (res && res.data) {
+      if (res && res.success && res.data && Array.isArray(res.data)) {
         setRecords(res.data)
+      } else {
+        console.log('加载约会记录失败', res?.message || '')
+        setRecords([])
       }
     } catch (error) {
-      console.log('加载约会记录失败')
+      console.log('加载约会记录失败', error)
+      setRecords([])
     }
   }
 
@@ -36,11 +40,15 @@ export default function DateRecord() {
       success: async (res) => {
         if (res.confirm) {
           try {
-            await del(`/api/date-records/${id}`)
-            setRecords(records.filter(r => r.id !== id))
-            Taro.showToast({ title: '删除成功', icon: 'success' })
+            const deleteRes = await del(`/api/date-records/${id}`)
+            if (deleteRes && deleteRes.success) {
+              setRecords(records.filter(r => r.id !== id))
+              Taro.showToast({ title: deleteRes.message || '删除成功', icon: 'success' })
+            } else {
+              Taro.showToast({ title: deleteRes?.message || '删除失败', icon: 'none' })
+            }
           } catch (error) {
-            console.log('删除失败')
+            Taro.showToast({ title: '删除失败，请重试', icon: 'none' })
           }
         }
       }

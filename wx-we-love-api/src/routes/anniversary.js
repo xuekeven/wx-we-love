@@ -1,69 +1,56 @@
 const express = require('express');
 const router = express.Router();
-
-// 模拟数据存储
-let anniversaries = [
-  {
-    id: '1',
-    title: '在一起纪念日',
-    date: '2025-10-11',
-    type: 'anniversary',
-    isYearly: true,
-    reminder: true,
-    createdAt: '2024-01-01T10:00:00Z'
-  }
-];
+const { Anniversary } = require('../models');
 
 // 获取纪念日列表
-router.get('/', (req, res) => {
-  res.json({
-    success: true,
-    data: anniversaries
-  });
+router.get('/', async (req, res) => {
+  try {
+    const anniversaries = await Anniversary.findAll({
+      order: [['date', 'ASC']]
+    });
+    res.json({
+      success: true,
+      data: anniversaries
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
 });
 
 // 添加纪念日
-router.post('/', (req, res) => {
-  const { title, date, type, isYearly, reminder } = req.body;
-  
-  const newAnniversary = {
-    id: Date.now().toString(),
-    title,
-    date,
-    type: type || 'custom',
-    isYearly: isYearly !== false,
-    reminder: reminder !== false,
-    createdAt: new Date().toISOString()
-  };
-  
-  anniversaries.unshift(newAnniversary);
-  
-  res.json({
-    success: true,
-    message: '添加成功',
-    data: newAnniversary
-  });
+router.post('/', async (req, res) => {
+  try {
+    const { title, date, type, isYearly, reminder } = req.body;
+    const newAnniversary = await Anniversary.create({
+      title, date, type, isYearly, reminder
+    });
+    res.json({
+      success: true,
+      message: '添加成功',
+      data: newAnniversary
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
 });
 
 // 删除纪念日
-router.delete('/:id', (req, res) => {
-  const { id } = req.params;
-  const index = anniversaries.findIndex(a => a.id === id);
-  
-  if (index === -1) {
-    return res.status(404).json({
-      success: false,
-      message: '纪念日不存在'
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Anniversary.destroy({ where: { id } });
+    
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: '纪念日不存在' });
+    }
+    
+    res.json({
+      success: true,
+      message: '删除成功'
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
   }
-  
-  anniversaries.splice(index, 1);
-  
-  res.json({
-    success: true,
-    message: '删除成功'
-  });
 });
 
 module.exports = router;
-

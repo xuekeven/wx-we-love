@@ -30,11 +30,20 @@ export default function My() {
   const loadUserInfo = async () => {
     try {
       const res = await get('/api/user/info')
-      if (res && res.data) {
-        setUserInfo(res.data)
+      if (res && res.success && res.data) {
+        const userData = res.data
+        setUserInfo({
+          avatar1: userData.avatar1 || 'https://via.placeholder.com/150',
+          avatar2: userData.avatar2 || 'https://via.placeholder.com/150',
+          name1: userData.name1 || '张三',
+          name2: userData.name2 || '李四',
+          loveDate: userData.loveDate || '2025-10-11'
+        })
+      } else {
+        console.log('加载用户信息失败', res?.message || '')
       }
     } catch (error) {
-      console.log('加载用户信息失败')
+      console.log('加载用户信息失败', error)
     }
   }
 

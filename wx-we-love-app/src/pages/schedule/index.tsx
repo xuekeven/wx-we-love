@@ -17,11 +17,15 @@ export default function Schedule() {
   const loadSchedules = async () => {
     try {
       const res = await get('/api/schedules')
-      if (res && res.data) {
+      if (res && res.success && res.data && Array.isArray(res.data)) {
         setSchedules(res.data)
+      } else {
+        console.log('加载日程失败', res?.message || '')
+        setSchedules([])
       }
     } catch (error) {
-      console.log('加载日程失败')
+      console.log('加载日程失败', error)
+      setSchedules([])
     }
   }
 
@@ -33,11 +37,15 @@ export default function Schedule() {
     try {
       const schedule = schedules.find(s => s.id === id)
       const newStatus = schedule?.status === 'pending' ? 'completed' : 'pending'
-      await post(`/api/schedules/${id}/status`, { status: newStatus })
-      setSchedules(schedules.map(s => s.id === id ? { ...s, status: newStatus } : s))
-      Taro.showToast({ title: newStatus === 'completed' ? '已完成' : '取消完成', icon: 'success' })
+      const res = await post(`/api/schedules/${id}/status`, { status: newStatus })
+      if (res && res.success && res.data) {
+        setSchedules(schedules.map(s => s.id === id ? res.data : s))
+        Taro.showToast({ title: res.message || (newStatus === 'completed' ? '已完成' : '取消完成'), icon: 'success' })
+      } else {
+        Taro.showToast({ title: res?.message || '更新失败', icon: 'none' })
+      }
     } catch (error) {
-      console.log('更新状态失败')
+      Taro.showToast({ title: '更新状态失败，请重试', icon: 'none' })
     }
   }
 
@@ -48,11 +56,15 @@ export default function Schedule() {
       success: async (res) => {
         if (res.confirm) {
           try {
-            await del(`/api/schedules/${id}`)
-            setSchedules(schedules.filter(s => s.id !== id))
-            Taro.showToast({ title: '删除成功', icon: 'success' })
+            const deleteRes = await del(`/api/schedules/${id}`)
+            if (deleteRes && deleteRes.success) {
+              setSchedules(schedules.filter(s => s.id !== id))
+              Taro.showToast({ title: deleteRes.message || '删除成功', icon: 'success' })
+            } else {
+              Taro.showToast({ title: deleteRes?.message || '删除失败', icon: 'none' })
+            }
           } catch (error) {
-            console.log('删除失败')
+            Taro.showToast({ title: '删除失败，请重试', icon: 'none' })
           }
         }
       }

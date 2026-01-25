@@ -20,6 +20,7 @@
     "bcryptjs": "^2.4.3",
     "mysql2": "^3.6.0",
     "sequelize": "^6.33.0",
+    "sqlite3": "^5.1.6",
     "moment": "^2.29.4",
     "express-validator": "^7.0.1"
   },
