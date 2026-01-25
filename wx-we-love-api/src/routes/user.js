@@ -404,4 +404,61 @@ router.post('/function-order', async (req, res) => {
   }
 });
 
+// 解绑匹配关系
+router.post('/unmatch', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ success: false, message: '未登录' });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
+      const currentUser = await User.findByPk(decoded.userId);
+      
+      if (!currentUser) {
+        return res.status(404).json({ success: false, message: '用户不存在' });
+      }
+
+      if (!currentUser.isMatched) {
+        return res.status(400).json({ success: false, message: '当前未匹配，无需解绑' });
+      }
+
+      // 获取匹配的用户
+      const matchedUser = currentUser.matchedUserId 
+        ? await User.findByPk(currentUser.matchedUserId)
+        : null;
+
+      // 解除当前用户的匹配关系
+      await currentUser.update({
+        isMatched: false,
+        matchedUserId: null
+      });
+
+      // 如果匹配的用户存在，也解除其匹配关系
+      if (matchedUser && matchedUser.isMatched && matchedUser.matchedUserId === currentUser.id) {
+        await matchedUser.update({
+          isMatched: false,
+          matchedUserId: null
+        });
+      }
+
+      res.json({
+        success: true,
+        message: '解绑成功',
+        data: {
+          isMatched: false,
+          matchedUserId: null
+        }
+      });
+    } catch (error) {
+      return res.status(401).json({ success: false, message: 'Token无效' });
+    }
+  } catch (error) {
+    console.error('解绑失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
 module.exports = router;

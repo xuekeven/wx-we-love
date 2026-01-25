@@ -28,12 +28,19 @@ export const request = async (options) => {
       return res.data
     } else {
       const errorMsg = res.data?.message || '请求失败'
-      Taro.showToast({
-        title: errorMsg,
-        icon: 'none',
-        duration: 2000
-      })
-      throw new Error(errorMsg)
+      const error = new Error(errorMsg)
+      // 添加statusCode到错误对象，方便调用方判断
+      error.statusCode = res.statusCode
+      error.data = res.data
+      // 401和404不显示toast，由调用方处理
+      if (res.statusCode !== 401 && res.statusCode !== 404) {
+        Taro.showToast({
+          title: errorMsg,
+          icon: 'none',
+          duration: 2000
+        })
+      }
+      throw error
     }
   } catch (error) {
     console.error('请求错误:', error)

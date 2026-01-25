@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components'
+import { View, Text, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { getWeekDay, getDaysDiff, getWeekOfYear } from '../../utils/date'
@@ -9,10 +9,11 @@ import './index.scss'
 
 export default function Index() {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [loveDate, setLoveDate] = useState('2025-10-11')
+  const [loveDate, setLoveDate] = useState(null)
   const [daysTogether, setDaysTogether] = useState(0)
   const [coupleNames, setCoupleNames] = useState({ name1: '张三', name2: '李四' })
-  const [isMatched, setIsMatched] = useState(false)
+  const [isMatched, setIsMatched] = useState(null) // null表示加载中，true/false表示已加载
+  const [isLoading, setIsLoading] = useState(true)
   const [functions, setFunctions] = useState([
     { id: '1', name: '心愿清单', icon: '💝', path: '/pages/wishlist/index', order: 1 },
     { id: '2', name: '约会记录', icon: '🌹', path: '/pages/date-record/index', order: 2 },
@@ -34,28 +35,50 @@ export default function Index() {
 
   useEffect(() => {
     if (loveDate) {
-      setDaysTogether(getDaysDiff(loveDate))
+      try {
+        setDaysTogether(getDaysDiff(loveDate))
+      } catch (error) {
+        console.error('计算天数失败:', error)
+        setDaysTogether(0)
+      }
+    } else {
+      setDaysTogether(0)
     }
   }, [loveDate])
 
   const loadUserData = async () => {
+    setIsLoading(true)
     try {
+      const token = Taro.getStorageSync('token')
+      if (!token) {
+        // 没有token，跳转到登录页
+        setIsLoading(false)
+        Taro.redirectTo({ url: '/pages/login/index' })
+        return
+      }
+
       const res = await get('/api/user/info')
       if (res && res.success && res.data) {
         const userData = res.data
-        setIsMatched(userData.isMatched || false)
+        const matched = userData.isMatched || false
+        setIsMatched(matched)
         
         // 如果未匹配，跳转到匹配页面
-        if (!userData.isMatched) {
+        if (!matched) {
+          setIsLoading(false)
           Taro.redirectTo({ url: '/pages/match/index' })
           return
         }
 
-        setLoveDate(userData.loveDate || '2025-10-11')
-        setCoupleNames({
-          name1: userData.name1 || '张三',
-          name2: userData.name2 || '李四'
-        })
+        // 设置恋爱日期
+        setLoveDate(userData.loveDate || null)
+        
+        // 设置情侣名字（优先使用name1和name2，如果没有则使用昵称）
+        const name1 = userData.name1 || (userData.matchedUser?.nickname ? userData.nickname : '张三')
+        const name2 = userData.name2 || (userData.matchedUser?.nickname ? userData.matchedUser.nickname : '李四')
+        setCoupleNames({ name1, name2 })
+        
+        // 设置功能排序
         if (userData.functionOrder && typeof userData.functionOrder === 'object') {
           const sortedFunctions = [...functions].sort((a, b) => {
             const orderA = userData.functionOrder[a.id] || a.order
@@ -65,10 +88,28 @@ export default function Index() {
           setFunctions(sortedFunctions)
         }
       } else {
-        console.log('加载用户数据失败，使用默认数据', res?.message || '')
+        console.error('加载用户数据失败:', res?.message || '')
+        // token无效，清除并跳转登录
+        if (res && (res.statusCode === 401 || res.statusCode === 404)) {
+          Taro.removeStorageSync('token')
+          setIsLoading(false)
+          Taro.redirectTo({ url: '/pages/login/index' })
+          return
+        }
+        setIsMatched(false)
       }
     } catch (error) {
-      console.log('加载用户数据失败，使用默认数据', error)
+      console.error('加载用户数据失败:', error)
+      // 如果是认证错误，清除token并跳转登录
+      if (error.statusCode === 401 || error.statusCode === 404) {
+        Taro.removeStorageSync('token')
+        setIsLoading(false)
+        Taro.redirectTo({ url: '/pages/login/index' })
+        return
+      }
+      setIsMatched(false)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -87,6 +128,17 @@ export default function Index() {
   const handleTouchEnd = () => {
     setLongPressItem(null)
     setIsDragging(false)
+  }
+
+  // 加载中，显示空白或加载提示
+  if (isLoading || isMatched === null) {
+    return (
+      <View className='index-page'>
+        <View className='loading-container'>
+          <Text>加载中...</Text>
+        </View>
+      </View>
+    )
   }
 
   // 如果未匹配，显示匹配提示

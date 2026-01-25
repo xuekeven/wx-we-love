@@ -1,5 +1,7 @@
 // 环境配置
-const ENV = 'development' // 'development' | 'production'
+// 开发环境: 'development' - 使用本地服务器或测试服务器
+// 生产环境: 'production' - 使用正式服务器
+const ENV = process.env.NODE_ENV || 'development' // 自动根据构建环境切换
 
 // ⚠️ 重要：微信小程序无法访问 localhost，必须使用本机IP地址
 // 获取本机IP：
@@ -13,12 +15,11 @@ const LOCAL_IP = '192.168.3.11' // ⚠️ 请修改为你的本机IP地址（不
 
 const config = {
   development: {
-    // 开发环境：微信小程序使用本机IP，H5使用localhost
-    apiBaseUrl: typeof window === 'undefined' && process.env.TARO_ENV === 'weapp'
-      ? `http://${LOCAL_IP}:4000`  // 微信小程序：使用IP地址
-      : 'http://localhost:4000'     // H5：使用localhost
+    // 开发环境：使用远程服务器
+    apiBaseUrl: 'http://39.102.122.22:4000'
   },
   production: {
+    // 生产环境：使用正式服务器
     apiBaseUrl: 'http://39.102.122.22:4000'
   }
 }

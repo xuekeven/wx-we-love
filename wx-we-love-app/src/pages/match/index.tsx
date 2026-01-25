@@ -16,17 +16,37 @@ export default function Match() {
 
   const loadUserInfo = async () => {
     try {
+      const token = Taro.getStorageSync('token')
+      if (!token) {
+        // 没有token，跳转到登录页
+        Taro.redirectTo({ url: '/pages/login/index' })
+        return
+      }
+
       const res = await get('/api/user/info')
       if (res && res.success && res.data) {
-        setMyMatchCode(res.data.matchCode || '')
-        
         // 如果已匹配，跳转到首页
         if (res.data.isMatched) {
           Taro.switchTab({ url: '/pages/index/index' })
+          return
+        }
+        
+        // 未匹配，显示匹配码
+        setMyMatchCode(res.data.matchCode || '')
+      } else {
+        // token无效，清除并跳转登录
+        if (res && (res.statusCode === 401 || res.statusCode === 404)) {
+          Taro.removeStorageSync('token')
+          Taro.redirectTo({ url: '/pages/login/index' })
         }
       }
     } catch (error) {
       console.error('加载用户信息失败:', error)
+      // 如果是认证错误，清除token并跳转登录
+      if (error.statusCode === 401 || error.statusCode === 404) {
+        Taro.removeStorageSync('token')
+        Taro.redirectTo({ url: '/pages/login/index' })
+      }
     }
   }
 

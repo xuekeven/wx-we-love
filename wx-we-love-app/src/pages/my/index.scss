@@ -114,6 +114,36 @@
     }
   }
 
+  .unmatch-section {
+    margin-bottom: 24px;
+
+    .unmatch-btn {
+      background: #FFFFFF;
+      color: #FF9500;
+      border-radius: 20px;
+      padding: 24px;
+      font-size: 30px;
+      font-weight: 600;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s ease;
+      width: 100%;
+
+      &::after {
+        border: none;
+      }
+
+      &:active {
+        transform: scale(0.98);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+      }
+    }
+  }
+
   .logout-section {
     .logout-btn {
       background: #FFFFFF;

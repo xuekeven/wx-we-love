@@ -1,8 +1,8 @@
 export default {
   pages: [
+    'pages/index/index', // 将首页放在第一位，已登录用户直接进入首页
     'pages/login/index',
     'pages/match/index',
-    'pages/index/index',
     'pages/wishlist/index',
     'pages/date-record/index',
     'pages/anniversary/index',

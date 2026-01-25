@@ -1,11 +1,42 @@
 import { View, Text, Button, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useState } from 'react'
-import { post } from '../../utils/request'
+import { useState, useEffect } from 'react'
+import { post, get } from '../../utils/request'
 import './index.scss'
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false)
+
+  // 检查是否已登录且已匹配
+  useEffect(() => {
+    checkLoginStatus()
+  }, [])
+
+  const checkLoginStatus = async () => {
+    const token = Taro.getStorageSync('token')
+    if (!token) {
+      return // 没有token，停留在登录页
+    }
+
+    try {
+      const res = await get('/api/user/info')
+      if (res && res.success && res.data) {
+        // 如果已匹配，直接跳转到首页
+        if (res.data.isMatched) {
+          Taro.switchTab({ url: '/pages/index/index' })
+        } else {
+          // 如果未匹配，跳转到匹配页
+          Taro.redirectTo({ url: '/pages/match/index' })
+        }
+      }
+    } catch (error) {
+      console.error('检查登录状态失败:', error)
+      // 如果token无效，清除token，停留在登录页
+      if (error.statusCode === 401 || error.statusCode === 404) {
+        Taro.removeStorageSync('token')
+      }
+    }
+  }
 
   // 微信授权登录
   const handleWechatLogin = () => {

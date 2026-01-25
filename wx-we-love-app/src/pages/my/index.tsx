@@ -16,6 +16,8 @@ export default function My() {
     loveDate: '2025-10-11'
   })
   const [daysTogether, setDaysTogether] = useState(0)
+  const [isMatched, setIsMatched] = useState(false)
+  const [isUnmatching, setIsUnmatching] = useState(false)
 
   useEffect(() => {
     loadUserInfo()
@@ -32,11 +34,12 @@ export default function My() {
       const res = await get('/api/user/info')
       if (res && res.success && res.data) {
         const userData = res.data
+        setIsMatched(userData.isMatched || false)
         setUserInfo({
-          avatar1: userData.avatar1 || 'https://via.placeholder.com/150',
-          avatar2: userData.avatar2 || 'https://via.placeholder.com/150',
-          name1: userData.name1 || '张三',
-          name2: userData.name2 || '李四',
+          avatar1: userData.avatar1 || userData.avatar || 'https://via.placeholder.com/150',
+          avatar2: userData.avatar2 || (userData.matchedUser?.avatar || 'https://via.placeholder.com/150'),
+          name1: userData.name1 || userData.nickname || '张三',
+          name2: userData.name2 || (userData.matchedUser?.nickname || '李四'),
           loveDate: userData.loveDate || '2025-10-11'
         })
       } else {
@@ -51,6 +54,51 @@ export default function My() {
     Taro.showToast({ title: '功能开发中', icon: 'none' })
   }
 
+  const handleUnmatch = () => {
+    Taro.showModal({
+      title: '确认解绑',
+      content: '解绑后需要重新匹配才能使用所有功能，确定要解绑吗？',
+      confirmText: '确认解绑',
+      cancelText: '取消',
+      success: async (res) => {
+        if (res.confirm) {
+          setIsUnmatching(true)
+          try {
+            const unmatchRes = await post('/api/user/unmatch', {})
+            if (unmatchRes && unmatchRes.success) {
+              Taro.showToast({
+                title: '解绑成功',
+                icon: 'success',
+                duration: 2000
+              })
+              
+              // 重新加载用户信息
+              await loadUserInfo()
+              
+              // 跳转到匹配页面
+              setTimeout(() => {
+                Taro.redirectTo({ url: '/pages/match/index' })
+              }, 2000)
+            } else {
+              Taro.showToast({
+                title: unmatchRes?.message || '解绑失败',
+                icon: 'none'
+              })
+              setIsUnmatching(false)
+            }
+          } catch (error) {
+            console.error('解绑失败:', error)
+            Taro.showToast({
+              title: '解绑失败，请重试',
+              icon: 'none'
+            })
+            setIsUnmatching(false)
+          }
+        }
+      }
+    })
+  }
+
   const handleLogout = () => {
     Taro.showModal({
       title: '确认退出',
@@ -58,7 +106,11 @@ export default function My() {
       success: (res) => {
         if (res.confirm) {
           Taro.removeStorageSync('token')
+          Taro.removeStorageSync('userInfo')
           Taro.showToast({ title: '已退出', icon: 'success' })
+          setTimeout(() => {
+            Taro.redirectTo({ url: '/pages/login/index' })
+          }, 1500)
         }
       }
     })
@@ -122,6 +174,20 @@ export default function My() {
           <Text className='arrow'>›</Text>
         </View>
       </View>
+
+      {/* 解绑匹配 */}
+      {isMatched && (
+        <View className='unmatch-section'>
+          <Button 
+            className='unmatch-btn' 
+            onClick={handleUnmatch}
+            loading={isUnmatching}
+            disabled={isUnmatching}
+          >
+            {isUnmatching ? '解绑中...' : '解绑匹配'}
+          </Button>
+        </View>
+      )}
 
       {/* 退出登录 */}
       <View className='logout-section'>

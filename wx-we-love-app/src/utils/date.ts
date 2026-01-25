@@ -25,7 +25,14 @@ export const getWeekOfYear = (date) => {
 }
 
 export const getDaysDiff = (startDate) => {
+  if (!startDate) {
+    return 0
+  }
   const start = new Date(startDate)
+  // 检查日期是否有效
+  if (isNaN(start.getTime())) {
+    return 0
+  }
   const now = new Date()
   const diff = now.getTime() - start.getTime()
   return Math.floor(diff / (1000 * 60 * 60 * 24))
