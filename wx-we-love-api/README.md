@@ -38,9 +38,9 @@
    - 收支记录
    - 余额统计
 
-6. **日程** `/api/schedules`
-   - 日程管理
-   - 状态跟踪
+6. **经期记录** `/api/menstrual`
+   - 经期记录管理
+   - 周期预测
 
 ## 安装与运行
 
@@ -103,11 +103,13 @@ npm start
 - `POST /api/piggy-bank` - 添加记录
 - `DELETE /api/piggy-bank/:id` - 删除记录
 
-### 日程
-- `GET /api/schedules` - 获取日程
-- `POST /api/schedules` - 添加日程
-- `POST /api/schedules/:id/status` - 更新状态
-- `DELETE /api/schedules/:id` - 删除日程
+### 经期记录
+- `GET /api/menstrual` - 获取记录列表
+- `GET /api/menstrual/:id` - 获取单条记录
+- `POST /api/menstrual` - 添加记录
+- `PUT /api/menstrual/:id` - 更新记录
+- `DELETE /api/menstrual/:id` - 删除记录
+- `GET /api/menstrual/stats/cycle` - 获取统计信息
 
 ## 响应格式
 
