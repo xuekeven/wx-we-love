@@ -1,4 +1,4 @@
 export default {
-  navigationBarTitleText: '匹配',
-  navigationStyle: 'custom'
+  // 不显示标题文本
+  navigationBarTitleText: ''
 }

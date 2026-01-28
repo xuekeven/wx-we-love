@@ -20,8 +20,9 @@ export default function Login() {
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [profileName, setProfileName] = useState('')
   const [profileAvatar, setProfileAvatar] = useState('')
-  const [wechatAvatar, setWechatAvatar] = useState('')
   const [isSavingProfile, setIsSavingProfile] = useState(false)
+  // 用于暂存登录返回的 token 和 user，只有资料保存后才真正写入本地
+  const [pendingAuth, setPendingAuth] = useState(null)
 
   // 检查是否已登录且已匹配
   useEffect(() => {
@@ -54,94 +55,89 @@ export default function Login() {
     }
   }
 
-  // 步骤1：点击“微信授权登录”按钮，弹出微信官方手机号授权弹层
-  const handleGetPhoneNumber = async (e) => {
+  // 步骤1：点击“微信授权登录”按钮，弹出微信官方【头像昵称授权】弹层（getUserProfile）
+  const handleWechatLogin = () => {
     if (isLoading) return
 
-    // 用户拒绝授权手机号
-    if (!e.detail || e.detail.errMsg !== 'getPhoneNumber:ok') {
-      Taro.showToast({
-        title: '需要授权手机号才能继续',
-        icon: 'none',
-        duration: 2000
-      })
-      return
-    }
+    // 注意：getUserProfile 必须直接在点击事件中调用，才能弹出官方授权弹层
+    Taro.getUserProfile({
+      desc: '用于完善用户资料',
+      success: async (profileRes) => {
+        setIsLoading(true)
+        try {
+          const uuid = generateUUID()
+          const userInfo = profileRes.userInfo
 
-    setIsLoading(true)
+          // 把微信昵称和头像作为默认值带入资料弹层
+          setProfileName(userInfo.nickName || '')
+          setProfileAvatar(userInfo.avatarUrl || '')
 
-    try {
-      const uuid = generateUUID()
+          // 获取登录 code
+          const loginRes = await Taro.login()
+          if (!loginRes.code) {
+            Taro.showToast({
+              title: '获取登录凭证失败',
+              icon: 'none'
+            })
+            setIsLoading(false)
+            return
+          }
 
-      // 步骤2：获取微信用户基本信息（昵称、头像）
-      const profileRes = await Taro.getUserProfile({
-        desc: '用于完善用户资料'
-      })
-      const userInfo = profileRes.userInfo
-      setWechatAvatar(userInfo.avatarUrl)
-      setProfileAvatar(userInfo.avatarUrl || '')
+          // 调用登录接口，传递 code、昵称、头像、uuid
+          const loginResp = await post('/api/user/login', {
+            code: loginRes.code,
+            nickname: userInfo.nickName,
+            avatar: userInfo.avatarUrl,
+            uuid
+          })
 
-      // 步骤3：获取登录 code
-      const loginRes = await Taro.login()
-      if (!loginRes.code) {
+          if (!loginResp || !loginResp.success || !loginResp.data) {
+            Taro.showToast({
+              title: loginResp?.message || '登录失败',
+              icon: 'none'
+            })
+            setIsLoading(false)
+            return
+          }
+
+          // 暂存 token 和 user，等资料完善后再真正写入本地
+          setPendingAuth({
+            token: loginResp.data.token,
+            user: loginResp.data.user,
+          })
+
+          // 进入资料完善弹层（姓名 + 头像上传）
+          setShowProfileModal(true)
+        } catch (error) {
+          console.error('登录失败:', error)
+          Taro.showToast({
+            title: '登录失败，请重试',
+            icon: 'none'
+          })
+          setIsLoading(false)
+        }
+      },
+      fail: (err) => {
+        console.error('获取用户信息失败:', err)
         Taro.showToast({
-          title: '获取登录凭证失败',
-          icon: 'none'
-        })
-        setIsLoading(false)
-        return
-      }
-
-      // 步骤4：调用登录接口，传递 code、昵称、头像、uuid
-      const loginResp = await post('/api/user/login', {
-        code: loginRes.code,
-        nickname: userInfo.nickName,
-        avatar: userInfo.avatarUrl,
-        uuid
-      })
-
-      if (!loginResp || !loginResp.success || !loginResp.data) {
-        Taro.showToast({
-          title: loginResp?.message || '登录失败',
-          icon: 'none'
-        })
-        setIsLoading(false)
-        return
-      }
-
-      // 保存token和用户信息
-      Taro.setStorageSync('token', loginResp.data.token)
-      Taro.setStorageSync('userInfo', loginResp.data.user)
-
-      // 步骤5：调用绑定手机号接口（服务端解密 encryptedData + iv）
-      try {
-        await post('/api/user/bind-phone', {
-          encryptedData: e.detail.encryptedData,
-          iv: e.detail.iv
-        })
-      } catch (err) {
-        console.error('绑定手机号失败:', err)
-        // 失败不阻塞后续流程，只提示
-        Taro.showToast({
-          title: '手机号绑定失败，可稍后在“我的”页面重试',
+          title: '需要授权头像昵称才能登录',
           icon: 'none',
           duration: 2000
         })
       }
-
-      // 步骤6：弹出自定义资料完善弹层（姓名 + 头像上传）
-      setShowProfileModal(true)
-    } catch (error) {
-      console.error('登录流程失败:', error)
-      Taro.showToast({
-        title: '登录失败，请重试',
-        icon: 'none'
-      })
-      setIsLoading(false)
-    }
+    })
   }
 
-  const handleChooseAvatar = () => {
+  // 根据微信官方文档：优先使用 open-type="chooseAvatar" 获取头像
+  // https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/userProfile.html
+  const handleChooseAvatar = (e) => {
+    // 优先处理 chooseAvatar 回调
+    if (e && e.detail && e.detail.avatarUrl) {
+      setProfileAvatar(e.detail.avatarUrl)
+      return
+    }
+
+    // 兼容：在不支持 chooseAvatar 的环境（或开发者工具）下，退回到手动选择图片
     Taro.chooseImage({
       count: 1,
       sizeType: ['compressed'],
@@ -160,9 +156,17 @@ export default function Login() {
       return
     }
 
+    if (!pendingAuth) {
+      // 理论上不会发生，只是兜底保护
+      Taro.showToast({ title: '登录状态异常，请重新登录', icon: 'none' })
+      setShowProfileModal(false)
+      setIsLoading(false)
+      return
+    }
+
     setIsSavingProfile(true)
     try {
-      const avatarToSave = profileAvatar || wechatAvatar || ''
+      const avatarToSave = profileAvatar || ''
       await post('/api/user/info', {
         name1: profileName.trim(),
         avatar1: avatarToSave
@@ -175,6 +179,11 @@ export default function Login() {
       })
 
       setShowProfileModal(false)
+
+      // 资料保存成功后，才真正写入 token 和 userInfo
+      Taro.setStorageSync('token', pendingAuth.token)
+      Taro.setStorageSync('userInfo', pendingAuth.user)
+      setPendingAuth(null)
 
       // 新用户默认未匹配，跳转到匹配页面
       setTimeout(() => {
@@ -192,13 +201,6 @@ export default function Login() {
     }
   }
 
-  const handleProfileSkip = () => {
-    setShowProfileModal(false)
-    setIsLoading(false)
-    // 直接进入匹配页
-    Taro.redirectTo({ url: '/pages/match/index' })
-  }
-
   return (
     <View className='login-page'>
       <View className='login-container'>
@@ -208,16 +210,9 @@ export default function Login() {
         </View>
 
         <View className='login-content'>
-
-          <View className='login-desc'>
-            <Text className='desc-text'>使用微信账号登录</Text>
-            <Text className='desc-tip'>登录时将获取您的手机号、昵称和头像</Text>
-          </View>
-
           <Button
             className='wechat-login-btn'
-            openType='getPhoneNumber'
-            onGetPhoneNumber={handleGetPhoneNumber}
+            onClick={handleWechatLogin}
             loading={isLoading}
             disabled={isLoading}
           >
@@ -239,6 +234,7 @@ export default function Login() {
               <Input
                 className='form-input'
                 placeholder='请输入你的姓名'
+                type='nickname'
                 value={profileName}
                 onInput={(e) => setProfileName(e.detail.value)}
                 maxlength={12}
@@ -248,30 +244,23 @@ export default function Login() {
             <View className='form-item'>
               <Text className='form-label'>头像</Text>
               <View className='avatar-row'>
-                <Image
-                  className='avatar-preview'
-                  src={profileAvatar || wechatAvatar}
-                  mode='aspectFill'
-                />
                 <Button
                   className='upload-avatar-btn'
-                  onClick={handleChooseAvatar}
+                  openType='chooseAvatar'
+                  onChooseAvatar={handleChooseAvatar}
                   size='mini'
                 >
-                  上传图片
+                  上传头像
                 </Button>
+                <Image
+                  className='avatar-preview'
+                  src={profileAvatar}
+                  mode='aspectFill'
+                />
               </View>
-              <Text className='avatar-tip'>默认使用微信头像，你也可以重新上传一张喜欢的照片</Text>
             </View>
 
             <View className='modal-actions'>
-              <Button
-                className='modal-btn cancel'
-                onClick={handleProfileSkip}
-                disabled={isSavingProfile}
-              >
-                暂不完善
-              </Button>
               <Button
                 className='modal-btn confirm'
                 onClick={handleProfileSubmit}

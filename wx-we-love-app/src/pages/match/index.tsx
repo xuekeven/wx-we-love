@@ -11,6 +11,15 @@ export default function Match() {
   const [isGenerating, setIsGenerating] = useState(false)
 
   useEffect(() => {
+    // 隐藏系统导航栏右上角的 home 按钮，避免视觉干扰
+    if (Taro.hideHomeButton) {
+      try {
+        Taro.hideHomeButton()
+      } catch (e) {
+        // 某些基础库版本可能不支持，忽略错误即可
+      }
+    }
+
     loadUserInfo()
   }, [])
 
@@ -51,14 +60,27 @@ export default function Match() {
   }
 
   const handleGenerateCode = async () => {
+    // 如果已有匹配码，则直接复制到剪贴板
+    if (myMatchCode) {
+      handleCopyCode()
+      return
+    }
+
+    // 如果还没有匹配码，则先生成再复制
     setIsGenerating(true)
     try {
       const res = await post('/api/user/generate-match-code', {})
       if (res && res.success && res.data) {
-        setMyMatchCode(res.data.matchCode)
-        Taro.showToast({
-          title: '匹配码已生成',
-          icon: 'success'
+        const code = res.data.matchCode
+        setMyMatchCode(code)
+        Taro.setClipboardData({
+          data: code,
+          success: () => {
+            Taro.showToast({
+              title: '匹配码已生成并复制',
+              icon: 'success'
+            })
+          }
         })
       } else {
         Taro.showToast({
@@ -145,16 +167,9 @@ export default function Match() {
         <View className='my-match-code-section'>
           <Text className='section-title'>我的匹配码</Text>
           <View className='match-code-display'>
-            <Text className='match-code-text'>{myMatchCode || '未生成'}</Text>
-            {myMatchCode && (
-              <Button
-                className='copy-btn'
-                size='mini'
-                onClick={handleCopyCode}
-              >
-                复制
-              </Button>
-            )}
+            <Text className='match-code-text'>
+              {myMatchCode || '------'}
+            </Text>
           </View>
           <Button
             className='generate-btn'
@@ -162,7 +177,7 @@ export default function Match() {
             loading={isGenerating}
             disabled={isGenerating}
           >
-            {isGenerating ? '生成中...' : '生成匹配码'}
+            {isGenerating ? '处理中...' : '复制匹配码'}
           </Button>
         </View>
 
