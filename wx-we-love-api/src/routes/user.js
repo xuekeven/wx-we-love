@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const https = require('https');
+const crypto = require('crypto');
 const { User } = require('../models');
 
 // 生成匹配码（6位数字）
@@ -57,20 +58,22 @@ function getOpenIdByCode(code) {
   });
 }
 
-// 微信登录
+// 微信登录（code + 用户基本资料 + 可选uuid）
 router.post('/login', async (req, res) => {
   try {
-    const { code, nickname, avatar } = req.body;
+    const { code, nickname, avatar, uuid } = req.body;
     
     if (!code) {
       return res.status(400).json({ success: false, message: '缺少code参数' });
     }
 
-    // 通过 code 换取 openId
+    // 通过 code 换取 openId 和 session_key
     let openId;
+    let sessionKey = null;
     try {
       const result = await getOpenIdByCode(code);
       openId = result.openId;
+      sessionKey = result.sessionKey || null;
     } catch (error) {
       console.error('获取 openId 失败:', error);
       return res.status(500).json({ 
@@ -99,8 +102,10 @@ router.post('/login', async (req, res) => {
 
       user = await User.create({
         openId,
+        uuid: uuid || null,
         nickname: nickname || '微信用户',
         avatar: avatar || '',
+        sessionKey,
         matchCode,
         isMatched: false,
         functionOrder: {
@@ -108,9 +113,11 @@ router.post('/login', async (req, res) => {
         }
       });
     } else {
-      // 更新昵称和头像（如果提供了）
+      // 更新昵称、头像、uuid、sessionKey（如果提供了）
       if (nickname) user.nickname = nickname;
       if (avatar) user.avatar = avatar;
+      if (uuid) user.uuid = uuid;
+      if (sessionKey) user.sessionKey = sessionKey;
       await user.save();
     }
 
@@ -128,8 +135,10 @@ router.post('/login', async (req, res) => {
         user: {
           id: user.id,
           openId: user.openId,
+          uuid: user.uuid,
           nickname: user.nickname,
           avatar: user.avatar,
+          phone: user.phone,
           matchCode: user.matchCode,
           isMatched: user.isMatched,
           matchedUserId: user.matchedUserId
@@ -173,6 +182,7 @@ router.get('/info', async (req, res) => {
           openId: user.openId,
           nickname: user.nickname,
           avatar: user.avatar,
+          phone: user.phone,
           matchCode: user.matchCode,
           isMatched: user.isMatched,
           matchedUserId: user.matchedUserId,
@@ -400,6 +410,76 @@ router.post('/function-order', async (req, res) => {
     }
   } catch (error) {
     console.error('更新排序失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// 绑定手机号（通过微信 getPhoneNumber 返回的 encryptedData + iv 解密）
+router.post('/bind-phone', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    const { encryptedData, iv } = req.body;
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: '未登录' });
+    }
+
+    if (!encryptedData || !iv) {
+      return res.status(400).json({ success: false, message: '缺少encryptedData或iv' });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
+      const user = await User.findByPk(decoded.userId);
+
+      if (!user) {
+        return res.status(404).json({ success: false, message: '用户不存在' });
+      }
+
+      if (!user.sessionKey) {
+        // 开发模式下可能没有配置 appid/secret，此时无法解密手机号
+        return res.status(400).json({
+          success: false,
+          message: '当前环境未配置微信appid/secret，无法解密手机号'
+        });
+      }
+
+      // 解密手机号
+      try {
+        const sessionKey = Buffer.from(user.sessionKey, 'base64');
+        const ivBuffer = Buffer.from(iv, 'base64');
+        const encryptedBuffer = Buffer.from(encryptedData, 'base64');
+
+        const decipher = crypto.createDecipheriv('aes-128-cbc', sessionKey, ivBuffer);
+        decipher.setAutoPadding(true);
+        let decodedStr = decipher.update(encryptedBuffer, 'binary', 'utf8');
+        decodedStr += decipher.final('utf8');
+
+        const phoneInfo = JSON.parse(decodedStr);
+        const phoneNumber = phoneInfo.phoneNumber || phoneInfo.purePhoneNumber;
+
+        if (!phoneNumber) {
+          return res.status(400).json({ success: false, message: '解密手机号失败' });
+        }
+
+        await user.update({ phone: phoneNumber });
+
+        res.json({
+          success: true,
+          message: '手机号绑定成功',
+          data: {
+            phone: phoneNumber
+          }
+        });
+      } catch (error) {
+        console.error('解密手机号失败:', error);
+        return res.status(500).json({ success: false, message: '解密手机号失败' });
+      }
+    } catch (error) {
+      return res.status(401).json({ success: false, message: 'Token无效' });
+    }
+  } catch (error) {
+    console.error('绑定手机号失败:', error);
     res.status(500).json({ success: false, message: '服务器错误' });
   }
 });

@@ -13,6 +13,12 @@ const User = sequelize.define('User', {
     unique: true,
     comment: '微信openId'
   },
+  // 客户端生成的16位UUID，用于标识设备/安装实例
+  uuid: {
+    type: DataTypes.STRING(32),
+    allowNull: true,
+    comment: '客户端UUID'
+  },
   nickname: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -22,6 +28,18 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: true,
     comment: '用户头像'
+  },
+  // 微信返回的手机号（解密后）
+  phone: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: '手机号'
+  },
+  // 微信会话密钥，用于解密手机号等敏感信息（仅在服务端使用）
+  sessionKey: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: '微信session_key'
   },
   matchCode: {
     type: DataTypes.STRING,
