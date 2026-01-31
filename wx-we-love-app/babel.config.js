@@ -4,7 +4,7 @@ module.exports = {
   presets: [
     ['taro', {
       framework: 'react',
-      ts: false
+      ts: true  // 启用 TypeScript，否则 Babel 会把 interface 等语法误识别为 Flow 报错
     }]
   ]
 }

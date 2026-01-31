@@ -24,18 +24,21 @@ export const getWeekOfYear = (date) => {
   return weekNumber
 }
 
+// 计算在一起的天数：恋爱纪念日当天为第 1 天
 export const getDaysDiff = (startDate) => {
   if (!startDate) {
     return 0
   }
   const start = new Date(startDate)
-  // 检查日期是否有效
   if (isNaN(start.getTime())) {
     return 0
   }
+  start.setHours(0, 0, 0, 0)
   const now = new Date()
-  const diff = now.getTime() - start.getTime()
-  return Math.floor(diff / (1000 * 60 * 60 * 24))
+  now.setHours(0, 0, 0, 0)
+  const diffMs = now.getTime() - start.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  return diffDays + 1 // 纪念日当天为第 1 天
 }
 
 export const formatTime = (date) => {

@@ -1,16 +1,9 @@
-import { View, Text, Button, Image, Input } from '@tarojs/components'
+import { View, Text, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { post, get } from '../../utils/request'
-import config from '../../config'
+import ProfileForm from '../../components/ProfileForm'
 import './index.scss'
-
-// 判断是否为本地临时路径（选择微信头像/相册后得到），需要先上传再传 URL
-const isLocalTempAvatar = (url) => {
-  if (!url || typeof url !== 'string') return false
-  const u = url.trim().toLowerCase()
-  return u.startsWith('wxfile://') || u.startsWith('http://tmp/') || !u.startsWith('https://')
-}
 
 // 生成16位随机UUID（包含数字和大小写字母）
 const generateUUID = () => {
@@ -30,7 +23,7 @@ export default function Login() {
   const [profileAvatar, setProfileAvatar] = useState('')
   const [isSavingProfile, setIsSavingProfile] = useState(false)
   // 用于暂存登录返回的 token 和 user，只有资料保存后才真正写入本地
-  const [pendingAuth, setPendingAuth] = useState(null)
+  const [pendingAuth, setPendingAuth] = useState<{ token: string; user: any } | null>(null)
 
   // 检查是否已登录且已匹配
   useEffect(() => {
@@ -145,107 +138,24 @@ export default function Login() {
     })
   }
 
-  // 根据微信官方文档：优先使用 open-type="chooseAvatar" 获取头像
-  // https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/userProfile.html
-  const handleChooseAvatar = (e) => {
-    // 优先处理 chooseAvatar 回调
-    if (e && e.detail && e.detail.avatarUrl) {
-      setProfileAvatar(e.detail.avatarUrl)
-      return
-    }
-
-    // 兼容：在不支持 chooseAvatar 的环境（或开发者工具）下，退回到手动选择图片
-    Taro.chooseImage({
-      count: 1,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
-      success: (res) => {
-        if (res.tempFilePaths && res.tempFilePaths.length > 0) {
-          setProfileAvatar(res.tempFilePaths[0])
-        }
-      }
-    })
-  }
-
-  const handleProfileSubmit = async () => {
-    if (!profileName.trim()) {
-      Taro.showToast({ title: '请填写姓名', icon: 'none' })
-      return
-    }
-
+  const handleProfileSubmit = async (values: { name?: string; avatar?: string }) => {
     if (!pendingAuth) {
-      // 理论上不会发生，只是兜底保护
       Taro.showToast({ title: '登录状态异常，请重新登录', icon: 'none' })
       setShowProfileModal(false)
-      setIsLoading(false)
       return
     }
-
-    setIsSavingProfile(true)
-    try {
-      let avatarToSave = profileAvatar || ''
-      if (avatarToSave && isLocalTempAvatar(avatarToSave)) {
-        const uploadRes = await new Promise((resolve, reject) => {
-          Taro.uploadFile({
-            url: `${config.apiBaseUrl}/api/upload`,
-            filePath: avatarToSave,
-            name: 'file',
-            header: {
-              Authorization: pendingAuth ? `Bearer ${pendingAuth.token}` : ''
-            },
-            success: (res) => {
-              if (res.statusCode === 200) {
-                try {
-                  const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
-                  resolve(data)
-                } catch (e) {
-                  reject(new Error('解析上传结果失败'))
-                }
-              } else {
-                const errData = typeof res.data === 'string' ? {} : (res.data || {})
-                reject(new Error(errData?.message || '上传失败'))
-              }
-            },
-            fail: (err) => reject(err)
-          })
-        })
-        if (uploadRes?.success && uploadRes?.data?.url) {
-          avatarToSave = uploadRes.data.url
-        }
-      }
-      // 此时 token 尚未写入 storage，显式传入以便请求带 Authorization
-      await post('/api/user/info', {
-        currentName: profileName.trim(),
-        currentAvatar: avatarToSave
-      }, { token: pendingAuth.token })
-
-      Taro.showToast({
-        title: '资料已保存',
-        icon: 'success',
-        duration: 1500
-      })
-
-      setShowProfileModal(false)
-
-      // 资料保存成功后，才真正写入 token 和 userInfo
-      Taro.setStorageSync('token', pendingAuth.token)
-      Taro.setStorageSync('userInfo', pendingAuth.user)
-      setPendingAuth(null)
-
-      // 新用户默认未匹配，跳转到匹配页面
-      setTimeout(() => {
-        Taro.redirectTo({ url: '/pages/match/index' })
-      }, 1500)
-    } catch (error) {
-      console.error('保存资料失败:', error)
-      Taro.showToast({
-        title: '保存失败，请重试',
-        icon: 'none'
-      })
-    } finally {
-      setIsSavingProfile(false)
-      setIsLoading(false)
-    }
+    await post('/api/user/info', {
+      currentName: values.name,
+      currentAvatar: values.avatar
+    }, { token: pendingAuth.token })
+    Taro.showToast({ title: '资料已保存', icon: 'success', duration: 1500 })
+    setShowProfileModal(false)
+    Taro.setStorageSync('token', pendingAuth.token)
+    Taro.setStorageSync('userInfo', pendingAuth.user)
+    setPendingAuth(null)
+    setTimeout(() => {
+      Taro.redirectTo({ url: '/pages/match/index' })
+    }, 1500)
   }
 
   return (
@@ -269,57 +179,30 @@ export default function Login() {
         </View>
       </View>
 
-      {/* 资料完善弹层：姓名 + 头像上传 */}
-      {showProfileModal && (
-        <View className='profile-modal-mask'>
-          <View className='profile-modal'>
-            <Text className='modal-title'>完善你的资料</Text>
-            <Text className='modal-subtitle'>填写姓名并选择头像，打造你们的专属空间</Text>
-
-            <View className='form-item'>
-              <Text className='form-label'>姓名</Text>
-              <Input
-                className='form-input'
-                placeholder='请输入你的姓名'
-                type='nickname'
-                value={profileName}
-                onInput={(e) => setProfileName(e.detail.value)}
-                maxlength={12}
-              />
-            </View>
-
-            <View className='form-item'>
-              <Text className='form-label'>头像</Text>
-              <View className='avatar-row'>
-                <Button
-                  className='upload-avatar-btn'
-                  openType='chooseAvatar'
-                  onChooseAvatar={handleChooseAvatar}
-                  size='mini'
-                >
-                  上传头像
-                </Button>
-                <Image
-                  className='avatar-preview'
-                  src={profileAvatar}
-                  mode='aspectFill'
-                />
-              </View>
-            </View>
-
-            <View className='modal-actions'>
-              <Button
-                className='modal-btn confirm'
-                onClick={handleProfileSubmit}
-                loading={isSavingProfile}
-                disabled={isSavingProfile}
-              >
-                保存并继续
-              </Button>
-            </View>
-          </View>
-        </View>
-      )}
+      {/* 完善资料弹层：姓名 + 头像（登录后未匹配时） */}
+      <ProfileForm
+        visible={showProfileModal}
+        title='完善你的资料'
+        subtitle='填写姓名并选择头像，打造你们的专属空间'
+        showName
+        showAvatar
+        initialName={profileName}
+        initialAvatar={profileAvatar}
+        submitButtonText='保存并继续'
+        loading={isSavingProfile}
+        token={pendingAuth?.token}
+        onSubmit={async (values) => {
+          setIsSavingProfile(true)
+          try {
+            await handleProfileSubmit(values)
+          } catch (error) {
+            console.error('保存资料失败:', error)
+            Taro.showToast({ title: '保存失败，请重试', icon: 'none' })
+          } finally {
+            setIsSavingProfile(false)
+          }
+        }}
+      />
     </View>
   )
 }

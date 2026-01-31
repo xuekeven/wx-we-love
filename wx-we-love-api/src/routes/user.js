@@ -344,7 +344,15 @@ router.post('/info', async (req, res) => {
       if (body.loveDate !== undefined) updates.loveDate = body.loveDate;
       if (body.functionOrder !== undefined) updates.functionOrder = body.functionOrder;
       await user.update(updates);
-      
+
+      // 恋爱纪念日：若已匹配，同步更新对方的 loveDate，两人共用同一天
+      if (body.loveDate !== undefined && user.isMatched && user.matchedUserId) {
+        const matchedUser = await User.findByPk(user.matchedUserId);
+        if (matchedUser) {
+          await matchedUser.update({ loveDate: body.loveDate });
+        }
+      }
+
       res.json({
         success: true,
         message: '更新成功',

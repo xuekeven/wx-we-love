@@ -2,7 +2,8 @@ import { View, Text, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { getWeekDay, getDaysDiff, getWeekOfYear } from '../../utils/date'
-import { get } from '../../utils/request'
+import { get, post } from '../../utils/request'
+import ProfileForm from '../../components/ProfileForm'
 import './index.scss'
 
 // FunctionItem: { id, name, icon, path, order }
@@ -24,6 +25,8 @@ export default function Index() {
   ])
   const [longPressItem, setLongPressItem] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [showLoveDateModal, setShowLoveDateModal] = useState(false)
+  const [isSavingLoveDate, setIsSavingLoveDate] = useState(false)
 
   useEffect(() => {
     loadUserData()
@@ -70,9 +73,12 @@ export default function Index() {
           return
         }
 
-        // 设置恋爱日期
+        // 设置恋爱日期；未设置则弹出「完善纪念日」弹层
         setLoveDate(userData.loveDate || null)
-        
+        if (!userData.loveDate) {
+          setShowLoveDateModal(true)
+        }
+
         // 设置情侣名字：当前用户 currentName，匹配对象 matchedName
         const name1 = userData.currentName || '张三'
         const name2 = userData.matchedName || '李四'
@@ -236,6 +242,30 @@ export default function Index() {
           )}
         </View>
       </View>
+
+      {/* 完善纪念日弹层：匹配成功且未设置恋爱纪念日时弹出 */}
+      <ProfileForm
+        visible={showLoveDateModal}
+        title='完善纪念日'
+        showLoveDate
+        initialLoveDate=''
+        submitButtonText='保存'
+        loading={isSavingLoveDate}
+        onSubmit={async (values) => {
+          if (!values.loveDate) return
+          setIsSavingLoveDate(true)
+          try {
+            await post('/api/user/info', { loveDate: values.loveDate })
+            setLoveDate(values.loveDate)
+            setShowLoveDateModal(false)
+            Taro.showToast({ title: '已保存', icon: 'success' })
+          } catch (e) {
+            Taro.showToast({ title: '保存失败，请重试', icon: 'none' })
+          } finally {
+            setIsSavingLoveDate(false)
+          }
+        }}
+      />
     </View>
   )
 }

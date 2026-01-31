@@ -3,6 +3,7 @@ import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { get, post } from '../../utils/request'
 import { getDaysDiff } from '../../utils/date'
+import ProfileForm from '../../components/ProfileForm'
 import './index.scss'
 
 // 展示用：当前用户 name1/avatar1，匹配对象 name2/avatar2（来自接口 current*/matched*）
@@ -18,6 +19,8 @@ export default function My() {
   const [daysTogether, setDaysTogether] = useState(0)
   const [isMatched, setIsMatched] = useState(false)
   const [isUnmatching, setIsUnmatching] = useState(false)
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false)
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
 
   useEffect(() => {
     loadUserInfo()
@@ -51,7 +54,25 @@ export default function My() {
   }
 
   const handleEditProfile = () => {
-    Taro.showToast({ title: '功能开发中', icon: 'none' })
+    setShowEditProfileModal(true)
+  }
+
+  const handleEditProfileSubmit = async (values: { name?: string; avatar?: string; loveDate?: string }) => {
+    setIsSavingProfile(true)
+    try {
+      await post('/api/user/info', {
+        currentName: values.name,
+        currentAvatar: values.avatar,
+        loveDate: values.loveDate
+      })
+      Taro.showToast({ title: '已保存', icon: 'success' })
+      setShowEditProfileModal(false)
+      await loadUserInfo()
+    } catch (e) {
+      Taro.showToast({ title: '保存失败，请重试', icon: 'none' })
+    } finally {
+      setIsSavingProfile(false)
+    }
   }
 
   const handleUnmatch = () => {
@@ -195,6 +216,23 @@ export default function My() {
           退出登录
         </Button>
       </View>
+
+      {/* 编辑资料弹层：姓名、头像、恋爱纪念日 */}
+      <ProfileForm
+        visible={showEditProfileModal}
+        title='编辑资料'
+        showName
+        showAvatar
+        showLoveDate
+        initialName={userInfo.name1}
+        initialAvatar={userInfo.avatar1}
+        initialLoveDate={userInfo.loveDate || ''}
+        submitButtonText='保存'
+        showCancel
+        onClose={() => setShowEditProfileModal(false)}
+        loading={isSavingProfile}
+        onSubmit={handleEditProfileSubmit}
+      />
     </View>
   )
 }
