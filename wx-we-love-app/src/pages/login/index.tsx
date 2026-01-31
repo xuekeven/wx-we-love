@@ -2,7 +2,15 @@ import { View, Text, Button, Image, Input } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { post, get } from '../../utils/request'
+import config from '../../config'
 import './index.scss'
+
+// 判断是否为本地临时路径（选择微信头像/相册后得到），需要先上传再传 URL
+const isLocalTempAvatar = (url) => {
+  if (!url || typeof url !== 'string') return false
+  const u = url.trim().toLowerCase()
+  return u.startsWith('wxfile://') || u.startsWith('http://tmp/') || !u.startsWith('https://')
+}
 
 // 生成16位随机UUID（包含数字和大小写字母）
 const generateUUID = () => {
@@ -166,7 +174,36 @@ export default function Login() {
 
     setIsSavingProfile(true)
     try {
-      const avatarToSave = profileAvatar || ''
+      let avatarToSave = profileAvatar || ''
+      if (avatarToSave && isLocalTempAvatar(avatarToSave)) {
+        const uploadRes = await new Promise((resolve, reject) => {
+          Taro.uploadFile({
+            url: `${config.apiBaseUrl}/api/upload`,
+            filePath: avatarToSave,
+            name: 'file',
+            header: {
+              Authorization: pendingAuth ? `Bearer ${pendingAuth.token}` : ''
+            },
+            success: (res) => {
+              if (res.statusCode === 200) {
+                try {
+                  const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+                  resolve(data)
+                } catch (e) {
+                  reject(new Error('解析上传结果失败'))
+                }
+              } else {
+                const errData = typeof res.data === 'string' ? {} : (res.data || {})
+                reject(new Error(errData?.message || '上传失败'))
+              }
+            },
+            fail: (err) => reject(err)
+          })
+        })
+        if (uploadRes?.success && uploadRes?.data?.url) {
+          avatarToSave = uploadRes.data.url
+        }
+      }
       await post('/api/user/info', {
         name1: profileName.trim(),
         avatar1: avatarToSave

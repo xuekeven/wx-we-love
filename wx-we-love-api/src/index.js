@@ -1,11 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const path = require('path');
 require('dotenv').config();
 const { sequelize } = require('./models');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+// 静态文件：上传的图片可通过 /uploads/xxx 访问
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+app.use('/uploads', express.static(uploadsDir));
 
 // 数据库同步
 sequelize.sync({ alter: true })
@@ -29,6 +34,7 @@ app.use((req, res, next) => {
 
 // 路由
 app.use('/api/user', require('./routes/user'));
+app.use('/api/upload', require('./routes/upload'));
 app.use('/api/wishlist', require('./routes/wishlist'));
 app.use('/api/date-records', require('./routes/dateRecord'));
 app.use('/api/anniversaries', require('./routes/anniversary'));
