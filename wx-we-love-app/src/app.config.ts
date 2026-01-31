@@ -11,7 +11,8 @@ export default {
     'pages/menstrual/index',
     'pages/menstrual/add',
     'pages/moment/index',
-    'pages/my/index'
+    'pages/my/index',
+    'pages/my/setting/index'
   ],
   window: {
     backgroundTextStyle: 'light',

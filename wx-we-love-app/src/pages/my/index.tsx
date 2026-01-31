@@ -1,4 +1,4 @@
-import { View, Text, Image, Button } from '@tarojs/components'
+import { View, Text, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { get, post } from '../../utils/request'
@@ -17,8 +17,6 @@ export default function My() {
     loveDate: '2025-10-11'
   })
   const [daysTogether, setDaysTogether] = useState(0)
-  const [isMatched, setIsMatched] = useState(false)
-  const [isUnmatching, setIsUnmatching] = useState(false)
   const [showEditProfileModal, setShowEditProfileModal] = useState(false)
   const [isSavingProfile, setIsSavingProfile] = useState(false)
 
@@ -37,7 +35,6 @@ export default function My() {
       const res = await get('/api/user/info')
       if (res && res.success && res.data) {
         const userData = res.data
-        setIsMatched(userData.isMatched || false)
         setUserInfo({
           avatar1: userData.currentAvatar || 'https://via.placeholder.com/150',
           avatar2: userData.matchedAvatar || 'https://via.placeholder.com/150',
@@ -73,68 +70,6 @@ export default function My() {
     } finally {
       setIsSavingProfile(false)
     }
-  }
-
-  const handleUnmatch = () => {
-    Taro.showModal({
-      title: '确认解绑',
-      content: '解绑后需要重新匹配才能使用所有功能，确定要解绑吗？',
-      confirmText: '确认解绑',
-      cancelText: '取消',
-      success: async (res) => {
-        if (res.confirm) {
-          setIsUnmatching(true)
-          try {
-            const unmatchRes = await post('/api/user/unmatch', {})
-            if (unmatchRes && unmatchRes.success) {
-              Taro.showToast({
-                title: '解绑成功',
-                icon: 'success',
-                duration: 2000
-              })
-              
-              // 重新加载用户信息
-              await loadUserInfo()
-              
-              // 跳转到匹配页面
-              setTimeout(() => {
-                Taro.redirectTo({ url: '/pages/match/index' })
-              }, 2000)
-            } else {
-              Taro.showToast({
-                title: unmatchRes?.message || '解绑失败',
-                icon: 'none'
-              })
-              setIsUnmatching(false)
-            }
-          } catch (error) {
-            console.error('解绑失败:', error)
-            Taro.showToast({
-              title: '解绑失败，请重试',
-              icon: 'none'
-            })
-            setIsUnmatching(false)
-          }
-        }
-      }
-    })
-  }
-
-  const handleLogout = () => {
-    Taro.showModal({
-      title: '确认退出',
-      content: '确定要退出登录吗？',
-      success: (res) => {
-        if (res.confirm) {
-          Taro.removeStorageSync('token')
-          Taro.removeStorageSync('userInfo')
-          Taro.showToast({ title: '已退出', icon: 'success' })
-          setTimeout(() => {
-            Taro.redirectTo({ url: '/pages/login/index' })
-          }, 1500)
-        }
-      }
-    })
   }
 
   return (
@@ -181,40 +116,19 @@ export default function My() {
 
         <View className='menu-item'>
           <View className='menu-item-left'>
-            <Text className='menu-icon'>🎨</Text>
-            <Text className='menu-title'>主题设置</Text>
-          </View>
-          <Text className='arrow'>›</Text>
-        </View>
-
-        <View className='menu-item'>
-          <View className='menu-item-left'>
             <Text className='menu-icon'>ℹ️</Text>
             <Text className='menu-title'>关于我们</Text>
           </View>
           <Text className='arrow'>›</Text>
         </View>
-      </View>
 
-      {/* 解绑匹配 */}
-      {isMatched && (
-        <View className='unmatch-section'>
-          <Button 
-            className='unmatch-btn' 
-            onClick={handleUnmatch}
-            loading={isUnmatching}
-            disabled={isUnmatching}
-          >
-            {isUnmatching ? '解绑中...' : '解绑匹配'}
-          </Button>
+        <View className='menu-item' onClick={() => Taro.navigateTo({ url: '/pages/my/setting/index' })}>
+          <View className='menu-item-left'>
+            <Text className='menu-icon'>⚙️</Text>
+            <Text className='menu-title'>设置</Text>
+          </View>
+          <Text className='arrow'>›</Text>
         </View>
-      )}
-
-      {/* 退出登录 */}
-      <View className='logout-section'>
-        <Button className='logout-btn' onClick={handleLogout}>
-          退出登录
-        </Button>
       </View>
 
       {/* 编辑资料弹层：姓名、头像、恋爱纪念日 */}

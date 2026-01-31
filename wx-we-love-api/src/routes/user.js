@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const https = require('https');
 const crypto = require('crypto');
-const { User } = require('../models');
+const { User, Wishlist, Anniversary, Note, DateRecord, PiggyBank, Menstrual } = require('../models');
 
 // 生成匹配码（6位数字）
 function generateMatchCode() {
@@ -498,23 +498,37 @@ router.post('/unmatch', async (req, res) => {
       }
 
       // 获取匹配的用户
-      const matchedUser = currentUser.matchedUserId 
+      const matchedUser = currentUser.matchedUserId
         ? await User.findByPk(currentUser.matchedUserId)
         : null;
 
-      // 解除当前用户的匹配关系
+      const defaultFunctionOrder = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6 };
+
+      // 解除当前用户的匹配关系，并清空恋爱纪念日等匹配相关数据
       await currentUser.update({
         isMatched: false,
-        matchedUserId: null
+        matchedUserId: null,
+        loveDate: null,
+        functionOrder: defaultFunctionOrder
       });
 
-      // 如果匹配的用户存在，也解除其匹配关系
+      // 如果匹配的用户存在，也解除其匹配关系并清空其匹配相关数据
       if (matchedUser && matchedUser.isMatched && matchedUser.matchedUserId === currentUser.id) {
         await matchedUser.update({
           isMatched: false,
-          matchedUserId: null
+          matchedUserId: null,
+          loveDate: null,
+          functionOrder: defaultFunctionOrder
         });
       }
+
+      // 清空两人已有的业务数据（心愿、纪念日、笔记、约会记录、存钱罐、经期等），重新匹配后需重新开始
+      await Wishlist.destroy({ where: {} });
+      await Anniversary.destroy({ where: {} });
+      await Note.destroy({ where: {} });
+      await DateRecord.destroy({ where: {} });
+      await PiggyBank.destroy({ where: {} });
+      await Menstrual.destroy({ where: {} });
 
       res.json({
         success: true,
