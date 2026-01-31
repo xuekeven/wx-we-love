@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import config from '../../config'
 import './index.scss'
 
+// 仅当为本地临时路径（需上传）时返回 true；http/https 的远程 URL 不再上传
 const isLocalTempAvatar = (url) => {
   if (!url || typeof url !== 'string') return false
   const u = url.trim().toLowerCase()
-  return u.startsWith('wxfile://') || u.startsWith('http://tmp/') || !u.startsWith('https://')
+  if (u.startsWith('http://') || u.startsWith('https://')) return false
+  return u.startsWith('wxfile://') || u.startsWith('http://tmp/')
 }
 
 export interface ProfileFormProps {

@@ -1,7 +1,8 @@
 import { View, Text, Input, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
-import { get, post } from '../../utils/request'
+import { post } from '../../utils/request'
+import { fetchUserInfo, getUserInfo } from '../../store/global'
 import './index.scss'
 
 export default function Match() {
@@ -28,31 +29,20 @@ export default function Match() {
     try {
       const token = Taro.getStorageSync('token')
       if (!token) {
-        // 没有token，跳转到登录页
         Taro.redirectTo({ url: '/pages/login/index' })
         return
       }
-
-      const res = await get('/api/user/info')
-      if (res && res.success && res.data) {
-        // 如果已匹配，跳转到首页
-        if (res.data.isMatched) {
+      let data = getUserInfo()
+      if (!data) data = await fetchUserInfo()
+      if (data) {
+        if (data.isMatched) {
           Taro.switchTab({ url: '/pages/index/index' })
           return
         }
-        
-        // 未匹配，显示匹配码
-        setMyMatchCode(res.data.matchCode || '')
-      } else {
-        // token无效，清除并跳转登录
-        if (res && (res.statusCode === 401 || res.statusCode === 404)) {
-          Taro.removeStorageSync('token')
-          Taro.redirectTo({ url: '/pages/login/index' })
-        }
+        setMyMatchCode(data.matchCode || '')
       }
     } catch (error) {
       console.error('加载用户信息失败:', error)
-      // 如果是认证错误，清除token并跳转登录
       if (error.statusCode === 401 || error.statusCode === 404) {
         Taro.removeStorageSync('token')
         Taro.redirectTo({ url: '/pages/login/index' })

@@ -1,19 +1,20 @@
 import { View, Text, Button } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { getWeekDay, getDaysDiff, getWeekOfYear } from '../../utils/date'
-import { get, post } from '../../utils/request'
+import { post } from '../../utils/request'
 import ProfileForm from '../../components/ProfileForm'
+import { fetchUserInfo, getUserInfo, setUserData, setUserInfoPartial, getLoveDate, getCoupleNames } from '../../store/global'
 import './index.scss'
 
 // FunctionItem: { id, name, icon, path, order }
 
 export default function Index() {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [loveDate, setLoveDate] = useState(null)
+  const [loveDate, setLoveDate] = useState<string | null>(null)
   const [daysTogether, setDaysTogether] = useState(0)
   const [coupleNames, setCoupleNames] = useState({ name1: '张三', name2: '李四' })
-  const [isMatched, setIsMatched] = useState(null) // null表示加载中，true/false表示已加载
+  const [isMatched, setIsMatched] = useState<boolean | null>(null) // null表示加载中，true/false表示已加载
   const [isLoading, setIsLoading] = useState(true)
   const [functions, setFunctions] = useState([
     { id: '1', name: '心愿清单', icon: '💝', path: '/pages/wishlist/index', order: 1 },
@@ -36,6 +37,14 @@ export default function Index() {
     return () => clearInterval(timer)
   }, [])
 
+  // 从其他页（如「我的」）返回首页时，从全局 store 同步恋爱纪念日等，保证首页显示最新
+  useDidShow(() => {
+    const storedLoveDate = getLoveDate()
+    if (storedLoveDate !== undefined) setLoveDate(storedLoveDate)
+    const storedCoupleNames = getCoupleNames()
+    if (storedCoupleNames) setCoupleNames(storedCoupleNames)
+  })
+
   useEffect(() => {
     if (loveDate) {
       try {
@@ -54,59 +63,40 @@ export default function Index() {
     try {
       const token = Taro.getStorageSync('token')
       if (!token) {
-        // 没有token，跳转到登录页
         setIsLoading(false)
         Taro.redirectTo({ url: '/pages/login/index' })
         return
       }
-
-      const res = await get('/api/user/info')
-      if (res && res.success && res.data) {
-        const userData = res.data
+      let userData = getUserInfo()
+      if (!userData) userData = await fetchUserInfo()
+      if (userData) {
         const matched = userData.isMatched || false
         setIsMatched(matched)
-        
-        // 如果未匹配，跳转到匹配页面
         if (!matched) {
           setIsLoading(false)
           Taro.redirectTo({ url: '/pages/match/index' })
           return
         }
-
-        // 设置恋爱日期；未设置则弹出「完善纪念日」弹层
-        setLoveDate(userData.loveDate || null)
-        if (!userData.loveDate) {
-          setShowLoveDateModal(true)
-        }
-
-        // 设置情侣名字：当前用户 currentName，匹配对象 matchedName
+        const loveDateVal = userData.loveDate || null
+        setLoveDate(loveDateVal)
+        if (!userData.loveDate) setShowLoveDateModal(true)
         const name1 = userData.currentName || '张三'
         const name2 = userData.matchedName || '李四'
         setCoupleNames({ name1, name2 })
-        
-        // 设置功能排序
+        setUserData({ loveDate: loveDateVal, coupleNames: { name1, name2 } })
         if (userData.functionOrder && typeof userData.functionOrder === 'object') {
           const sortedFunctions = [...functions].sort((a, b) => {
-            const orderA = userData.functionOrder[a.id] || a.order
-            const orderB = userData.functionOrder[b.id] || b.order
+            const orderA = userData!.functionOrder![a.id] ?? a.order
+            const orderB = userData!.functionOrder![b.id] ?? b.order
             return orderA - orderB
           })
           setFunctions(sortedFunctions)
         }
       } else {
-        console.error('加载用户数据失败:', res?.message || '')
-        // token无效，清除并跳转登录
-        if (res && (res.statusCode === 401 || res.statusCode === 404)) {
-          Taro.removeStorageSync('token')
-          setIsLoading(false)
-          Taro.redirectTo({ url: '/pages/login/index' })
-          return
-        }
         setIsMatched(false)
       }
     } catch (error) {
       console.error('加载用户数据失败:', error)
-      // 如果是认证错误，清除token并跳转登录
       if (error.statusCode === 401 || error.statusCode === 404) {
         Taro.removeStorageSync('token')
         setIsLoading(false)
@@ -173,7 +163,7 @@ export default function Index() {
       {/* 顶部标题区域 */}
       <View className='topbar'>
         <View className='topbar-content'>
-          <Text className='heart-icon'>💗</Text>
+        <Text className='heart-icon'>💗</Text>
           <Text className='title' numberOfLines={1}>
             {coupleNames.name1}和{coupleNames.name2}的恋爱空间
           </Text>
@@ -256,6 +246,7 @@ export default function Index() {
           setIsSavingLoveDate(true)
           try {
             await post('/api/user/info', { loveDate: values.loveDate })
+            setUserInfoPartial({ loveDate: values.loveDate })
             setLoveDate(values.loveDate)
             setShowLoveDateModal(false)
             Taro.showToast({ title: '已保存', icon: 'success' })

@@ -1,7 +1,8 @@
 import { View, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
-import { get, post } from '../../../utils/request'
+import { post } from '../../../utils/request'
+import { getUserInfo, clearUserData } from '../../../store/global'
 import './index.scss'
 
 export default function Setting() {
@@ -12,15 +13,9 @@ export default function Setting() {
     loadMatchStatus()
   }, [])
 
-  const loadMatchStatus = async () => {
-    try {
-      const res = await get('/api/user/info')
-      if (res && res.success && res.data) {
-        setIsMatched(res.data.isMatched || false)
-      }
-    } catch (e) {
-      console.log('加载状态失败', e)
-    }
+  const loadMatchStatus = () => {
+    const data = getUserInfo()
+    if (data) setIsMatched(data.isMatched || false)
   }
 
   const handleUnmatch = () => {
@@ -71,6 +66,7 @@ export default function Setting() {
         if (res.confirm) {
           Taro.removeStorageSync('token')
           Taro.removeStorageSync('userInfo')
+          clearUserData()
           Taro.showToast({ title: '已退出', icon: 'success' })
           setTimeout(() => {
             Taro.redirectTo({ url: '/pages/login/index' })

@@ -1,7 +1,8 @@
 import { View, Text, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
-import { post, get } from '../../utils/request'
+import { post } from '../../utils/request'
+import { fetchUserInfo, getUserInfo, clearUserData } from '../../store/global'
 import ProfileForm from '../../components/ProfileForm'
 import './index.scss'
 
@@ -37,19 +38,17 @@ export default function Login() {
     }
 
     try {
-      const res = await get('/api/user/info')
-      if (res && res.success && res.data) {
-        // 如果已匹配，直接跳转到首页
-        if (res.data.isMatched) {
+      let data = getUserInfo()
+      if (!data) data = await fetchUserInfo()
+      if (data) {
+        if (data.isMatched) {
           Taro.switchTab({ url: '/pages/index/index' })
         } else {
-          // 如果未匹配，跳转到匹配页
           Taro.redirectTo({ url: '/pages/match/index' })
         }
       }
     } catch (error) {
       console.error('检查登录状态失败:', error)
-      // 如果token无效，清除token，停留在登录页
       if (error.statusCode === 401 || error.statusCode === 404) {
         Taro.removeStorageSync('token')
       }
@@ -105,6 +104,7 @@ export default function Login() {
 
           // 已匹配过的账号：直接写入 token 和 userInfo，进入首页
           if (user && user.isMatched) {
+            clearUserData()
             Taro.setStorageSync('token', token)
             Taro.setStorageSync('userInfo', user)
             Taro.showToast({ title: '登录成功', icon: 'success', duration: 1200 })
@@ -150,6 +150,7 @@ export default function Login() {
     }, { token: pendingAuth.token })
     Taro.showToast({ title: '资料已保存', icon: 'success', duration: 1500 })
     setShowProfileModal(false)
+    clearUserData()
     Taro.setStorageSync('token', pendingAuth.token)
     Taro.setStorageSync('userInfo', pendingAuth.user)
     setPendingAuth(null)

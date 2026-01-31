@@ -1,9 +1,10 @@
 import { View, Text, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
-import { get, post } from '../../utils/request'
+import { post } from '../../utils/request'
 import { getDaysDiff } from '../../utils/date'
 import ProfileForm from '../../components/ProfileForm'
+import { fetchUserInfo, getUserInfo, setUserInfoPartial } from '../../store/global'
 import './index.scss'
 
 // 展示用：当前用户 name1/avatar1，匹配对象 name2/avatar2（来自接口 current*/matched*）
@@ -32,18 +33,16 @@ export default function My() {
 
   const loadUserInfo = async () => {
     try {
-      const res = await get('/api/user/info')
-      if (res && res.success && res.data) {
-        const userData = res.data
+      let data = getUserInfo()
+      if (!data) data = await fetchUserInfo()
+      if (data) {
         setUserInfo({
-          avatar1: userData.currentAvatar || 'https://via.placeholder.com/150',
-          avatar2: userData.matchedAvatar || 'https://via.placeholder.com/150',
-          name1: userData.currentName || '张三',
-          name2: userData.matchedName || '李四',
-          loveDate: userData.loveDate || '2025-10-11'
+          avatar1: data.currentAvatar || 'https://via.placeholder.com/150',
+          avatar2: data.matchedAvatar || 'https://via.placeholder.com/150',
+          name1: data.currentName || '张三',
+          name2: data.matchedName || '李四',
+          loveDate: data.loveDate || '2025-10-11'
         })
-      } else {
-        console.log('加载用户信息失败', res?.message || '')
       }
     } catch (error) {
       console.log('加载用户信息失败', error)
@@ -55,15 +54,25 @@ export default function My() {
   }
 
   const handleEditProfileSubmit = async (values: { name?: string; avatar?: string; loveDate?: string }) => {
+    const initialLoveDate = userInfo.loveDate || ''
+    const body: Record<string, string> = {}
+    if (values.name !== undefined && values.name !== userInfo.name1) body.currentName = values.name
+    if (values.avatar !== undefined && values.avatar !== userInfo.avatar1) body.currentAvatar = values.avatar
+    if (values.loveDate !== undefined && values.loveDate !== initialLoveDate) body.loveDate = values.loveDate
+    if (Object.keys(body).length === 0) {
+      Taro.showToast({ title: '未修改任何内容', icon: 'none' })
+      return
+    }
     setIsSavingProfile(true)
     try {
-      await post('/api/user/info', {
-        currentName: values.name,
-        currentAvatar: values.avatar,
-        loveDate: values.loveDate
-      })
+      await post('/api/user/info', body)
       Taro.showToast({ title: '已保存', icon: 'success' })
       setShowEditProfileModal(false)
+      const partial: Record<string, string> = {}
+      if (body.loveDate !== undefined) partial.loveDate = body.loveDate
+      if (body.currentName !== undefined) partial.currentName = body.currentName
+      if (body.currentAvatar !== undefined) partial.currentAvatar = body.currentAvatar
+      if (Object.keys(partial).length) setUserInfoPartial(partial)
       await loadUserInfo()
     } catch (e) {
       Taro.showToast({ title: '保存失败，请重试', icon: 'none' })
