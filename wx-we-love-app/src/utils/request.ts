@@ -4,13 +4,13 @@ import config from '../config'
 // API地址配置
 const API_BASE_URL = config.apiBaseUrl
 
-// RequestOptions: { url, method?, data?, header? }
+// RequestOptions: { url, method?, data?, header?, token? }  // token 可选，用于未写入 storage 时传参（如登录后资料完善）
 
 export const request = async (options) => {
-  const { url, method = 'GET', data, header = {} } = options
+  const { url, method = 'GET', data, header = {}, token: tokenOverride } = options
 
   try {
-    const token = Taro.getStorageSync('token')
+    const token = tokenOverride !== undefined ? tokenOverride : Taro.getStorageSync('token')
     
     const res = await Taro.request({
       url: `${API_BASE_URL}${url}`,
@@ -83,12 +83,12 @@ export const request = async (options) => {
   }
 }
 
-export const get = (url, data = {}) => {
-  return request({ url, method: 'GET', data })
+export const get = (url, data = {}, options = {}) => {
+  return request({ url, method: 'GET', data, ...options })
 }
 
-export const post = (url, data = {}) => {
-  return request({ url, method: 'POST', data })
+export const post = (url, data = {}, options = {}) => {
+  return request({ url, method: 'POST', data, ...options })
 }
 
 export const put = (url, data = {}) => {

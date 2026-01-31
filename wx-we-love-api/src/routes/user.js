@@ -113,9 +113,11 @@ router.post('/login', async (req, res) => {
         }
       });
     } else {
-      // 更新昵称、头像、uuid、sessionKey（如果提供了）
-      if (nickname !== undefined) user.currentName = nickname;
-      if (avatar !== undefined) user.currentAvatar = avatar;
+      // 未匹配用户：用本次登录上传的 nickname/avatar 更新；已匹配用户：不覆盖已有 currentName/currentAvatar
+      if (!user.isMatched) {
+        if (nickname !== undefined) user.currentName = nickname;
+        if (avatar !== undefined) user.currentAvatar = avatar;
+      }
       if (uuid) user.uuid = uuid;
       if (sessionKey) user.sessionKey = sessionKey;
       await user.save();

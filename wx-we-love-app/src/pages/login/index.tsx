@@ -108,13 +108,22 @@ export default function Login() {
             return
           }
 
-          // 暂存 token 和 user，等资料完善后再真正写入本地
-          setPendingAuth({
-            token: loginResp.data.token,
-            user: loginResp.data.user,
-          })
+          const { token, user } = loginResp.data
 
-          // 进入资料完善弹层（姓名 + 头像上传）
+          // 已匹配过的账号：直接写入 token 和 userInfo，进入首页
+          if (user && user.isMatched) {
+            Taro.setStorageSync('token', token)
+            Taro.setStorageSync('userInfo', user)
+            Taro.showToast({ title: '登录成功', icon: 'success', duration: 1200 })
+            setTimeout(() => {
+              Taro.switchTab({ url: '/pages/index/index' })
+            }, 1200)
+            setIsLoading(false)
+            return
+          }
+
+          // 未匹配：暂存 token 和 user，等资料完善后再写入本地，并进入资料完善弹层
+          setPendingAuth({ token, user })
           setShowProfileModal(true)
         } catch (error) {
           console.error('登录失败:', error)
@@ -204,10 +213,11 @@ export default function Login() {
           avatarToSave = uploadRes.data.url
         }
       }
+      // 此时 token 尚未写入 storage，显式传入以便请求带 Authorization
       await post('/api/user/info', {
         currentName: profileName.trim(),
         currentAvatar: avatarToSave
-      })
+      }, { token: pendingAuth.token })
 
       Taro.showToast({
         title: '资料已保存',
