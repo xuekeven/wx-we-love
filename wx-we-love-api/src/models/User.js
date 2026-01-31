@@ -19,15 +19,15 @@ const User = sequelize.define('User', {
     allowNull: true,
     comment: '客户端UUID'
   },
-  nickname: {
+  currentName: {
     type: DataTypes.STRING,
     allowNull: true,
-    comment: '用户昵称'
+    comment: '当前用户显示名称'
   },
-  avatar: {
+  currentAvatar: {
     type: DataTypes.STRING,
     allowNull: true,
-    comment: '用户头像'
+    comment: '当前用户头像URL'
   },
   // 微信返回的手机号（解密后）
   phone: {
@@ -63,22 +63,6 @@ const User = sequelize.define('User', {
   },
   loveDate: {
     type: DataTypes.DATEONLY,
-    allowNull: true
-  },
-  name1: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  name2: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  avatar1: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  avatar2: {
-    type: DataTypes.STRING,
     allowNull: true
   },
   functionOrder: {

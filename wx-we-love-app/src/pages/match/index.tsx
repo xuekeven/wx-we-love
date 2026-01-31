@@ -9,6 +9,7 @@ export default function Match() {
   const [myMatchCode, setMyMatchCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     // 隐藏系统导航栏右上角的 home 按钮，避免视觉干扰
@@ -155,6 +156,13 @@ export default function Match() {
     }
   }
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    await loadUserInfo()
+    setIsRefreshing(false)
+    Taro.showToast({ title: '已刷新', icon: 'success' })
+  }
+
   return (
     <View className='match-page'>
       <View className='match-container'>
@@ -178,6 +186,18 @@ export default function Match() {
             disabled={isGenerating}
           >
             {isGenerating ? '处理中...' : '复制匹配码'}
+          </Button>
+        </View>
+
+        {/* 刷新匹配状态 */}
+        <View className='refresh-section'>
+          <Button
+            className='refresh-btn'
+            onClick={handleRefresh}
+            loading={isRefreshing}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? '刷新中...' : '刷新匹配状态'}
           </Button>
         </View>
 

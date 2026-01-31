@@ -205,8 +205,8 @@ export default function Login() {
         }
       }
       await post('/api/user/info', {
-        name1: profileName.trim(),
-        avatar1: avatarToSave
+        currentName: profileName.trim(),
+        currentAvatar: avatarToSave
       })
 
       Taro.showToast({

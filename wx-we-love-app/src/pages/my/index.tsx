@@ -5,7 +5,7 @@ import { get, post } from '../../utils/request'
 import { getDaysDiff } from '../../utils/date'
 import './index.scss'
 
-// UserInfo: { avatar1, avatar2, name1, name2, loveDate }
+// 展示用：当前用户 name1/avatar1，匹配对象 name2/avatar2（来自接口 current*/matched*）
 
 export default function My() {
   const [userInfo, setUserInfo] = useState({
@@ -36,10 +36,10 @@ export default function My() {
         const userData = res.data
         setIsMatched(userData.isMatched || false)
         setUserInfo({
-          avatar1: userData.avatar1 || userData.avatar || 'https://via.placeholder.com/150',
-          avatar2: userData.avatar2 || (userData.matchedUser?.avatar || 'https://via.placeholder.com/150'),
-          name1: userData.name1 || userData.nickname || '张三',
-          name2: userData.name2 || (userData.matchedUser?.nickname || '李四'),
+          avatar1: userData.currentAvatar || 'https://via.placeholder.com/150',
+          avatar2: userData.matchedAvatar || 'https://via.placeholder.com/150',
+          name1: userData.currentName || '张三',
+          name2: userData.matchedName || '李四',
           loveDate: userData.loveDate || '2025-10-11'
         })
       } else {

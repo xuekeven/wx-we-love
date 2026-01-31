@@ -73,9 +73,9 @@ export default function Index() {
         // 设置恋爱日期
         setLoveDate(userData.loveDate || null)
         
-        // 设置情侣名字（优先使用name1和name2，如果没有则使用昵称）
-        const name1 = userData.name1 || (userData.matchedUser?.nickname ? userData.nickname : '张三')
-        const name2 = userData.name2 || (userData.matchedUser?.nickname ? userData.matchedUser.nickname : '李四')
+        // 设置情侣名字：当前用户 currentName，匹配对象 matchedName
+        const name1 = userData.currentName || '张三'
+        const name2 = userData.matchedName || '李四'
         setCoupleNames({ name1, name2 })
         
         // 设置功能排序

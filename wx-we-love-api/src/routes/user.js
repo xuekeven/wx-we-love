@@ -61,7 +61,7 @@ function getOpenIdByCode(code) {
 // 微信登录（code + 用户基本资料 + 可选uuid）
 router.post('/login', async (req, res) => {
   try {
-    const { code, nickname, avatar, uuid } = req.body;
+    const { code, nickname, avatar, uuid } = req.body; // 微信返回的 nickname/avatar 存入 currentName/currentAvatar
     
     if (!code) {
       return res.status(400).json({ success: false, message: '缺少code参数' });
@@ -103,8 +103,8 @@ router.post('/login', async (req, res) => {
       user = await User.create({
         openId,
         uuid: uuid || null,
-        nickname: nickname || '微信用户',
-        avatar: avatar || '',
+        currentName: nickname || '微信用户',
+        currentAvatar: avatar || '',
         sessionKey,
         matchCode,
         isMatched: false,
@@ -114,8 +114,8 @@ router.post('/login', async (req, res) => {
       });
     } else {
       // 更新昵称、头像、uuid、sessionKey（如果提供了）
-      if (nickname) user.nickname = nickname;
-      if (avatar) user.avatar = avatar;
+      if (nickname !== undefined) user.currentName = nickname;
+      if (avatar !== undefined) user.currentAvatar = avatar;
       if (uuid) user.uuid = uuid;
       if (sessionKey) user.sessionKey = sessionKey;
       await user.save();
@@ -136,8 +136,8 @@ router.post('/login', async (req, res) => {
           id: user.id,
           openId: user.openId,
           uuid: user.uuid,
-          nickname: user.nickname,
-          avatar: user.avatar,
+          currentName: user.currentName,
+          currentAvatar: user.currentAvatar,
           phone: user.phone,
           matchCode: user.matchCode,
           isMatched: user.isMatched,
@@ -175,27 +175,22 @@ router.get('/info', async (req, res) => {
         matchedUser = await User.findByPk(user.matchedUserId);
       }
 
+      // 统一属性名：当前用户 currentName/currentAvatar，匹配对象 matchedName/matchedAvatar
       res.json({
         success: true,
         data: {
           id: user.id,
           openId: user.openId,
-          nickname: user.nickname,
-          avatar: user.avatar,
           phone: user.phone,
           matchCode: user.matchCode,
           isMatched: user.isMatched,
           matchedUserId: user.matchedUserId,
-          matchedUser: matchedUser ? {
-            id: matchedUser.id,
-            nickname: matchedUser.nickname,
-            avatar: matchedUser.avatar
-          } : null,
+          currentName: user.currentName || '',
+          currentAvatar: user.currentAvatar || '',
+          matchedName: matchedUser ? (matchedUser.currentName || '') : '',
+          matchedAvatar: matchedUser ? (matchedUser.currentAvatar || '') : '',
+          matchedUser: matchedUser ? { id: matchedUser.id } : null,
           loveDate: user.loveDate,
-          name1: user.name1,
-          name2: user.name2,
-          avatar1: user.avatar1,
-          avatar2: user.avatar2,
           functionOrder: user.functionOrder
         }
       });
@@ -204,29 +199,6 @@ router.get('/info', async (req, res) => {
     }
   } catch (error) {
     console.error('获取用户信息失败:', error);
-    res.status(500).json({ success: false, message: '服务器错误' });
-  }
-});
-
-// 更新用户信息
-router.post('/info', async (req, res) => {
-  try {
-    const updates = req.body;
-    let user = await User.findOne();
-    
-    if (user) {
-      await user.update(updates);
-    } else {
-      user = await User.create(updates);
-    }
-    
-    res.json({
-      success: true,
-      message: '更新成功',
-      data: user
-    });
-  } catch (error) {
-    console.error('更新用户信息失败:', error);
     res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
@@ -332,8 +304,8 @@ router.post('/match', async (req, res) => {
         data: {
           matchedUser: {
             id: targetUser.id,
-            nickname: targetUser.nickname,
-            avatar: targetUser.avatar
+            currentName: targetUser.currentName,
+            currentAvatar: targetUser.currentAvatar
           }
         }
       });
@@ -346,11 +318,11 @@ router.post('/match', async (req, res) => {
   }
 });
 
-// 更新用户信息
+// 更新用户信息（接受 currentName、currentAvatar 等，统一映射到数据库字段）
 router.post('/info', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    const updates = req.body;
+    const body = req.body;
     
     if (!token) {
       return res.status(401).json({ success: false, message: '未登录' });
@@ -364,12 +336,22 @@ router.post('/info', async (req, res) => {
         return res.status(404).json({ success: false, message: '用户不存在' });
       }
 
+      const updates = {};
+      if (body.currentName !== undefined) updates.currentName = body.currentName;
+      if (body.currentAvatar !== undefined) updates.currentAvatar = body.currentAvatar;
+      if (body.loveDate !== undefined) updates.loveDate = body.loveDate;
+      if (body.functionOrder !== undefined) updates.functionOrder = body.functionOrder;
       await user.update(updates);
       
       res.json({
         success: true,
         message: '更新成功',
-        data: user
+        data: {
+          currentName: user.currentName,
+          currentAvatar: user.currentAvatar,
+          loveDate: user.loveDate,
+          functionOrder: user.functionOrder
+        }
       });
     } catch (error) {
       return res.status(401).json({ success: false, message: 'Token无效' });
