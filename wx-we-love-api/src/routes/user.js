@@ -504,21 +504,31 @@ router.post('/unmatch', async (req, res) => {
 
       const defaultFunctionOrder = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6 };
 
-      // 解除当前用户的匹配关系，并清空恋爱纪念日等匹配相关数据
+      // 为当前用户生成新匹配码（旧匹配码作废）
+      let newCodeA = generateMatchCode();
+      while (await User.findOne({ where: { matchCode: newCodeA } })) {
+        newCodeA = generateMatchCode();
+      }
       await currentUser.update({
         isMatched: false,
         matchedUserId: null,
         loveDate: null,
-        functionOrder: defaultFunctionOrder
+        functionOrder: defaultFunctionOrder,
+        matchCode: newCodeA
       });
 
-      // 如果匹配的用户存在，也解除其匹配关系并清空其匹配相关数据
+      // 如果匹配的用户存在，也解除其匹配关系、清空其匹配相关数据，并为其生成新匹配码
       if (matchedUser && matchedUser.isMatched && matchedUser.matchedUserId === currentUser.id) {
+        let newCodeB = generateMatchCode();
+        while (await User.findOne({ where: { matchCode: newCodeB } }) || newCodeB === newCodeA) {
+          newCodeB = generateMatchCode();
+        }
         await matchedUser.update({
           isMatched: false,
           matchedUserId: null,
           loveDate: null,
-          functionOrder: defaultFunctionOrder
+          functionOrder: defaultFunctionOrder,
+          matchCode: newCodeB
         });
       }
 
