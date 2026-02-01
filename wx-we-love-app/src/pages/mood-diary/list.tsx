@@ -214,7 +214,9 @@ export default function MoodDiaryList() {
                       </Text>
                       {entry.comments.map((c) => (
                         <Text key={c.id} className='list-item-comment-row'>
-                          {c.authorName}: {c.content} {c.createdAt}
+                          <Text className='list-item-comment-meta'>{c.authorName}: </Text>
+                          <Text className='list-item-comment-content'>{c.content} </Text>
+                          <Text className='list-item-comment-meta'>{c.createdAt}</Text>
                         </Text>
                       ))}
                     </View>
