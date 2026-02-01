@@ -1,6 +1,6 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { get } from '../../utils/request'
 import { getWeekDayLong } from '../../utils/date'
 import { MOODS } from './constants'
@@ -22,7 +22,10 @@ export default function MoodDiary() {
   const [displayMonth, setDisplayMonth] = useState(new Date().getMonth() + 1)
   const [touchStartX, setTouchStartX] = useState(0)
   const [showMoodModal, setShowMoodModal] = useState(false)
-  const [monthEntries, setMonthEntries] = useState<Record<string, { moodId: string }>>({})
+  const [monthEntriesSelf, setMonthEntriesSelf] = useState<Record<string, { moodId: string }>>({})
+  const [monthEntriesMatched, setMonthEntriesMatched] = useState<Record<string, { moodId: string }>>({})
+  const [selectedDateForModal, setSelectedDateForModal] = useState('')
+  const hasShownRef = useRef(false)
 
   const today = useMemo(() => {
     const d = new Date()
@@ -39,14 +42,34 @@ export default function MoodDiary() {
   const loadMonthEntries = async () => {
     try {
       const res = await get('/api/mood-diary', { year: displayYear, month: displayMonth })
-      const list = (res?.data && Array.isArray(res.data)) ? res.data : []
-      const map: Record<string, { moodId: string }> = {}
-      list.forEach((item: { date: string; moodId: string }) => {
-        map[item.date] = { moodId: item.moodId }
+      const selfList = Array.isArray(res?.data?.self) ? res.data.self : []
+      const matchedList = Array.isArray(res?.data?.matched) ? res.data.matched : []
+      const selfMap: Record<string, { moodId: string }> = {}
+      const matchedMap: Record<string, { moodId: string }> = {}
+      const toDateKey = (d: unknown): string => {
+        if (d == null) return ''
+        const s = String(d)
+        if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10)
+        const date = new Date(s)
+        if (Number.isNaN(date.getTime())) return ''
+        const y = date.getFullYear()
+        const m = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${y}-${m}-${day}`
+      }
+      selfList.forEach((item: { date?: string; moodId?: string }) => {
+        const key = toDateKey(item?.date)
+        if (key && item?.moodId) selfMap[key] = { moodId: item.moodId }
       })
-      setMonthEntries(map)
+      matchedList.forEach((item: { date?: string; moodId?: string }) => {
+        const key = toDateKey(item?.date)
+        if (key && item?.moodId) matchedMap[key] = { moodId: item.moodId }
+      })
+      setMonthEntriesSelf(selfMap)
+      setMonthEntriesMatched(matchedMap)
     } catch (e) {
-      setMonthEntries({})
+      setMonthEntriesSelf({})
+      setMonthEntriesMatched({})
     }
   }
 
@@ -55,7 +78,11 @@ export default function MoodDiary() {
   }, [displayYear, displayMonth])
 
   useDidShow(() => {
-    loadMonthEntries()
+    if (hasShownRef.current) {
+      loadMonthEntries()
+    } else {
+      hasShownRef.current = true
+    }
   })
 
   const calendarGrid = useMemo(() => {
@@ -124,33 +151,54 @@ export default function MoodDiary() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }, [])
 
-  const todayDisplay = useMemo(() => {
-    const d = new Date()
-    return {
-      monthDay: `${d.getMonth() + 1}月${d.getDate()}日`,
-      week: getWeekDayLong(d),
-    }
-  }, [])
-
-  const handleMoodSelect = (moodId: string) => {
-    setShowMoodModal(false)
-    Taro.navigateTo({
-      url: `/pages/mood-diary/write?date=${todayDateStr}&mood=${moodId}`,
-    })
-  }
-
   const getDateStr = (type: string, day: number) => {
     if (type !== 'curr') return ''
     return `${displayYear}-${String(displayMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   }
 
-  const getMoodEmoji = (type: string, day: number) => {
+  const isPastOrToday = (type: string, day: number) => {
+    if (type !== 'curr') return false
     const dateStr = getDateStr(type, day)
-    const entry = dateStr ? monthEntries[dateStr] : null
+    if (!dateStr) return false
+    return dateStr <= todayDateStr
+  }
+
+  const getMoodEmoji = (type: string, day: number, who: 'self' | 'matched') => {
+    const dateStr = getDateStr(type, day)
+    const entries = who === 'self' ? monthEntriesSelf : monthEntriesMatched
+    const entry = dateStr ? entries[dateStr] : null
     if (!entry) return null
     const mood = MOODS.find((m) => m.id === entry.moodId)
     return mood ? mood.emoji : null
   }
+
+  const openMoodModalForDate = (dateStr: string) => {
+    setSelectedDateForModal(dateStr)
+    setShowMoodModal(true)
+  }
+
+  const handleFabClick = () => {
+    setSelectedDateForModal(todayDateStr)
+    setShowMoodModal(true)
+  }
+
+  const handleMoodSelect = (moodId: string) => {
+    const date = selectedDateForModal || todayDateStr
+    setShowMoodModal(false)
+    Taro.navigateTo({
+      url: `/pages/mood-diary/write?date=${date}&mood=${moodId}`,
+    })
+  }
+
+  const modalDisplayDate = useMemo(() => {
+    const str = selectedDateForModal || todayDateStr
+    const [y, m, d] = str.split('-').map(Number)
+    const date = new Date(y, m - 1, d)
+    return {
+      monthDay: `${date.getMonth() + 1}月${date.getDate()}日`,
+      week: getWeekDayLong(date),
+    }
+  }, [selectedDateForModal, todayDateStr])
 
   return (
     <View className='mood-diary-page'>
@@ -188,23 +236,41 @@ export default function MoodDiary() {
           ))}
         </View>
         <View className='calendar-grid'>
-          {calendarGrid.map((cell, i) => (
-            <View
-              key={i}
-              className={`day-cell ${cell.type} ${isToday(cell.type, cell.day) ? 'today' : ''}`}
-            >
-              <Text className='day-num'>{cell.day}</Text>
-              <View className='day-mood'>
-                {cell.type === 'curr' && getMoodEmoji(cell.type, cell.day) && (
-                  <Text className='day-mood-emoji'>{getMoodEmoji(cell.type, cell.day)}</Text>
-                )}
+          {calendarGrid.map((cell, i) => {
+            const dateStr = getDateStr(cell.type, cell.day)
+            const selfEmoji = cell.type === 'curr' ? getMoodEmoji(cell.type, cell.day, 'self') : null
+            const matchedEmoji = cell.type === 'curr' ? getMoodEmoji(cell.type, cell.day, 'matched') : null
+            const showSelfCircle = cell.type === 'curr' && isPastOrToday(cell.type, cell.day) && !selfEmoji && dateStr
+            return (
+              <View
+                key={i}
+                className={`day-cell ${cell.type} ${isToday(cell.type, cell.day) ? 'today' : ''}`}
+              >
+                <Text className='day-num'>{cell.day}</Text>
+                <View className='day-mood'>
+                  <View className='day-mood-row day-mood-self'>
+                    {selfEmoji ? (
+                      <Text className='day-mood-emoji'>{selfEmoji}</Text>
+                    ) : showSelfCircle ? (
+                      <View
+                        className='day-mood-circle'
+                        onClick={() => openMoodModalForDate(dateStr)}
+                      />
+                    ) : null}
+                  </View>
+                  <View className='day-mood-row day-mood-matched'>
+                    {matchedEmoji && (
+                      <Text className='day-mood-emoji'>{matchedEmoji}</Text>
+                    )}
+                  </View>
+                </View>
               </View>
-            </View>
-          ))}
+            )
+          })}
         </View>
       </View>
 
-      <View className='fab-wrap' onClick={() => setShowMoodModal(true)}>
+      <View className='fab-wrap' onClick={handleFabClick}>
         <View className='fab'>
           <Text className='fab-icon'>✏️</Text>
         </View>
@@ -215,8 +281,8 @@ export default function MoodDiary() {
           <View className='mood-modal' catchMove>
             <View className='mood-modal-header'>
               <View className='mood-modal-date'>
-                <Text className='mood-modal-date-num'>{todayDisplay.monthDay}</Text>
-                <Text className='mood-modal-week'>{todayDisplay.week}</Text>
+                <Text className='mood-modal-date-num'>{modalDisplayDate.monthDay}</Text>
+                <Text className='mood-modal-week'>{modalDisplayDate.week}</Text>
               </View>
               <View className='mood-modal-close' onClick={() => setShowMoodModal(false)}>
                 <Text className='mood-modal-close-x'>×</Text>

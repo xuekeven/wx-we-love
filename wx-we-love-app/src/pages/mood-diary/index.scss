@@ -119,13 +119,29 @@
       flex: 1;
       min-height: 80rpx;
       width: 100%;
-      border-radius: 8rpx;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      /* 足够大的区域记录当天心情 */
+      gap: 4rpx;
+      .day-mood-row {
+        flex: 1;
+        min-height: 36rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+      }
       .day-mood-emoji {
-        font-size: 36rpx;
+        font-size: 28rpx;
+      }
+      .day-mood-circle {
+        width: 48rpx;
+        height: 48rpx;
+        border-radius: 50%;
+        border: 2rpx solid #C7C7CC;
+        background: transparent;
+        box-sizing: border-box;
       }
     }
     &.prev .day-num,

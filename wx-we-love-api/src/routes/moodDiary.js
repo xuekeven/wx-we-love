@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { MoodDiary } = require('../models');
+const { MoodDiary, User } = require('../models');
 const authMiddleware = require('../middleware/auth');
 const { Op } = require('sequelize');
 
-// 获取某月心情日记列表（按用户）
+// 获取某月心情日记列表：本人 + 匹配对象
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const { year, month } = req.query;
@@ -20,16 +20,42 @@ router.get('/', authMiddleware, async (req, res) => {
     const start = `${y}-${String(m).padStart(2, '0')}-01`;
     const lastDay = new Date(y, m, 0).getDate();
     const end = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    const user = await User.findByPk(userId, { attributes: ['matchedUserId'] });
+    const matchedUserId = user?.matchedUserId || null;
+    const userIds = [userId];
+    if (matchedUserId) userIds.push(matchedUserId);
+
     const list = await MoodDiary.findAll({
       where: {
-        userId,
+        userId: { [Op.in]: userIds },
         date: { [Op.between]: [start, end] }
       },
       order: [['date', 'ASC']]
     });
+
+    const toDateStr = (d) => {
+      if (!d) return '';
+      const s = String(d);
+      if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+      const date = new Date(s);
+      if (Number.isNaN(date.getTime())) return '';
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    const self = list
+      .filter((item) => item.userId === userId)
+      .map((item) => ({ date: toDateStr(item.date), moodId: item.moodId }));
+    const matched = matchedUserId
+      ? list
+          .filter((item) => item.userId === matchedUserId)
+          .map((item) => ({ date: toDateStr(item.date), moodId: item.moodId }))
+      : [];
     res.json({
       success: true,
-      data: list
+      data: { self, matched }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: '服务器错误' });
