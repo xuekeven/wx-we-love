@@ -125,6 +125,34 @@ router.get('/all', authMiddleware, async (req, res) => {
   }
 });
 
+// 获取当前用户某一天的日记（用于编辑时拉取已有内容）
+router.get('/entry', authMiddleware, async (req, res) => {
+  try {
+    const { date } = req.query;
+    const userId = req.userId;
+    if (!date || typeof date !== 'string') {
+      return res.status(400).json({ success: false, message: '缺少 date 参数' });
+    }
+    const dateStr = String(date).slice(0, 10);
+    const entry = await MoodDiary.findOne({
+      where: { userId, date: dateStr }
+    });
+    if (!entry) {
+      return res.json({ success: true, data: null });
+    }
+    res.json({
+      success: true,
+      data: {
+        date: String(entry.date).slice(0, 10),
+        moodId: entry.moodId,
+        content: entry.content || ''
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
 // 保存一条心情日记（同一天同用户会覆盖）
 router.post('/', authMiddleware, async (req, res) => {
   try {

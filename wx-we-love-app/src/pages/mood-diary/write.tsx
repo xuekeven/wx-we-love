@@ -1,7 +1,7 @@
 import { View, Text, Textarea, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
-import { post } from '../../utils/request'
+import { get, post } from '../../utils/request'
 import { MOODS } from './constants'
 import './write.scss'
 
@@ -44,6 +44,19 @@ export default function MoodDiaryWrite() {
     const mood = MOODS.find((x) => x.id === m)
     if (mood) setMoodInfo({ name: mood.name, emoji: mood.emoji })
   }, [])
+
+  useEffect(() => {
+    if (!dateStr) return
+    const fetchEntry = async () => {
+      try {
+        const res = await get('/api/mood-diary/entry', { date: dateStr })
+        if (res?.success && res?.data?.content != null) {
+          setContent(res.data.content)
+        }
+      } catch (_) {}
+    }
+    fetchEntry()
+  }, [dateStr])
 
   const [saving, setSaving] = useState(false)
 

@@ -273,3 +273,54 @@
     font-weight: 500;
   }
 }
+
+/* 今日已添加日记时的确认弹层 */
+.edit-confirm-modal {
+  width: 100%;
+  max-width: 560rpx;
+  background: #fff;
+  border-radius: 32rpx;
+  padding: 48rpx 40rpx 32rpx;
+  box-sizing: border-box;
+}
+
+.edit-confirm-text {
+  display: block;
+  text-align: center;
+  font-size: 32rpx;
+  color: #2D2D2D;
+  line-height: 1.5;
+  margin-bottom: 48rpx;
+}
+
+.edit-confirm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.edit-confirm-btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 44rpx;
+  border: none;
+
+  &::after {
+    border: none;
+  }
+}
+
+.edit-confirm-cancel {
+  background: #F5F5F5;
+  color: #8E8E93;
+}
+
+.edit-confirm-ok {
+  background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
+  color: #fff;
+}

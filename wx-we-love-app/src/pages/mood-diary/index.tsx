@@ -21,6 +21,7 @@ export default function MoodDiary() {
   const [displayMonth, setDisplayMonth] = useState(new Date().getMonth() + 1)
   const [touchStartX, setTouchStartX] = useState(0)
   const [showMoodModal, setShowMoodModal] = useState(false)
+  const [showEditConfirmModal, setShowEditConfirmModal] = useState(false)
   const [monthEntriesSelf, setMonthEntriesSelf] = useState<Record<string, { moodId: string }>>({})
   const [monthEntriesMatched, setMonthEntriesMatched] = useState<Record<string, { moodId: string }>>({})
   const [selectedDateForModal, setSelectedDateForModal] = useState('')
@@ -171,7 +172,26 @@ export default function MoodDiary() {
 
   const handleFabClick = () => {
     setSelectedDateForModal(todayDateStr)
-    setShowMoodModal(true)
+    const existing = monthEntriesSelf[todayDateStr]
+    if (existing?.moodId) {
+      setShowEditConfirmModal(true)
+    } else {
+      setShowMoodModal(true)
+    }
+  }
+
+  const handleEditConfirmCancel = () => {
+    setShowEditConfirmModal(false)
+  }
+
+  const handleEditConfirmOk = () => {
+    const moodId = monthEntriesSelf[todayDateStr]?.moodId
+    setShowEditConfirmModal(false)
+    if (moodId) {
+      Taro.navigateTo({
+        url: `/pages/mood-diary/write?date=${todayDateStr}&mood=${moodId}`,
+      })
+    }
   }
 
   const handleMoodSelect = (moodId: string) => {
@@ -247,9 +267,14 @@ export default function MoodDiary() {
                     ) : null}
                   </View>
                   <View className='day-mood-row day-mood-matched'>
-                    {matchedEmoji && (
-                      <Text className='day-mood-emoji'>{matchedEmoji}</Text>
-                    )}
+                    {matchedEmoji ? (
+                      <Text
+                        className='day-mood-emoji day-mood-emoji-click'
+                        onClick={() => Taro.navigateTo({ url: '/pages/mood-diary/list' })}
+                      >
+                        {matchedEmoji}
+                      </Text>
+                    ) : null}
                   </View>
                 </View>
               </View>
@@ -290,6 +315,22 @@ export default function MoodDiary() {
                   <Text className='mood-modal-name'>{m.name}</Text>
                 </View>
               ))}
+            </View>
+          </View>
+        </View>
+      )}
+
+      {showEditConfirmModal && (
+        <View className='mood-modal-mask' onClick={handleEditConfirmCancel}>
+          <View className='edit-confirm-modal' catchMove onClick={(e) => (e as any)?.stopPropagation?.()}>
+            <Text className='edit-confirm-text'>今天的日记已经添加啦，是否要前往修改呢</Text>
+            <View className='edit-confirm-actions'>
+              <Button className='edit-confirm-btn edit-confirm-cancel' onClick={handleEditConfirmCancel}>
+                取消
+              </Button>
+              <Button className='edit-confirm-btn edit-confirm-ok' onClick={handleEditConfirmOk}>
+                确定
+              </Button>
             </View>
           </View>
         </View>
