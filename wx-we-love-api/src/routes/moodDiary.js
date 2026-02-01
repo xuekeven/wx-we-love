@@ -62,6 +62,69 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
+// 全部日记列表：本人 + 匹配对象，倒序，含作者信息与匹配对象是否已读
+router.get('/all', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const user = await User.findByPk(userId, { attributes: ['matchedUserId'] });
+    const matchedUserId = user?.matchedUserId || null;
+    const userIds = [userId];
+    if (matchedUserId) userIds.push(matchedUserId);
+
+    const list = await MoodDiary.findAll({
+      where: { userId: { [Op.in]: userIds } },
+      order: [['date', 'DESC'], ['createdAt', 'DESC']]
+    });
+
+    const toDateStr = (d) => {
+      if (!d) return '';
+      const s = String(d);
+      if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+      const date = new Date(s);
+      if (Number.isNaN(date.getTime())) return '';
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    const authorIds = [...new Set(list.map((item) => item.userId))];
+    const users = await User.findAll({
+      where: { id: { [Op.in]: authorIds } },
+      attributes: ['id', 'currentName', 'currentAvatar']
+    });
+    const userMap = {};
+    users.forEach((u) => { userMap[u.id] = u; });
+
+    const now = new Date();
+    for (const item of list) {
+      if (item.userId !== userId && item.userId === matchedUserId && !item.readByMatchedAt) {
+        await item.update({ readByMatchedAt: now });
+        item.readByMatchedAt = now;
+      }
+    }
+
+    const data = list.map((item) => {
+      const author = userMap[item.userId];
+      const isBySelf = item.userId === userId;
+      return {
+        id: item.id,
+        date: toDateStr(item.date),
+        moodId: item.moodId,
+        content: item.content || '',
+        userId: item.userId,
+        authorName: author?.currentName || '未知',
+        authorAvatar: author?.currentAvatar || '',
+        readByMatched: isBySelf ? !!item.readByMatchedAt : true
+      };
+    });
+
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
 // 保存一条心情日记（同一天同用户会覆盖）
 router.post('/', authMiddleware, async (req, res) => {
   try {

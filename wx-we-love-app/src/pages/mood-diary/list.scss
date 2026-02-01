@@ -1,0 +1,161 @@
+.mood-diary-list-page {
+  min-height: 100vh;
+  background: #FAF8FC;
+  padding: 24rpx;
+  padding-bottom: 120rpx;
+  box-sizing: border-box;
+}
+
+.list-loading,
+.list-empty {
+  padding: 80rpx 0;
+  text-align: center;
+  .list-loading-text,
+  .list-empty-text {
+    font-size: 28rpx;
+    color: #8E8E93;
+  }
+}
+
+.list-scroll {
+  height: calc(100vh - 48rpx);
+}
+
+.list-item-wrap {
+  margin-bottom: 24rpx;
+}
+
+.list-item-wave {
+  height: 24rpx;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8'%3E%3Cpath d='M0 4 Q25 0 50 4 T100 4' stroke='%23FF6B9D' stroke-width='2' fill='none'/%3E%3C/svg%3E") repeat-x;
+  background-size: 80rpx 24rpx;
+  margin-bottom: -8rpx;
+}
+
+.list-item {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+.list-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.list-item-date {
+  .list-item-day {
+    display: inline-block;
+    font-size: 48rpx;
+    font-weight: 700;
+    color: #2D2D2D;
+    line-height: 1.2;
+    padding-bottom: 8rpx;
+    border-bottom: 4rpx solid #FFB88C;
+  }
+  .list-item-month-year {
+    display: block;
+    font-size: 26rpx;
+    color: #8E8E93;
+    margin-top: 8rpx;
+  }
+}
+
+.list-item-badge {
+  padding: 8rpx 20rpx;
+  background: #FFF0E8;
+  border-radius: 32rpx;
+  .list-item-badge-text {
+    font-size: 24rpx;
+    color: #E85A3C;
+    font-weight: 500;
+  }
+}
+
+.list-item-mood {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.list-item-mood-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 16rpx;
+  background: #F5F5F5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.list-item-mood-emoji {
+  font-size: 40rpx;
+}
+
+.list-item-mood-chip {
+  padding: 12rpx 24rpx;
+  background: #FFF0E8;
+  border-radius: 32rpx;
+}
+
+.list-item-mood-name {
+  font-size: 26rpx;
+  color: #E85A3C;
+  font-weight: 500;
+}
+
+.list-item-content {
+  display: block;
+  font-size: 30rpx;
+  color: #2D2D2D;
+  line-height: 1.6;
+  margin-bottom: 24rpx;
+}
+
+.list-item-author {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.list-item-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.list-item-avatar-placeholder {
+  background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.list-item-avatar-text {
+  font-size: 28rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+.list-item-nickname {
+  flex: 1;
+  font-size: 26rpx;
+  color: #8E8E93;
+}
+
+.list-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.list-item-action-icon {
+  font-size: 32rpx;
+  color: #C7C7CC;
+}

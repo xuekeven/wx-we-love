@@ -26,6 +26,11 @@ const MoodDiary = sequelize.define('MoodDiary', {
     type: DataTypes.TEXT,
     allowNull: true,
     comment: '日记正文'
+  },
+  readByMatchedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '匹配对象阅读时间，null 表示未读'
   }
 });
 

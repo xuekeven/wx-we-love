@@ -233,7 +233,12 @@ export default function MoodDiary() {
                 <View className='day-mood'>
                   <View className='day-mood-row day-mood-self'>
                     {selfEmoji ? (
-                      <Text className='day-mood-emoji'>{selfEmoji}</Text>
+                      <Text
+                        className='day-mood-emoji day-mood-emoji-click'
+                        onClick={() => Taro.navigateTo({ url: '/pages/mood-diary/list' })}
+                      >
+                        {selfEmoji}
+                      </Text>
                     ) : showSelfCircle ? (
                       <View
                         className='day-mood-circle'
