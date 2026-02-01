@@ -6,19 +6,11 @@ import { MOODS } from './constants'
 import './write.scss'
 
 export default function MoodDiaryWrite() {
-  const [topSafeHeight, setTopSafeHeight] = useState(44)
   const [dateStr, setDateStr] = useState('')
   const [moodId, setMoodId] = useState('')
   const [content, setContent] = useState('')
   const [dateDisplay, setDateDisplay] = useState({ day: '', monthYear: '' })
   const [moodInfo, setMoodInfo] = useState<{ name: string; emoji: string } | null>(null)
-
-  useEffect(() => {
-    const sys = Taro.getSystemInfoSync() as any
-    const safeTop = sys.safeArea?.top ?? sys.safeAreaInsets?.top
-    const statusBar = sys.statusBarHeight ?? 20
-    setTopSafeHeight(typeof safeTop === 'number' ? safeTop : statusBar + 24)
-  }, [])
 
   useEffect(() => {
     const router = Taro.getCurrentInstance().router
@@ -74,23 +66,12 @@ export default function MoodDiaryWrite() {
     }
   }
 
+  const handleCancel = () => {
+    Taro.navigateBack()
+  }
+
   return (
     <View className='write-page'>
-      <View
-        className='write-nav'
-        style={{ paddingTop: `${topSafeHeight}px` }}
-      >
-        <View className='write-nav-inner'>
-          <View className='write-nav-left' onClick={() => Taro.navigateBack()}>
-            <Text className='write-nav-back'>{'<'}</Text>
-          </View>
-          <Text className='write-nav-title'>写日记</Text>
-          <Button className='write-nav-btn' onClick={handleComplete} disabled={saving}>
-            {saving ? '保存中...' : '完成'}
-          </Button>
-        </View>
-      </View>
-
       <View className='write-content'>
         <View className='write-date-row'>
           <Text className='write-date-day'>{dateDisplay.day}</Text>
@@ -115,6 +96,14 @@ export default function MoodDiaryWrite() {
           placeholderClass='write-textarea-placeholder'
           autoHeight
         />
+      </View>
+      <View className='write-actions'>
+        <Button className='write-cancel-btn' onClick={handleCancel} disabled={saving}>
+          取消
+        </Button>
+        <Button className='write-complete-btn' onClick={handleComplete} disabled={saving}>
+          {saving ? '保存中...' : '完成'}
+        </Button>
       </View>
     </View>
   )

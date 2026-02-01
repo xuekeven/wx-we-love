@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components'
+import { View, Text, Button } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { get } from '../../utils/request'
@@ -17,7 +17,6 @@ function getFirstWeekday(year: number, month: number) {
 }
 
 export default function MoodDiary() {
-  const [topSafeHeight, setTopSafeHeight] = useState(44)
   const [displayYear, setDisplayYear] = useState(new Date().getFullYear())
   const [displayMonth, setDisplayMonth] = useState(new Date().getMonth() + 1)
   const [touchStartX, setTouchStartX] = useState(0)
@@ -30,13 +29,6 @@ export default function MoodDiary() {
   const today = useMemo(() => {
     const d = new Date()
     return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() }
-  }, [])
-
-  useEffect(() => {
-    const sys = Taro.getSystemInfoSync() as any
-    const safeTop = sys.safeArea?.top ?? sys.safeAreaInsets?.top
-    const statusBar = sys.statusBarHeight ?? 20
-    setTopSafeHeight(typeof safeTop === 'number' ? safeTop : statusBar + 24)
   }, [])
 
   const loadMonthEntries = async () => {
@@ -202,23 +194,14 @@ export default function MoodDiary() {
 
   return (
     <View className='mood-diary-page'>
-      <View
-        className='custom-nav'
-        style={{ paddingTop: `${topSafeHeight}px` }}
-      >
-        <View className='nav-inner'>
-          <View className='nav-left' onClick={() => Taro.navigateBack()}>
-            <Text className='nav-back'>{'<'}</Text>
+      <View className='page-header'>
+        <View className='page-header-row'>
+          <View className='page-header-left'>
+            <Text className='page-header-month'>{displayMonth}月</Text>
+            <Text className='page-header-year'>{displayYear}年</Text>
           </View>
-          <View className='nav-center'>
-            <Text className='nav-month'>{displayMonth}月</Text>
-            <Text className='nav-year'>{displayYear}年</Text>
-          </View>
-          <View className='nav-right'>
-            <Text className='nav-today' onClick={goToday}>
-              今天
-            </Text>
-            <Text className='nav-icon'>☀️</Text>
+          <View className='page-header-right' onClick={goToday}>
+            <Button className='page-header-today'>回到今天</Button>
           </View>
         </View>
       </View>
