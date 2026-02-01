@@ -54,11 +54,7 @@ wx-we-love-app/
 ├── src/
 │   ├── pages/          # 页面
 │   │   ├── index/      # 主页
-│   │   ├── wishlist/   # 心愿清单
-│   │   ├── date-record/# 约会记录
 │   │   ├── anniversary/# 纪念日
-│   │   ├── notebook/   # 记事本
-│   │   ├── piggy-bank/ # 存钱罐
 │   │   ├── menstrual/  # 经期记录
 │   │   ├── moment/     # Moment(开发中)
 │   │   └── my/         # 我的

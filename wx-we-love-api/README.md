@@ -17,28 +17,11 @@
 - 功能排序设置
 
 ### 核心功能API
-1. **心愿清单** `/api/wishlist`
-   - 增删改查心愿
-   - 更新完成状态
-
-2. **约会记录** `/api/date-records`
-   - 记录约会详情
-   - 上传照片
-   - 评分系统
-
-3. **纪念日** `/api/anniversaries`
+1. **纪念日** `/api/anniversaries`
    - 管理重要日期
    - 提醒设置
 
-4. **记事本** `/api/notes`
-   - 笔记增删改查
-   - 心情记录
-
-5. **存钱罐** `/api/piggy-bank`
-   - 收支记录
-   - 余额统计
-
-6. **经期记录** `/api/menstrual`
+2. **经期记录** `/api/menstrual`
    - 经期记录管理
    - 周期预测
 
@@ -76,32 +59,10 @@ npm start
 - `POST /api/user/info` - 更新用户信息
 - `POST /api/user/function-order` - 更新功能排序
 
-### 心愿清单
-- `GET /api/wishlist` - 获取心愿列表
-- `POST /api/wishlist` - 添加心愿
-- `POST /api/wishlist/:id/status` - 更新状态
-- `DELETE /api/wishlist/:id` - 删除心愿
-
-### 约会记录
-- `GET /api/date-records` - 获取记录
-- `POST /api/date-records` - 添加记录
-- `DELETE /api/date-records/:id` - 删除记录
-
 ### 纪念日
 - `GET /api/anniversaries` - 获取纪念日
 - `POST /api/anniversaries` - 添加纪念日
 - `DELETE /api/anniversaries/:id` - 删除纪念日
-
-### 记事本
-- `GET /api/notes` - 获取笔记
-- `POST /api/notes` - 添加笔记
-- `PUT /api/notes/:id` - 更新笔记
-- `DELETE /api/notes/:id` - 删除笔记
-
-### 存钱罐
-- `GET /api/piggy-bank` - 获取记录
-- `POST /api/piggy-bank` - 添加记录
-- `DELETE /api/piggy-bank/:id` - 删除记录
 
 ### 经期记录
 - `GET /api/menstrual` - 获取记录列表

@@ -35,11 +35,7 @@ app.use((req, res, next) => {
 // 路由
 app.use('/api/user', require('./routes/user'));
 app.use('/api/upload', require('./routes/upload'));
-app.use('/api/wishlist', require('./routes/wishlist'));
-app.use('/api/date-records', require('./routes/dateRecord'));
 app.use('/api/anniversaries', require('./routes/anniversary'));
-app.use('/api/notes', require('./routes/note'));
-app.use('/api/piggy-bank', require('./routes/piggyBank'));
 app.use('/api/menstrual', require('./routes/menstrual'));
 
 // 健康检查
@@ -59,11 +55,7 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       user: '/api/user',
-      wishlist: '/api/wishlist',
-      dateRecords: '/api/date-records',
       anniversaries: '/api/anniversaries',
-      notes: '/api/notes',
-      piggyBank: '/api/piggy-bank',
       menstrual: '/api/menstrual'
     }
   });

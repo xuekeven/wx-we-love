@@ -7,25 +7,27 @@ import ProfileForm from '../../components/ProfileForm'
 import { fetchUserInfo, getUserInfo, setUserData, setUserInfoPartial, getLoveDate, getCoupleNames } from '../../store/global'
 import './index.scss'
 
-// FunctionItem: { id, name, icon, path, order }
+// 第一行：3 个功能，图标在上、名称在下
+const ROW1_FUNCTIONS = [
+  { id: 'notebook', name: '心情日记', icon: '📔', path: '/pages/notebook/index' },
+  { id: 'anniversary', name: '纪念日', icon: '🎂', path: '/pages/anniversary/index' },
+  { id: 'menstrual', name: '经期记录', icon: '🌸', path: '/pages/menstrual/index' },
+]
+// 第二行：2 个功能，卡片样式（左标题右图标）
+const ROW2_FUNCTIONS = [
+  { id: 'piggy-bank', name: '一起Better', icon: '🌱', path: '/pages/piggy-bank/index' },
+  { id: 'wishlist', name: '恋爱惊喜', icon: '🎁', path: '/pages/wishlist/index' },
+]
+// 点击时仅提示「功能正在开发中」、不跳转的入口
+const DEVELOPING_IDS = ['notebook', 'piggy-bank', 'wishlist']
 
 export default function Index() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [loveDate, setLoveDate] = useState<string | null>(null)
   const [daysTogether, setDaysTogether] = useState(0)
   const [coupleNames, setCoupleNames] = useState({ name1: '张三', name2: '李四' })
-  const [isMatched, setIsMatched] = useState<boolean | null>(null) // null表示加载中，true/false表示已加载
+  const [isMatched, setIsMatched] = useState<boolean | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [functions, setFunctions] = useState([
-    { id: '1', name: '心愿清单', icon: '💝', path: '/pages/wishlist/index', order: 1 },
-    { id: '2', name: '约会记录', icon: '🌹', path: '/pages/date-record/index', order: 2 },
-    { id: '3', name: '纪念日', icon: '🎂', path: '/pages/anniversary/index', order: 3 },
-    { id: '4', name: '记事本', icon: '📝', path: '/pages/notebook/index', order: 4 },
-    { id: '6', name: '经期记录', icon: '🌸', path: '/pages/menstrual/index', order: 5 },
-    { id: '5', name: '存钱罐', icon: '🐷', path: '/pages/piggy-bank/index', order: 6 },
-  ])
-  const [longPressItem, setLongPressItem] = useState(null)
-  const [isDragging, setIsDragging] = useState(false)
   const [showLoveDateModal, setShowLoveDateModal] = useState(false)
   const [isSavingLoveDate, setIsSavingLoveDate] = useState(false)
 
@@ -84,14 +86,6 @@ export default function Index() {
         const name2 = userData.matchedName || '李四'
         setCoupleNames({ name1, name2 })
         setUserData({ loveDate: loveDateVal, coupleNames: { name1, name2 } })
-        if (userData.functionOrder && typeof userData.functionOrder === 'object') {
-          const sortedFunctions = [...functions].sort((a, b) => {
-            const orderA = userData!.functionOrder![a.id] ?? a.order
-            const orderB = userData!.functionOrder![b.id] ?? b.order
-            return orderA - orderB
-          })
-          setFunctions(sortedFunctions)
-        }
       } else {
         setIsMatched(false)
       }
@@ -109,21 +103,12 @@ export default function Index() {
     }
   }
 
-  const handleFunctionClick = (path) => {
-    if (!isDragging) {
-      Taro.navigateTo({ url: path })
+  const handleFunctionClick = (id: string, path: string) => {
+    if (DEVELOPING_IDS.includes(id)) {
+      Taro.showToast({ title: '功能正在开发中', icon: 'none' })
+      return
     }
-  }
-
-  const handleLongPress = (id) => {
-    setLongPressItem(id)
-    setIsDragging(true)
-    Taro.vibrateShort({ type: 'heavy' })
-  }
-
-  const handleTouchEnd = () => {
-    setLongPressItem(null)
-    setIsDragging(false)
+    Taro.navigateTo({ url: path })
   }
 
   // 加载中，显示空白或加载提示
@@ -207,29 +192,39 @@ export default function Index() {
           </View>
         </View>
 
-        {/* 功能区 */}
+        {/* 功能区：第一行 3 个（图标上、名称下） */}
         <View className='function-section'>
-          <View className='function-grid'>
-            {functions.map((item) => (
+          <View className='function-row function-row-1'>
+            {ROW1_FUNCTIONS.map((item) => (
               <View
                 key={item.id}
-                className={`function-item ${longPressItem === item.id ? 'shaking' : ''}`}
-                onClick={() => handleFunctionClick(item.path)}
-                onLongPress={() => handleLongPress(item.id)}
-                onTouchEnd={handleTouchEnd}
+                className='function-item-top'
+                onClick={() => handleFunctionClick(item.id, item.path)}
               >
-                <View className='function-icon-wrapper'>
+                <View className='function-icon-wrapper function-icon-circle'>
                   <Text className='function-icon'>{item.icon}</Text>
                 </View>
                 <Text className='function-name'>{item.name}</Text>
               </View>
             ))}
           </View>
-          {isDragging && (
-            <View className='drag-tip'>
-              <Text>长按拖动可调整顺序</Text>
-            </View>
-          )}
+          {/* 第二行 2 个（卡片：左标题右图标） */}
+          <View className='function-row function-row-2'>
+            {ROW2_FUNCTIONS.map((item) => (
+              <View
+                key={item.id}
+                className='function-item-card'
+                onClick={() => handleFunctionClick(item.id, item.path)}
+              >
+                <View className='function-content'>
+                  <Text className='function-name'>{item.name}</Text>
+                </View>
+                <View className='function-icon-wrapper function-icon-circle'>
+                  <Text className='function-icon'>{item.icon}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
 

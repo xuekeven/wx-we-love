@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const https = require('https');
 const crypto = require('crypto');
-const { User, Wishlist, Anniversary, Note, DateRecord, PiggyBank, Menstrual } = require('../models');
+const { User, Anniversary, Menstrual } = require('../models');
 
 // 生成匹配码（6位数字）
 function generateMatchCode() {
@@ -532,12 +532,8 @@ router.post('/unmatch', async (req, res) => {
         });
       }
 
-      // 清空两人已有的业务数据（心愿、纪念日、笔记、约会记录、存钱罐、经期等），重新匹配后需重新开始
-      await Wishlist.destroy({ where: {} });
+      // 清空两人已有的业务数据（纪念日、经期等），重新匹配后需重新开始
       await Anniversary.destroy({ where: {} });
-      await Note.destroy({ where: {} });
-      await DateRecord.destroy({ where: {} });
-      await PiggyBank.destroy({ where: {} });
       await Menstrual.destroy({ where: {} });
 
       res.json({
