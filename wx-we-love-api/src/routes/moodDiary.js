@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { MoodDiary, User } = require('../models');
+const { MoodDiary, MoodDiaryComment, User } = require('../models');
 const authMiddleware = require('../middleware/auth');
 const { Op } = require('sequelize');
 
@@ -104,6 +104,48 @@ router.get('/all', authMiddleware, async (req, res) => {
       }
     }
 
+    const diaryIds = list.map((item) => item.id);
+    const comments = diaryIds.length
+      ? await MoodDiaryComment.findAll({
+          where: { moodDiaryId: { [Op.in]: diaryIds } },
+          order: [['createdAt', 'ASC']]
+        })
+      : [];
+    const commentUserIds = [...new Set(comments.map((c) => c.userId))];
+    const commentUsers = commentUserIds.length
+      ? await User.findAll({
+          where: { id: { [Op.in]: commentUserIds } },
+          attributes: ['id', 'currentName']
+        })
+      : [];
+    const commentUserMap = {};
+    commentUsers.forEach((u) => { commentUserMap[u.id] = u; });
+
+    const formatCommentTime = (d) => {
+      const date = new Date(d);
+      const now = new Date();
+      const today = now.getFullYear() === date.getFullYear() && now.getMonth() === date.getMonth() && now.getDate() === date.getDate();
+      const h = String(date.getHours()).padStart(2, '0');
+      const min = String(date.getMinutes()).padStart(2, '0');
+      if (today) return `今天 ${h}:${min}`;
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${m}-${day} ${h}:${min}`;
+    };
+
+    const commentsByDiary = {};
+    diaryIds.forEach((id) => { commentsByDiary[id] = []; });
+    comments.forEach((c) => {
+      const u = commentUserMap[c.userId];
+      commentsByDiary[c.moodDiaryId].push({
+        id: c.id,
+        userId: c.userId,
+        authorName: u?.currentName || '未知',
+        content: c.content,
+        createdAt: formatCommentTime(c.createdAt)
+      });
+    });
+
     const data = list.map((item) => {
       const author = userMap[item.userId];
       const isBySelf = item.userId === userId;
@@ -115,11 +157,113 @@ router.get('/all', authMiddleware, async (req, res) => {
         userId: item.userId,
         authorName: author?.currentName || '未知',
         authorAvatar: author?.currentAvatar || '',
-        readByMatched: isBySelf ? !!item.readByMatchedAt : true
+        readByMatched: isBySelf ? !!item.readByMatchedAt : true,
+        comments: commentsByDiary[item.id] || []
       };
     });
 
     res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// 获取某条日记的评论列表（可选，用于提交评论后刷新）
+router.get('/comments', authMiddleware, async (req, res) => {
+  try {
+    const { diaryId } = req.query;
+    const userId = req.userId;
+    if (!diaryId) {
+      return res.status(400).json({ success: false, message: '缺少 diaryId 参数' });
+    }
+    const diary = await MoodDiary.findByPk(diaryId);
+    if (!diary) {
+      return res.status(404).json({ success: false, message: '日记不存在' });
+    }
+    const user = await User.findByPk(userId, { attributes: ['matchedUserId'] });
+    const matchedUserId = user?.matchedUserId || null;
+    const allowed = diary.userId === userId || diary.userId === matchedUserId;
+    if (!allowed) {
+      return res.status(403).json({ success: false, message: '无权查看' });
+    }
+    const list = await MoodDiaryComment.findAll({
+      where: { moodDiaryId: diaryId },
+      order: [['createdAt', 'ASC']]
+    });
+    const userIds = [...new Set(list.map((c) => c.userId))];
+    const users = userIds.length
+      ? await User.findAll({ where: { id: { [Op.in]: userIds } }, attributes: ['id', 'currentName'] })
+      : [];
+    const userMap = {};
+    users.forEach((u) => { userMap[u.id] = u; });
+    const formatTime = (d) => {
+      const date = new Date(d);
+      const now = new Date();
+      const today = now.getFullYear() === date.getFullYear() && now.getMonth() === date.getMonth() && now.getDate() === date.getDate();
+      const h = String(date.getHours()).padStart(2, '0');
+      const min = String(date.getMinutes()).padStart(2, '0');
+      if (today) return `今天 ${h}:${min}`;
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${m}-${day} ${h}:${min}`;
+    };
+    const data = list.map((c) => ({
+      id: c.id,
+      userId: c.userId,
+      authorName: userMap[c.userId]?.currentName || '未知',
+      content: c.content,
+      createdAt: formatTime(c.createdAt)
+    }));
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// 发表评论
+router.post('/comment', authMiddleware, async (req, res) => {
+  try {
+    const { diaryId, content } = req.body;
+    const userId = req.userId;
+    if (!diaryId || content == null || String(content).trim() === '') {
+      return res.status(400).json({ success: false, message: '缺少 diaryId 或 content' });
+    }
+    const diary = await MoodDiary.findByPk(diaryId);
+    if (!diary) {
+      return res.status(404).json({ success: false, message: '日记不存在' });
+    }
+    const user = await User.findByPk(userId, { attributes: ['matchedUserId'] });
+    const matchedUserId = user?.matchedUserId || null;
+    const allowed = diary.userId === userId || diary.userId === matchedUserId;
+    if (!allowed) {
+      return res.status(403).json({ success: false, message: '无权评论' });
+    }
+    const row = await MoodDiaryComment.create({
+      moodDiaryId: diaryId,
+      userId,
+      content: String(content).trim().slice(0, 500)
+    });
+    res.json({ success: true, message: '评论成功', data: row });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// 删除日记（仅作者可删）
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const diary = await MoodDiary.findByPk(id);
+    if (!diary) {
+      return res.status(404).json({ success: false, message: '日记不存在' });
+    }
+    if (diary.userId !== userId) {
+      return res.status(403).json({ success: false, message: '只能删除自己的日记' });
+    }
+    await MoodDiaryComment.destroy({ where: { moodDiaryId: id } });
+    await diary.destroy();
+    res.json({ success: true, message: '删除成功' });
   } catch (error) {
     res.status(500).json({ success: false, message: '服务器错误' });
   }
