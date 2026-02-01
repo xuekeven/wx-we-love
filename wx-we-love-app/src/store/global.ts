@@ -32,8 +32,13 @@ export function getUserInfo(): UserInfoData | null {
 
 /**
  * 拉取用户信息：有缓存则直接返回，否则请求一次并缓存（并发调用共用一个请求）
+ * @param forceRefresh 为 true 时忽略缓存，强制请求接口
  */
-export async function fetchUserInfo(): Promise<UserInfoData | null> {
+export async function fetchUserInfo(forceRefresh?: boolean): Promise<UserInfoData | null> {
+  if (forceRefresh) {
+    userInfoCache = null
+    fetchPromise = null
+  }
   if (userInfoCache) return userInfoCache
   if (fetchPromise) return fetchPromise
   fetchPromise = (async () => {

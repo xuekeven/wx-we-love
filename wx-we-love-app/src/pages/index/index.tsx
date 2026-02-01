@@ -9,7 +9,7 @@ import './index.scss'
 
 // 第一行：3 个功能，图标在上、名称在下
 const ROW1_FUNCTIONS = [
-  { id: 'notebook', name: '心情日记', icon: '📔', path: '/pages/notebook/index' },
+  { id: 'mood-diary', name: '心情日记', icon: '📔', path: '/pages/mood-diary/index' },
   { id: 'anniversary', name: '纪念日', icon: '🎂', path: '/pages/anniversary/index' },
   { id: 'menstrual', name: '经期记录', icon: '🌸', path: '/pages/menstrual/index' },
 ]
@@ -19,7 +19,7 @@ const ROW2_FUNCTIONS = [
   { id: 'wishlist', name: '恋爱惊喜', icon: '🎁', path: '/pages/wishlist/index' },
 ]
 // 点击时仅提示「功能正在开发中」、不跳转的入口
-const DEVELOPING_IDS = ['notebook', 'piggy-bank', 'wishlist']
+const DEVELOPING_IDS = ['piggy-bank', 'wishlist']
 
 export default function Index() {
   const [currentDate, setCurrentDate] = useState(new Date())

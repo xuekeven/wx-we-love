@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
 const { sequelize } = require('./models');
+const authMiddleware = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -37,6 +38,7 @@ app.use('/api/user', require('./routes/user'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/anniversaries', require('./routes/anniversary'));
 app.use('/api/menstrual', require('./routes/menstrual'));
+app.use('/api/mood-diary', authMiddleware, require('./routes/moodDiary'));
 
 // 健康检查
 app.get('/health', (req, res) => {
@@ -56,7 +58,8 @@ app.get('/', (req, res) => {
       health: '/health',
       user: '/api/user',
       anniversaries: '/api/anniversaries',
-      menstrual: '/api/menstrual'
+      menstrual: '/api/menstrual',
+      moodDiary: '/api/mood-diary'
     }
   });
 });

@@ -1,0 +1,142 @@
+.write-page {
+  min-height: 100vh;
+  background: #FAF8FC;
+  padding-bottom: 80rpx;
+  box-sizing: border-box;
+}
+
+.write-nav {
+  background: #FAF8FC;
+  padding-bottom: 24rpx;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  .write-nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 88rpx;
+    padding: 0 24rpx;
+  }
+
+  .write-nav-left {
+    width: 100rpx;
+    .write-nav-back {
+      font-size: 44rpx;
+      font-weight: 600;
+      color: #2D2D2D;
+    }
+  }
+
+  .write-nav-title {
+    font-size: 36rpx;
+    font-weight: 700;
+    color: #2D2D2D;
+  }
+
+  .write-nav-btn {
+    width: 120rpx;
+    height: 64rpx;
+    line-height: 64rpx;
+    padding: 0;
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #FFB88C 0%, #FF9A6C 100%);
+    border-radius: 32rpx;
+    border: none;
+
+    &::after {
+      border: none;
+    }
+  }
+}
+
+.write-content {
+  margin: 0 24rpx;
+  padding: 32rpx;
+  background: #fff;
+  border: 2rpx solid #FFB88C;
+  border-radius: 24rpx;
+  min-height: 60vh;
+  box-sizing: border-box;
+}
+
+.write-date-row {
+  margin-bottom: 24rpx;
+  .write-date-day {
+    font-size: 48rpx;
+    font-weight: 700;
+    color: #2D2D2D;
+  }
+  .write-date-rest {
+    font-size: 28rpx;
+    color: #8E8E93;
+  }
+}
+
+.write-mood-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 32rpx;
+
+  .write-mood-icon {
+    width: 72rpx;
+    height: 72rpx;
+    border-radius: 16rpx;
+    background: #F5F5F5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .write-mood-emoji {
+    font-size: 40rpx;
+  }
+  .write-mood-chip {
+    padding: 12rpx 24rpx;
+    background: #FFF0E8;
+    border-radius: 32rpx;
+  }
+  .write-mood-name {
+    font-size: 26rpx;
+    color: #E85A3C;
+    font-weight: 500;
+  }
+}
+
+.write-placeholder {
+  display: block;
+  font-size: 26rpx;
+  color: #C7C7CC;
+  margin-bottom: 24rpx;
+}
+
+.write-textarea {
+  width: 100%;
+  min-height: 320rpx;
+  font-size: 30rpx;
+  color: #2D2D2D;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.write-add-media {
+  margin-top: 32rpx;
+  .write-add-btn {
+    width: 96rpx;
+    height: 96rpx;
+    border-radius: 16rpx;
+    background: #F5F5F5;
+    border: 2rpx dashed #D0D0D0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .write-add-icon {
+    font-size: 48rpx;
+    color: #8E8E93;
+    font-weight: 300;
+  }
+}

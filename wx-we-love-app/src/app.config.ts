@@ -4,6 +4,8 @@ export default {
     'pages/login/index',
     'pages/match/index',
     'pages/anniversary/index',
+    'pages/mood-diary/index',
+    'pages/mood-diary/write',
     'pages/menstrual/index',
     'pages/menstrual/add',
     'pages/moment/index',

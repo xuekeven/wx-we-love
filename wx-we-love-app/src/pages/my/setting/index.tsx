@@ -30,6 +30,7 @@ export default function Setting() {
           try {
             const unmatchRes = await post('/api/user/unmatch', {})
             if (unmatchRes && unmatchRes.success) {
+              clearUserData()
               Taro.showToast({
                 title: '解绑成功',
                 icon: 'success',

@@ -10,6 +10,12 @@ export const getWeekDay = (date) => {
   return weekDays[date.getDay()]
 }
 
+/** 星期X 格式：星期天、星期一…星期六 */
+export const getWeekDayLong = (date) => {
+  const weekDays = ['星期天', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+  return weekDays[date.getDay()]
+}
+
 // 计算当年第几周（从1月1日开始计算）
 export const getWeekOfYear = (date) => {
   const year = date.getFullYear()

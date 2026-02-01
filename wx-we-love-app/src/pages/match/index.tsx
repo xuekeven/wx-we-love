@@ -106,15 +106,15 @@ export default function Match() {
     try {
       const res = await post('/api/user/match', { matchCode: matchCode.trim() })
       if (res && res.success && res.data) {
+        await fetchUserInfo(true)
         Taro.showToast({
           title: '匹配成功！',
           icon: 'success',
-          duration: 2000
+          duration: 1500
         })
-
         setTimeout(() => {
           Taro.switchTab({ url: '/pages/index/index' })
-        }, 2000)
+        }, 1500)
       } else {
         Taro.showToast({
           title: res?.message || '匹配失败',
@@ -148,9 +148,31 @@ export default function Match() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
-    await loadUserInfo()
-    setIsRefreshing(false)
-    Taro.showToast({ title: '已刷新', icon: 'success' })
+    try {
+      const token = Taro.getStorageSync('token')
+      if (!token) {
+        Taro.redirectTo({ url: '/pages/login/index' })
+        return
+      }
+      const data = await fetchUserInfo(true)
+      if (data?.isMatched) {
+        Taro.showToast({ title: '已匹配，正在跳转', icon: 'success' })
+        Taro.switchTab({ url: '/pages/index/index' })
+        return
+      }
+      setMyMatchCode(data?.matchCode || '')
+      Taro.showToast({ title: '已刷新', icon: 'success' })
+    } catch (error) {
+      console.error('刷新失败:', error)
+      if (error.statusCode === 401 || error.statusCode === 404) {
+        Taro.removeStorageSync('token')
+        Taro.redirectTo({ url: '/pages/login/index' })
+        return
+      }
+      Taro.showToast({ title: '刷新失败，请重试', icon: 'none' })
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   return (
