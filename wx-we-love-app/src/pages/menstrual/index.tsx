@@ -1,6 +1,6 @@
 import { View, Text, Button, ScrollView, Picker } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useDidShow } from '@tarojs/taro'
 import { get, post, del } from '../../utils/request'
 import { formatDate } from '../../utils/date'
@@ -13,14 +13,19 @@ export default function Menstrual() {
   const [nextPrediction, setNextPrediction] = useState(null)
   const [averageCycle, setAverageCycle] = useState(28)
   const [currentPhase, setCurrentPhase] = useState('')
+  const hasShownRef = useRef(false)
 
   useEffect(() => {
     loadRecords()
   }, [])
 
-  // 页面显示时刷新数据（从添加/编辑页面返回时）
+  // 页面显示时刷新数据（从添加/编辑页面返回时）；首次进入不重复请求
   useDidShow(() => {
-    loadRecords()
+    if (hasShownRef.current) {
+      loadRecords()
+    } else {
+      hasShownRef.current = true
+    }
   })
 
   useEffect(() => {
@@ -80,20 +85,30 @@ export default function Menstrual() {
     })
   }
 
-  // 计算当前阶段
+  // 计算当前阶段：月经期仅当今天在「开始日期～结束日期」区间内
   const calculatePhase = () => {
     if (records.length === 0) return
-    
+
     const lastRecord = records[0]
-    const lastDate = new Date(lastRecord.startDate)
+    const start = new Date(lastRecord.startDate)
+    const end = lastRecord.endDate
+      ? new Date(lastRecord.endDate)
+      : new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000)
     const today = new Date()
-    const daysSince = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24))
-    
-    if (daysSince < 0) {
+    start.setHours(0, 0, 0, 0)
+    end.setHours(23, 59, 59, 999)
+    today.setHours(12, 0, 0, 0)
+
+    if (today < start) {
       setCurrentPhase('等待中')
-    } else if (daysSince <= 7) {
+      return
+    }
+    if (today >= start && today <= end) {
       setCurrentPhase('月经期')
-    } else if (daysSince <= 14) {
+      return
+    }
+    const daysSince = Math.floor((today - start) / (1000 * 60 * 60 * 24))
+    if (daysSince <= 14) {
       setCurrentPhase('卵泡期')
     } else if (daysSince <= 16) {
       setCurrentPhase('排卵期')
@@ -149,7 +164,6 @@ export default function Menstrual() {
     <View className='menstrual-page'>
       <View className='page-header'>
         <Text className='page-title'>🌸 经期记录</Text>
-        <Text className='page-subtitle'>关爱女性健康</Text>
       </View>
 
       {/* 周期统计卡片 */}
@@ -187,7 +201,7 @@ export default function Menstrual() {
 
       <Button className='add-btn' onClick={handleAdd}>
         <Text className='add-icon'>+</Text>
-        <Text>记录本次月经</Text>
+        <Text>记录月经</Text>
       </Button>
 
       <ScrollView scrollY className='record-list'>
@@ -201,10 +215,13 @@ export default function Menstrual() {
               <View className='record-date-info'>
                 <Text className='record-start-date'>
                   {formatDate(new Date(record.startDate))}
+                  {record.endDate
+                    ? ` - ${formatDate(new Date(record.endDate))}`
+                    : ''}
                 </Text>
                 {record.endDate && (
                   <Text className='record-duration'>
-                    持续 {Math.ceil((new Date(record.endDate) - new Date(record.startDate)) / (1000 * 60 * 60 * 24))} 天
+                    持续 {Math.ceil((new Date(record.endDate) - new Date(record.startDate)) / (1000 * 60 * 60 * 24)) + 1} 天
                   </Text>
                 )}
               </View>

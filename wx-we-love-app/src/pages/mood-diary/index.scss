@@ -97,6 +97,12 @@
       color: #2D2D2D;
       flex-shrink: 0;
       margin-bottom: 8rpx;
+      width: 56rpx;
+      height: 56rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
     }
     .day-mood {
       flex: 1;
@@ -138,13 +144,8 @@
     &.today .day-num {
       background: #FF6B9D;
       color: #fff;
-      width: 56rpx;
-      height: 56rpx;
-      line-height: 56rpx;
-      text-align: center;
       border-radius: 50%;
       font-weight: 600;
-      margin-bottom: 8rpx;
     }
   }
 }
