@@ -13,14 +13,12 @@ function generateMatchCode() {
 // 通过 code 换取 openId 和 session_key
 function getOpenIdByCode(code) {
   return new Promise((resolve, reject) => {
-    // 生产环境：需要配置小程序的 appid 和 secret
+    // 必须配置小程序 appid 和 secret
     const appid = process.env.WX_APPID || '';
     const secret = process.env.WX_SECRET || '';
     
     if (!appid || !secret) {
-      // 开发环境：如果没有配置，使用 code 作为 openId（仅用于开发测试）
-      console.warn('⚠️  警告：未配置微信小程序 appid 和 secret，使用开发模式');
-      resolve({ openId: code, sessionKey: null });
+      reject(new Error('未配置 WX_APPID 或 WX_SECRET'));
       return;
     }
 
