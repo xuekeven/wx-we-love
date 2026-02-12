@@ -3,6 +3,28 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
+
+function hasEnv(name) {
+  const v = process.env[name];
+  return typeof v === 'string' && v.trim().length > 0;
+}
+
+const envCheck = {
+  WX_APPID: hasEnv('WX_APPID'),
+  WX_SECRET: hasEnv('WX_SECRET'),
+  JWT_SECRET: hasEnv('JWT_SECRET'),
+};
+
+console.log('[startup] env check:', {
+  WX_APPID: envCheck.WX_APPID ? 'SET' : 'MISSING',
+  WX_SECRET: envCheck.WX_SECRET ? 'SET' : 'MISSING',
+  JWT_SECRET: envCheck.JWT_SECRET ? 'SET' : 'MISSING',
+});
+
+if (!envCheck.WX_APPID || !envCheck.WX_SECRET) {
+  console.warn('[startup] WeChat login will fail: WX_APPID/WX_SECRET is missing.');
+}
+
 const { sequelize } = require('./models');
 const authMiddleware = require('./middleware/auth');
 
