@@ -2,20 +2,39 @@ import { View, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { post } from '../../../utils/request'
-import { getUserInfo, clearUserData } from '../../../store/global'
+import { getUserInfo, fetchUserInfo, clearUserData, setPreviewMode, usePreviewMode } from '../../../store/global'
+import PreviewBanner from '../../../components/PreviewBanner'
+import { PREVIEW } from '../../../config/preview'
 import './index.scss'
 
 export default function Setting() {
   const [isMatched, setIsMatched] = useState(false)
   const [isUnmatching, setIsUnmatching] = useState(false)
+  const isPreview = usePreviewMode()
 
   useEffect(() => {
     loadMatchStatus()
   }, [])
 
-  const loadMatchStatus = () => {
-    const data = getUserInfo()
-    if (data) setIsMatched(data.isMatched || false)
+  const loadMatchStatus = async () => {
+    try {
+      const token = Taro.getStorageSync('token')
+      if (!token) {
+        setPreviewMode(true)
+        setIsMatched(false)
+        return
+      }
+      setPreviewMode(false)
+      let data = getUserInfo()
+      if (!data) data = await fetchUserInfo()
+      if (data) {
+        setIsMatched(data.isMatched || false)
+      } else {
+        setIsMatched(false)
+      }
+    } catch (error) {
+      setIsMatched(false)
+    }
   }
 
   const handleUnmatch = () => {
@@ -60,6 +79,11 @@ export default function Setting() {
   }
 
   const handleLogout = () => {
+    const token = Taro.getStorageSync('token')
+    if (!token) {
+      Taro.navigateTo({ url: '/pages/login/index' })
+      return
+    }
     Taro.showModal({
       title: '确认退出',
       content: '确定要退出登录吗？',
@@ -68,6 +92,7 @@ export default function Setting() {
           Taro.removeStorageSync('token')
           Taro.removeStorageSync('userInfo')
           clearUserData()
+          setPreviewMode(false)
           Taro.showToast({ title: '已退出', icon: 'success' })
           setTimeout(() => {
             Taro.redirectTo({ url: '/pages/login/index' })
@@ -79,6 +104,13 @@ export default function Setting() {
 
   return (
     <View className='setting-page'>
+      {isPreview && (
+        <PreviewBanner
+          text={PREVIEW.setting}
+          buttonText={PREVIEW.loginButtonText}
+          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
+        />
+      )}
       {isMatched && (
         <View className='setting-section'>
           <Button

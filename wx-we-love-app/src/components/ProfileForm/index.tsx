@@ -8,8 +8,13 @@ import './index.scss'
 const isLocalTempAvatar = (url) => {
   if (!url || typeof url !== 'string') return false
   const u = url.trim().toLowerCase()
+  if (!u) return false
+  if (u.startsWith('wxfile://') || u.startsWith('file://')) return true
+  if (u.startsWith('/tmp/') || u.startsWith('tmp/')) return true
+  // 微信临时地址常见为 http(s)://tmp/...
+  if (/^https?:\/\/tmp([/:]|$)/.test(u)) return true
   if (u.startsWith('http://') || u.startsWith('https://')) return false
-  return u.startsWith('wxfile://') || u.startsWith('http://tmp/')
+  return true
 }
 
 export interface ProfileFormProps {

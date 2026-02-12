@@ -1,9 +1,12 @@
-import { View, Text, Button, ScrollView, Picker } from '@tarojs/components'
+import { View, Text, Button, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect, useRef } from 'react'
 import { useDidShow } from '@tarojs/taro'
-import { get, post, del } from '../../utils/request'
+import { get, del } from '../../utils/request'
 import { formatDate } from '../../utils/date'
+import PreviewBanner from '../../components/PreviewBanner'
+import { PREVIEW } from '../../config/preview'
+import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
 // MenstrualRecord: { id, startDate, endDate, cycleLength, symptoms, note, createdAt }
@@ -13,6 +16,7 @@ export default function Menstrual() {
   const [nextPrediction, setNextPrediction] = useState(null)
   const [averageCycle, setAverageCycle] = useState(28)
   const [currentPhase, setCurrentPhase] = useState('')
+  const isPreview = usePreviewMode()
   const hasShownRef = useRef(false)
 
   useEffect(() => {
@@ -38,6 +42,29 @@ export default function Menstrual() {
 
   const loadRecords = async () => {
     try {
+      const token = Taro.getStorageSync('token')
+      if (!token) {
+        setPreviewMode(true)
+        const today = new Date()
+        const fmt = (d: Date) => {
+          const y = d.getFullYear()
+          const m = String(d.getMonth() + 1).padStart(2, '0')
+          const day = String(d.getDate()).padStart(2, '0')
+          return `${y}-${m}-${day}`
+        }
+        const addDays = (d: Date, days: number) => new Date(d.getTime() + days * 24 * 60 * 60 * 1000)
+        const cycle = 28
+        const lastStart = addDays(today, -10)
+        const lastEnd = addDays(lastStart, 4)
+        const prevStart = addDays(lastStart, -cycle)
+        const prevEnd = addDays(prevStart, 4)
+        setRecords([
+          { id: 'p1', startDate: fmt(lastStart), endDate: fmt(lastEnd), cycleLength: cycle, symptoms: ['轻微腹痛', '疲劳乏力'], note: '注意休息' },
+          { id: 'p2', startDate: fmt(prevStart), endDate: fmt(prevEnd), cycleLength: cycle, symptoms: ['情绪波动'], note: '' }
+        ])
+        return
+      }
+      setPreviewMode(false)
       const res = await get('/api/menstrual')
       if (res && res.success && res.data && Array.isArray(res.data)) {
         setRecords(res.data)
@@ -120,10 +147,34 @@ export default function Menstrual() {
   }
 
   const handleAdd = () => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后可记录与管理经期信息，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     Taro.navigateTo({ url: '/pages/menstrual/add' })
   }
 
   const handleEdit = (record) => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后才可编辑记录，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     // 将记录数据编码为JSON字符串，通过URL参数传递
     const recordData = encodeURIComponent(JSON.stringify(record))
     Taro.navigateTo({
@@ -132,6 +183,18 @@ export default function Menstrual() {
   }
 
   const handleDelete = async (id) => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后才可删除记录，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     Taro.showModal({
       title: '确认删除',
       content: '确定要删除这条记录吗？',
@@ -162,6 +225,13 @@ export default function Menstrual() {
 
   return (
     <View className='menstrual-page'>
+      {isPreview && (
+        <PreviewBanner
+          text={PREVIEW.menstrual}
+          buttonText={PREVIEW.loginButtonText}
+          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
+        />
+      )}
       <View className='page-header'>
         <Text className='page-title'>🌸 经期记录</Text>
       </View>
@@ -270,4 +340,3 @@ export default function Menstrual() {
     </View>
   )
 }
-

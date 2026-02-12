@@ -1,29 +1,39 @@
 import { View, Text, Image } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { post } from '../../utils/request'
 import { getDaysDiff } from '../../utils/date'
 import ProfileForm from '../../components/ProfileForm'
-import { fetchUserInfo, getUserInfo, setUserInfoPartial } from '../../store/global'
+import PreviewBanner from '../../components/PreviewBanner'
+import { PREVIEW } from '../../config/preview'
+import { fetchUserInfo, getUserInfo, setUserInfoPartial, setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
 // 展示用：当前用户 name1/avatar1，匹配对象 name2/avatar2（来自接口 current*/matched*）
+const PREVIEW_USER_INFO = {
+  avatar1: 'https://via.placeholder.com/150',
+  avatar2: 'https://via.placeholder.com/150',
+  name1: '张三',
+  name2: '李四',
+  loveDate: '2025-10-11'
+}
 
 export default function My() {
   const [userInfo, setUserInfo] = useState({
-    avatar1: 'https://via.placeholder.com/150',
-    avatar2: 'https://via.placeholder.com/150',
-    name1: '张三',
-    name2: '李四',
-    loveDate: '2025-10-11'
+    ...PREVIEW_USER_INFO
   })
   const [daysTogether, setDaysTogether] = useState(0)
   const [showEditProfileModal, setShowEditProfileModal] = useState(false)
   const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const isPreview = usePreviewMode()
 
   useEffect(() => {
     loadUserInfo()
   }, [])
+
+  useDidShow(() => {
+    loadUserInfo()
+  })
 
   useEffect(() => {
     if (userInfo.loveDate) {
@@ -33,6 +43,13 @@ export default function My() {
 
   const loadUserInfo = async () => {
     try {
+      const token = Taro.getStorageSync('token')
+      if (!token) {
+        setPreviewMode(true)
+        setUserInfo(PREVIEW_USER_INFO)
+        return
+      }
+      setPreviewMode(false)
       let data = getUserInfo()
       if (!data) data = await fetchUserInfo()
       if (data) {
@@ -50,6 +67,19 @@ export default function My() {
   }
 
   const handleEditProfile = () => {
+    const token = Taro.getStorageSync('token')
+    if (!token) {
+      Taro.showModal({
+        title: '登录后操作',
+        content: '编辑资料需要先登录，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     setShowEditProfileModal(true)
   }
 
@@ -83,6 +113,13 @@ export default function My() {
 
   return (
     <View className='my-page'>
+      {isPreview && (
+        <PreviewBanner
+          text={PREVIEW.my}
+          buttonText={PREVIEW.loginButtonText}
+          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
+        />
+      )}
       {/* 顶部卡片 */}
       <View className='profile-card'>
         <View className='couple-avatars'>
@@ -159,4 +196,3 @@ export default function My() {
     </View>
   )
 }
-

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import Taro from '@tarojs/taro'
-import { fetchUserInfo, clearUserData } from './store/global'
+import { fetchUserInfo, clearUserData, getPreviewMode, setPreviewMode } from './store/global'
 import './app.scss'
 
 function App(props) {
@@ -17,13 +17,15 @@ function App(props) {
     const currentRoute = currentPages[currentPages.length - 1]?.route
 
     if (!token) {
-      if (currentRoute !== 'pages/login/index' && currentRoute !== 'pages/match/index') {
+      const isPreview = getPreviewMode()
+      if (!isPreview && currentRoute !== 'pages/login/index') {
         Taro.redirectTo({ url: '/pages/login/index' })
       }
       return
     }
 
     try {
+      setPreviewMode(false)
       const data = await fetchUserInfo()
       if (data) {
         if (data.isMatched) {
@@ -33,7 +35,7 @@ function App(props) {
         } else {
           if (currentRoute !== 'pages/match/index' && !currentRoute?.includes('login')) {
             const tabBarPages = ['pages/index/index', 'pages/moment/index', 'pages/my/index']
-            if (!tabBarPages.includes(currentRoute)) {
+            if (currentRoute && !tabBarPages.includes(currentRoute)) {
               Taro.redirectTo({ url: '/pages/match/index' })
             }
           }
@@ -44,12 +46,14 @@ function App(props) {
       if (error.statusCode === 401 || error.statusCode === 404) {
         Taro.removeStorageSync('token')
         clearUserData()
+        setPreviewMode(false)
         if (currentRoute !== 'pages/login/index') {
           Taro.redirectTo({ url: '/pages/login/index' })
         }
       } else if (error.message && (error.message.includes('未登录') || error.message.includes('Token无效'))) {
         Taro.removeStorageSync('token')
         clearUserData()
+        setPreviewMode(false)
         if (currentRoute !== 'pages/login/index') {
           Taro.redirectTo({ url: '/pages/login/index' })
         }
@@ -61,4 +65,3 @@ function App(props) {
 }
 
 export default App
-

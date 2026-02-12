@@ -4,6 +4,9 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { get } from '../../utils/request'
 import { getWeekDayLong } from '../../utils/date'
 import { MOODS } from './constants'
+import PreviewBanner from '../../components/PreviewBanner'
+import { PREVIEW } from '../../config/preview'
+import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日']
@@ -25,6 +28,7 @@ export default function MoodDiary() {
   const [monthEntriesSelf, setMonthEntriesSelf] = useState<Record<string, { moodId: string }>>({})
   const [monthEntriesMatched, setMonthEntriesMatched] = useState<Record<string, { moodId: string }>>({})
   const [selectedDateForModal, setSelectedDateForModal] = useState('')
+  const isPreview = usePreviewMode()
   const hasShownRef = useRef(false)
 
   const today = useMemo(() => {
@@ -34,6 +38,18 @@ export default function MoodDiary() {
 
   const loadMonthEntries = async () => {
     try {
+      const token = Taro.getStorageSync('token')
+      if (!token) {
+        setPreviewMode(true)
+        const monthStr = String(displayMonth).padStart(2, '0')
+        const d1 = `${displayYear}-${monthStr}-03`
+        const d2 = `${displayYear}-${monthStr}-14`
+        const d3 = `${displayYear}-${monthStr}-21`
+        setMonthEntriesSelf({ [d1]: { moodId: 'happy' }, [d2]: { moodId: 'heartbeat' } })
+        setMonthEntriesMatched({ [d3]: { moodId: 'calm' } })
+        return
+      }
+      setPreviewMode(false)
       const res = await get('/api/mood-diary', { year: displayYear, month: displayMonth })
       const selfList = Array.isArray(res?.data?.self) ? res.data.self : []
       const matchedList = Array.isArray(res?.data?.matched) ? res.data.matched : []
@@ -166,11 +182,35 @@ export default function MoodDiary() {
   }
 
   const openMoodModalForDate = (dateStr: string) => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后可记录心情日记，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     setSelectedDateForModal(dateStr)
     setShowMoodModal(true)
   }
 
   const handleFabClick = () => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后可记录心情日记，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     setSelectedDateForModal(todayDateStr)
     const existing = monthEntriesSelf[todayDateStr]
     if (existing?.moodId) {
@@ -185,6 +225,18 @@ export default function MoodDiary() {
   }
 
   const handleEditConfirmOk = () => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后可修改心情日记，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     const moodId = monthEntriesSelf[todayDateStr]?.moodId
     setShowEditConfirmModal(false)
     if (moodId) {
@@ -195,6 +247,18 @@ export default function MoodDiary() {
   }
 
   const handleMoodSelect = (moodId: string) => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后可记录心情日记，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     const date = selectedDateForModal || todayDateStr
     setShowMoodModal(false)
     Taro.navigateTo({
@@ -214,6 +278,14 @@ export default function MoodDiary() {
 
   return (
     <View className='mood-diary-page'>
+      {isPreview && (
+        <PreviewBanner
+          className='preview-banner-inset'
+          text={PREVIEW.moodDiary}
+          buttonText={PREVIEW.loginButtonText}
+          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
+        />
+      )}
       <View className='page-header'>
         <View className='page-header-row'>
           <View className='page-header-left'>
@@ -255,7 +327,9 @@ export default function MoodDiary() {
                     {selfEmoji ? (
                       <Text
                         className='day-mood-emoji day-mood-emoji-click'
-                        onClick={() => Taro.navigateTo({ url: '/pages/mood-diary/list' })}
+                        onClick={() => {
+                          Taro.navigateTo({ url: '/pages/mood-diary/list' })
+                        }}
                       >
                         {selfEmoji}
                       </Text>
@@ -270,7 +344,9 @@ export default function MoodDiary() {
                     {matchedEmoji ? (
                       <Text
                         className='day-mood-emoji day-mood-emoji-click'
-                        onClick={() => Taro.navigateTo({ url: '/pages/mood-diary/list' })}
+                        onClick={() => {
+                          Taro.navigateTo({ url: '/pages/mood-diary/list' })
+                        }}
                       >
                         {matchedEmoji}
                       </Text>

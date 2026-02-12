@@ -3,6 +3,9 @@ import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { get, post } from '../../utils/request'
 import { MOODS } from './constants'
+import PreviewBanner from '../../components/PreviewBanner'
+import { PREVIEW } from '../../config/preview'
+import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './write.scss'
 
 export default function MoodDiaryWrite() {
@@ -11,8 +14,15 @@ export default function MoodDiaryWrite() {
   const [content, setContent] = useState('')
   const [dateDisplay, setDateDisplay] = useState({ day: '', monthYear: '' })
   const [moodInfo, setMoodInfo] = useState<{ name: string; emoji: string } | null>(null)
+  const isPreview = usePreviewMode()
 
   useEffect(() => {
+    const token = Taro.getStorageSync('token')
+    if (!token) {
+      setPreviewMode(true)
+    } else {
+      setPreviewMode(false)
+    }
     const router = Taro.getCurrentInstance().router
     const params = (router?.params || {}) as { date?: string; mood?: string }
     const d = params.date || ''
@@ -46,7 +56,7 @@ export default function MoodDiaryWrite() {
   }, [])
 
   useEffect(() => {
-    if (!dateStr) return
+    if (!dateStr || isPreview) return
     const fetchEntry = async () => {
       try {
         const res = await get('/api/mood-diary/entry', { date: dateStr })
@@ -61,6 +71,18 @@ export default function MoodDiaryWrite() {
   const [saving, setSaving] = useState(false)
 
   const handleComplete = async () => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后可记录心情日记，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     if (!dateStr || !moodId) {
       Taro.showToast({ title: '请选择日期和心情', icon: 'none' })
       return
@@ -85,6 +107,14 @@ export default function MoodDiaryWrite() {
 
   return (
     <View className='write-page'>
+      {isPreview && (
+        <PreviewBanner
+          className='preview-banner-inset'
+          text={PREVIEW.moodDiaryWrite}
+          buttonText={PREVIEW.loginButtonText}
+          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
+        />
+      )}
       <View className='write-content'>
         <View className='write-date-row'>
           <Text className='write-date-day'>{dateDisplay.day}</Text>
@@ -108,13 +138,14 @@ export default function MoodDiaryWrite() {
           onInput={(e) => setContent(e.detail.value)}
           placeholderClass='write-textarea-placeholder'
           autoHeight
+          disabled={isPreview}
         />
       </View>
       <View className='write-actions'>
         <Button className='write-cancel-btn' onClick={handleCancel} disabled={saving}>
           取消
         </Button>
-        <Button className='write-complete-btn' onClick={handleComplete} disabled={saving}>
+        <Button className='write-complete-btn' onClick={handleComplete} disabled={saving || isPreview}>
           {saving ? '保存中...' : '完成'}
         </Button>
       </View>

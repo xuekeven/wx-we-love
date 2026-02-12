@@ -4,6 +4,7 @@
  */
 
 import { get } from '../utils/request'
+import { useEffect, useState } from 'react'
 
 /** /api/user/info 返回的 data 结构 */
 export interface UserInfoData {
@@ -24,6 +25,14 @@ export interface UserInfoData {
 
 let userInfoCache: UserInfoData | null = null
 let fetchPromise: Promise<UserInfoData | null> | null = null
+let previewMode = false
+const previewSubscribers = new Set<(value: boolean) => void>()
+
+function emitPreviewMode() {
+  previewSubscribers.forEach((listener) => {
+    listener(previewMode)
+  })
+}
 
 /** 从缓存读取，不发起请求 */
 export function getUserInfo(): UserInfoData | null {
@@ -93,4 +102,27 @@ export function setUserData(data: Partial<Pick<UserInfoData, 'loveDate'>> & { co
 export function clearUserData() {
   userInfoCache = null
   fetchPromise = null
+}
+
+export function getPreviewMode(): boolean {
+  return previewMode
+}
+
+export function setPreviewMode(value: boolean) {
+  previewMode = value
+  emitPreviewMode()
+}
+
+export function usePreviewMode(): boolean {
+  const [isPreview, setIsPreview] = useState(previewMode)
+
+  useEffect(() => {
+    const listener = (value: boolean) => setIsPreview(value)
+    previewSubscribers.add(listener)
+    return () => {
+      previewSubscribers.delete(listener)
+    }
+  }, [])
+
+  return isPreview
 }

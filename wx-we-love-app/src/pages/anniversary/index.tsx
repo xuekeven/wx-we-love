@@ -1,14 +1,18 @@
 import { View, Text, Button, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
-import { get, post, del } from '../../utils/request'
+import { get, del } from '../../utils/request'
 import { formatDate } from '../../utils/date'
+import PreviewBanner from '../../components/PreviewBanner'
+import { PREVIEW } from '../../config/preview'
+import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
 // Anniversary: { id, title, date, type: 'birthday'|'anniversary'|'custom', isYearly, reminder, createdAt }
 
 export default function Anniversary() {
   const [anniversaries, setAnniversaries] = useState([])
+  const isPreview = usePreviewMode()
 
   useEffect(() => {
     loadAnniversaries()
@@ -16,6 +20,17 @@ export default function Anniversary() {
 
   const loadAnniversaries = async () => {
     try {
+      const token = Taro.getStorageSync('token')
+      if (!token) {
+        setPreviewMode(true)
+        setAnniversaries([
+          { id: 'p1', title: '第一次见面', date: '2024-02-14', type: 'anniversary' },
+          { id: 'p2', title: 'Ta的生日', date: '2024-05-20', type: 'birthday' },
+          { id: 'p3', title: '旅行纪念', date: '2024-10-01', type: 'custom' }
+        ])
+        return
+      }
+      setPreviewMode(false)
       const res = await get('/api/anniversaries')
       if (res && res.success && res.data && Array.isArray(res.data)) {
         setAnniversaries(res.data)
@@ -30,10 +45,34 @@ export default function Anniversary() {
   }
 
   const handleAdd = () => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后可添加与管理纪念日，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     Taro.showToast({ title: '功能开发中', icon: 'none' })
   }
 
   const handleDelete = async (id) => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后才可删除纪念日，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     Taro.showModal({
       title: '确认删除',
       content: '确定要删除这个纪念日吗？',
@@ -73,6 +112,13 @@ export default function Anniversary() {
 
   return (
     <View className='anniversary-page'>
+      {isPreview && (
+        <PreviewBanner
+          text={PREVIEW.anniversary}
+          buttonText={PREVIEW.loginButtonText}
+          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
+        />
+      )}
       <View className='page-header'>
         <Text className='page-title'>🎂 纪念日</Text>
         <Text className='page-subtitle'>铭记每一个重要时刻</Text>
@@ -120,4 +166,3 @@ export default function Anniversary() {
     </View>
   )
 }
-

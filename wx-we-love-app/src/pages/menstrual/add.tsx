@@ -3,6 +3,9 @@ import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { post, put } from '../../utils/request'
 import { formatDate } from '../../utils/date'
+import PreviewBanner from '../../components/PreviewBanner'
+import { PREVIEW } from '../../config/preview'
+import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './add.scss'
 
 export default function MenstrualAdd() {
@@ -14,8 +17,15 @@ export default function MenstrualAdd() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [recordId, setRecordId] = useState(null)
+  const isPreview = usePreviewMode()
 
   useEffect(() => {
+    const token = Taro.getStorageSync('token')
+    if (!token) {
+      setPreviewMode(true)
+    } else {
+      setPreviewMode(false)
+    }
     // 检查是否为编辑模式
     const pages = Taro.getCurrentPages()
     const currentPage = pages[pages.length - 1]
@@ -67,14 +77,17 @@ export default function MenstrualAdd() {
   ]
 
   const handleStartDateChange = (e) => {
+    if (isPreview) return
     setStartDate(e.detail.value)
   }
 
   const handleEndDateChange = (e) => {
+    if (isPreview) return
     setEndDate(e.detail.value)
   }
 
   const toggleSymptom = (symptomName) => {
+    if (isPreview) return
     if (selectedSymptoms.includes(symptomName)) {
       setSelectedSymptoms(selectedSymptoms.filter(s => s !== symptomName))
     } else {
@@ -83,6 +96,7 @@ export default function MenstrualAdd() {
   }
 
   const handleNoteChange = (e) => {
+    if (isPreview) return
     setNote(e.detail.value)
   }
 
@@ -110,6 +124,18 @@ export default function MenstrualAdd() {
   }
 
   const handleSubmit = async () => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后才可记录经期信息，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     if (!validateForm()) return
 
     setIsSubmitting(true)
@@ -161,6 +187,14 @@ export default function MenstrualAdd() {
 
   return (
     <ScrollView scrollY className='menstrual-add-page'>
+      {isPreview && (
+        <PreviewBanner
+          className='preview-banner-inset'
+          text={PREVIEW.menstrualAdd}
+          buttonText={PREVIEW.loginButtonText}
+          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
+        />
+      )}
       <View className='page-header'>
         <Text className='page-title'>🌸 {isEditMode ? '编辑月经记录' : '记录月经'}</Text>
         <Text className='page-subtitle'>{isEditMode ? '修改记录信息' : '记录健康每一天'}</Text>
@@ -181,6 +215,7 @@ export default function MenstrualAdd() {
               value={startDate}
               end={formatDate(new Date())}
               onChange={handleStartDateChange}
+              disabled={isPreview}
             >
               <View className='picker-value'>
                 <Text className={startDate ? 'value-text' : 'placeholder-text'}>
@@ -202,6 +237,7 @@ export default function MenstrualAdd() {
               start={startDate}
               end={formatDate(new Date())}
               onChange={handleEndDateChange}
+              disabled={isPreview}
             >
               <View className='picker-value'>
                 <Text className={endDate ? 'value-text' : 'placeholder-text'}>
@@ -263,6 +299,7 @@ export default function MenstrualAdd() {
             onInput={handleNoteChange}
             maxlength={200}
             autoHeight
+            disabled={isPreview}
           />
           <Text className='char-count'>{note.length}/200</Text>
         </View>
@@ -280,7 +317,7 @@ export default function MenstrualAdd() {
         <Button
           className='submit-btn'
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isPreview}
           loading={isSubmitting}
         >
           {isSubmitting ? '保存中...' : (isEditMode ? '保存修改' : '保存记录')}
@@ -289,4 +326,3 @@ export default function MenstrualAdd() {
     </ScrollView>
   )
 }
-

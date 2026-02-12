@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import { getWeekDay, getDaysDiff, getWeekOfYear } from '../../utils/date'
 import { post } from '../../utils/request'
 import ProfileForm from '../../components/ProfileForm'
-import { fetchUserInfo, getUserInfo, setUserData, setUserInfoPartial, getLoveDate, getCoupleNames } from '../../store/global'
+import PreviewBanner from '../../components/PreviewBanner'
+import { PREVIEW } from '../../config/preview'
+import { fetchUserInfo, getUserInfo, setUserData, setUserInfoPartial, getLoveDate, getCoupleNames, setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
 // 第一行：3 个功能，图标在上、名称在下
@@ -30,6 +32,8 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(true)
   const [showLoveDateModal, setShowLoveDateModal] = useState(false)
   const [isSavingLoveDate, setIsSavingLoveDate] = useState(false)
+  const PREVIEW_LOVE_DATE = '2025-10-11'
+  const isPreview = usePreviewMode()
 
   useEffect(() => {
     loadUserData()
@@ -41,6 +45,7 @@ export default function Index() {
 
   // 从其他页（如「我的」）返回首页时，从全局 store 同步恋爱纪念日等，保证首页显示最新
   useDidShow(() => {
+    loadUserData()
     const storedLoveDate = getLoveDate()
     if (storedLoveDate !== undefined) setLoveDate(storedLoveDate)
     const storedCoupleNames = getCoupleNames()
@@ -65,10 +70,15 @@ export default function Index() {
     try {
       const token = Taro.getStorageSync('token')
       if (!token) {
+        // 未登录：进入浏览模式，不强制跳转登录
+        setPreviewMode(true)
+        setIsMatched(true)
+        setLoveDate(PREVIEW_LOVE_DATE)
+        setCoupleNames({ name1: '张三', name2: '李四' })
         setIsLoading(false)
-        Taro.redirectTo({ url: '/pages/login/index' })
         return
       }
+      setPreviewMode(false)
       let userData = getUserInfo()
       if (!userData) userData = await fetchUserInfo()
       if (userData) {
@@ -156,6 +166,13 @@ export default function Index() {
       </View>
 
       <View className='content'>
+        {isPreview && (
+          <PreviewBanner
+            text={PREVIEW.home}
+            buttonText={PREVIEW.loginButtonText}
+            onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
+          />
+        )}
         {/* 日期区域 */}
         <View className='date-section'>
           <View className='date-main'>
@@ -230,7 +247,7 @@ export default function Index() {
 
       {/* 完善纪念日弹层：匹配成功且未设置恋爱纪念日时弹出 */}
       <ProfileForm
-        visible={showLoveDateModal}
+        visible={!isPreview && showLoveDateModal}
         title='完善纪念日'
         showLoveDate
         initialLoveDate=''
@@ -255,4 +272,3 @@ export default function Index() {
     </View>
   )
 }
-

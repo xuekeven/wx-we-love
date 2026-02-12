@@ -1,0 +1,34 @@
+.preview-banner {
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  .preview-text {
+    font-size: 26px;
+    color: #2D2D2D;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .preview-login-btn {
+    height: 72px;
+    line-height: 72px;
+    padding: 0 24px;
+    background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
+    color: #fff;
+    border-radius: 18px;
+    font-size: 26px;
+    font-weight: 600;
+    border: none;
+
+    &::after {
+      border: none;
+    }
+  }
+}

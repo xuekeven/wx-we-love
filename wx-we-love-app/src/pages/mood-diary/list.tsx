@@ -3,6 +3,9 @@ import Taro from '@tarojs/taro'
 import { useState, useEffect, useRef } from 'react'
 import { get, post, del } from '../../utils/request'
 import { MOODS } from './constants'
+import PreviewBanner from '../../components/PreviewBanner'
+import { PREVIEW } from '../../config/preview'
+import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './list.scss'
 
 interface CommentItem {
@@ -32,11 +35,31 @@ export default function MoodDiaryList() {
   const [commentDiaryId, setCommentDiaryId] = useState<string | null>(null)
   const [commentInput, setCommentInput] = useState('')
   const [commentSubmitting, setCommentSubmitting] = useState(false)
+  const isPreview = usePreviewMode()
   const commentInputRef = useRef<any>(null)
 
   const loadList = async () => {
     if (!refreshing) setLoading(true)
     try {
+      const token = Taro.getStorageSync('token')
+      if (!token) {
+        setPreviewMode(true)
+        setList([
+          {
+            id: 'p1',
+            date: '2024-11-08',
+            moodId: 'happy',
+            content: '今天一起散步，心情超级好。',
+            userId: 1,
+            authorName: '我',
+            authorAvatar: '',
+            readByMatched: false,
+            comments: []
+          }
+        ])
+        return
+      }
+      setPreviewMode(false)
       const res = await get('/api/mood-diary/all')
       const data = Array.isArray(res?.data) ? res.data : []
       setList(data.map((e) => ({ ...e, comments: e.comments || [] })))
@@ -68,6 +91,18 @@ export default function MoodDiaryList() {
   }
 
   const openCommentInput = (diaryId: string) => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后可评论心情日记，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     setCommentDiaryId(diaryId)
     setCommentInput('')
     setTimeout(() => {
@@ -81,6 +116,18 @@ export default function MoodDiaryList() {
   }
 
   const submitComment = async () => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后可评论心情日记，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     const diaryId = commentDiaryId
     const content = commentInput.trim()
     if (!diaryId || !content) return
@@ -102,6 +149,18 @@ export default function MoodDiaryList() {
   }
 
   const showEntryActions = (entry: DiaryEntry) => {
+    if (isPreview) {
+      Taro.showModal({
+        title: '登录后使用',
+        content: '登录后可编辑或删除日记，是否现在登录？',
+        confirmText: '去登录',
+        cancelText: '先看看',
+        success: (res) => {
+          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
+        }
+      })
+      return
+    }
     Taro.showActionSheet({
       itemList: ['修改', '删除', '取消'],
       success: (res) => {
@@ -132,6 +191,13 @@ export default function MoodDiaryList() {
 
   return (
     <View className='mood-diary-list-page'>
+      {isPreview && (
+        <PreviewBanner
+          text={PREVIEW.moodDiaryList}
+          buttonText={PREVIEW.loginButtonText}
+          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
+        />
+      )}
       {loading ? (
         <View className='list-loading'>
           <Text className='list-loading-text'>加载中...</Text>
@@ -228,7 +294,7 @@ export default function MoodDiaryList() {
         </ScrollView>
       )}
 
-      {commentDiaryId && (
+      {commentDiaryId && !isPreview && (
         <View className='comment-input-wrap'>
           <Input
             ref={commentInputRef}

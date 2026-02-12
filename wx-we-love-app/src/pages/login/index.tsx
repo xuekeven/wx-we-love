@@ -2,7 +2,7 @@ import { View, Text, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { post } from '../../utils/request'
-import { fetchUserInfo, getUserInfo, clearUserData } from '../../store/global'
+import { fetchUserInfo, getUserInfo, clearUserData, setPreviewMode } from '../../store/global'
 import ProfileForm from '../../components/ProfileForm'
 import './index.scss'
 
@@ -51,6 +51,7 @@ export default function Login() {
       console.error('检查登录状态失败:', error)
       if (error.statusCode === 401 || error.statusCode === 404) {
         Taro.removeStorageSync('token')
+        setPreviewMode(false)
       }
     }
   }
@@ -83,11 +84,9 @@ export default function Login() {
             return
           }
 
-          // 调用登录接口，传递 code、昵称、头像、uuid
+          // 调用登录接口，仅传递 code 和 uuid
           const loginResp = await post('/api/user/login', {
             code: loginRes.code,
-            nickname: userInfo.nickName,
-            avatar: userInfo.avatarUrl,
             uuid
           })
 
@@ -107,6 +106,8 @@ export default function Login() {
             clearUserData()
             Taro.setStorageSync('token', token)
             Taro.setStorageSync('userInfo', user)
+            setPreviewMode(false)
+            await fetchUserInfo(true)
             Taro.showToast({ title: '登录成功', icon: 'success', duration: 1200 })
             setTimeout(() => {
               Taro.switchTab({ url: '/pages/index/index' })
@@ -153,6 +154,7 @@ export default function Login() {
     clearUserData()
     Taro.setStorageSync('token', pendingAuth.token)
     Taro.setStorageSync('userInfo', pendingAuth.user)
+    setPreviewMode(false)
     setPendingAuth(null)
     setTimeout(() => {
       Taro.redirectTo({ url: '/pages/match/index' })
@@ -176,7 +178,15 @@ export default function Login() {
           >
             {isLoading ? '登录中...' : '微信授权登录'}
           </Button>
-
+          <Button
+            className='skip-login-btn'
+            onClick={() => {
+              setPreviewMode(true)
+              Taro.switchTab({ url: '/pages/index/index' })
+            }}
+          >
+            暂不登录，我先看看
+          </Button>
         </View>
       </View>
 

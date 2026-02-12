@@ -6,6 +6,10 @@
   box-sizing: border-box;
 }
 
+.preview-banner-inset {
+  margin: 24px 24px 0;
+}
+
 /* 与纪念日、经期记录一致：系统导航栏下方为 page-header */
 .page-header {
   flex-shrink: 0;
