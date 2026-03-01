@@ -1,29 +1,60 @@
-import { View, Text, Button, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
-import { useState, useEffect, useRef } from 'react'
-import { useDidShow } from '@tarojs/taro'
+import { View, Text, ScrollView } from '@tarojs/components'
+import Taro, { useDidShow } from '@tarojs/taro'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { get, del } from '../../utils/request'
-import { formatDate } from '../../utils/date'
 import PreviewBanner from '../../components/PreviewBanner'
+import BaseCalendar, { type CalCell } from '../../components/BaseCalendar'
 import { PREVIEW } from '../../config/preview'
 import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
-// MenstrualRecord: { id, startDate, endDate, cycleLength, symptoms, note, createdAt }
+// ── 功能开关 ──────────────────────────────────────────
+// 可育窗口（排卵预测区间）：改为 true 开启在日历和预测卡片中展示
+const ENABLE_FERTILE_WINDOW = false
+// ────────────────────────────────────────────────────
+
+function toYMD(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function addDays(d: Date, n: number): Date {
+  return new Date(d.getTime() + n * 86400000)
+}
+
+function fmtShort(ds: string): string {
+  if (!ds) return ''
+  const parts = ds.split('-')
+  if (parts.length < 3) return ds
+  return `${parseInt(parts[1])}月${parseInt(parts[2])}日`
+}
+
+function fmtRange(startDs: string, endDs: string): string {
+  if (!endDs) return fmtShort(startDs)
+  const sp = startDs.split('-')
+  const ep = endDs.split('-')
+  if (sp[0] === ep[0] && sp[1] === ep[1]) {
+    return `${parseInt(sp[1])}月${parseInt(sp[2])}日 - ${parseInt(ep[2])}日`
+  }
+  return `${fmtShort(startDs)} - ${fmtShort(endDs)}`
+}
 
 export default function Menstrual() {
-  const [records, setRecords] = useState([])
-  const [nextPrediction, setNextPrediction] = useState(null)
-  const [averageCycle, setAverageCycle] = useState(28)
-  const [currentPhase, setCurrentPhase] = useState('')
+  const todayDate = new Date()
+  todayDate.setHours(0, 0, 0, 0)
+  const todayStr = toYMD(todayDate)
+
+  const [records, setRecords] = useState<any[]>([])
+  const [calYear, setCalYear] = useState(todayDate.getFullYear())
+  const [calMonth, setCalMonth] = useState(todayDate.getMonth())
+  const [sheetRecord, setSheetRecord] = useState<any>(null)
   const isPreview = usePreviewMode()
   const hasShownRef = useRef(false)
 
-  useEffect(() => {
-    loadRecords()
-  }, [])
+  useEffect(() => { loadRecords() }, [])
 
-  // 页面显示时刷新数据（从添加/编辑页面返回时）；首次进入不重复请求
   useDidShow(() => {
     if (hasShownRef.current) {
       loadRecords()
@@ -32,118 +63,200 @@ export default function Menstrual() {
     }
   })
 
-  useEffect(() => {
-    if (records.length > 0) {
-      calculateCycle()
-      predictNext()
-      calculatePhase()
-    }
-  }, [records])
-
   const loadRecords = async () => {
     try {
       const token = Taro.getStorageSync('token')
       if (!token) {
         setPreviewMode(true)
-        const today = new Date()
-        const fmt = (d: Date) => {
-          const y = d.getFullYear()
-          const m = String(d.getMonth() + 1).padStart(2, '0')
-          const day = String(d.getDate()).padStart(2, '0')
-          return `${y}-${m}-${day}`
-        }
-        const addDays = (d: Date, days: number) => new Date(d.getTime() + days * 24 * 60 * 60 * 1000)
         const cycle = 28
-        const lastStart = addDays(today, -10)
+        const lastStart = addDays(todayDate, -10)
         const lastEnd = addDays(lastStart, 4)
         const prevStart = addDays(lastStart, -cycle)
         const prevEnd = addDays(prevStart, 4)
         setRecords([
-          { id: 'p1', startDate: fmt(lastStart), endDate: fmt(lastEnd), cycleLength: cycle, symptoms: ['轻微腹痛', '疲劳乏力'], note: '注意休息' },
-          { id: 'p2', startDate: fmt(prevStart), endDate: fmt(prevEnd), cycleLength: cycle, symptoms: ['情绪波动'], note: '' }
+          { id: 'p1', startDate: toYMD(lastStart), endDate: toYMD(lastEnd), symptoms: ['轻微腹痛', '疲劳乏力'], note: '注意休息' },
+          { id: 'p2', startDate: toYMD(prevStart), endDate: toYMD(prevEnd), symptoms: ['情绪波动'], note: '' }
         ])
         return
       }
       setPreviewMode(false)
       const res = await get('/api/menstrual')
-      if (res && res.success && res.data && Array.isArray(res.data)) {
+      if (res?.success && Array.isArray(res.data)) {
         setRecords(res.data)
       } else {
-        console.log('加载经期记录失败', res?.message || '')
         setRecords([])
       }
-    } catch (error) {
-      console.log('加载经期记录失败', error)
+    } catch {
       setRecords([])
     }
   }
 
-  // 计算平均周期
-  const calculateCycle = () => {
-    if (records.length < 2) return
-    
-    const cycles = []
+  const avgCycle = useMemo(() => {
+    if (records.length < 2) return 28
+    const diffs: number[] = []
     for (let i = 0; i < records.length - 1; i++) {
-      const current = new Date(records[i].startDate)
-      const next = new Date(records[i + 1].startDate)
-      const diff = Math.abs(current - next) / (1000 * 60 * 60 * 24)
-      cycles.push(diff)
+      diffs.push(Math.round(
+        Math.abs(new Date(records[i].startDate).getTime() - new Date(records[i + 1].startDate).getTime()) / 86400000
+      ))
     }
-    
-    if (cycles.length > 0) {
-      const avg = Math.round(cycles.reduce((a, b) => a + b, 0) / cycles.length)
-      setAverageCycle(avg)
+    return Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length)
+  }, [records])
+
+  const avgDuration = useMemo(() => {
+    const withEnd = records.filter(r => r.endDate)
+    if (!withEnd.length) return 5
+    const total = withEnd.reduce((sum, r) => {
+      return sum + Math.round((new Date(r.endDate).getTime() - new Date(r.startDate).getTime()) / 86400000) + 1
+    }, 0)
+    return Math.round(total / withEnd.length)
+  }, [records])
+
+  // Map dateStr → { record, dayNum }，dayNum = 该日期是这次月经第几天
+  const periodMap = useMemo<Record<string, { record: any; dayNum: number }>>(() => {
+    const map: Record<string, { record: any; dayNum: number }> = {}
+    for (const r of records) {
+      const s = new Date(r.startDate); s.setHours(0, 0, 0, 0)
+      const e = r.endDate ? new Date(r.endDate) : addDays(s, avgDuration - 1)
+      e.setHours(0, 0, 0, 0)
+      let dayNum = 1
+      for (let d = new Date(s); d <= e; d = addDays(d, 1)) {
+        map[toYMD(d)] = { record: r, dayNum }
+        dayNum++
+      }
     }
+    return map
+  }, [records, avgDuration])
+
+  // 预测下次经期日期集合
+  const predictedSet = useMemo<Set<string>>(() => {
+    const set = new Set<string>()
+    if (!records.length) return set
+    const lastStart = new Date(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
+    const predStart = addDays(lastStart, avgCycle)
+    const predEnd = addDays(predStart, avgDuration - 1)
+    for (let d = new Date(predStart); d <= predEnd; d = addDays(d, 1)) {
+      const s = toYMD(d)
+      if (!periodMap[s]) set.add(s)
+    }
+    return set
+  }, [records, avgCycle, avgDuration, periodMap])
+
+  // 可育窗口：排卵日前 4 天到排卵日后 1 天（共 6 天）
+  // 排卵日 = 下次经期开始 - 14 天；受 ENABLE_FERTILE_WINDOW 开关控制
+  const fertileMap = useMemo<Record<string, 'fertile' | 'peak'>>(() => {
+    if (!ENABLE_FERTILE_WINDOW || !records.length) return {}
+    const lastStart = new Date(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
+    const nextPeriodStart = addDays(lastStart, avgCycle)
+    const ovDate = addDays(nextPeriodStart, -14)
+    const map: Record<string, 'fertile' | 'peak'> = {}
+    for (let i = -4; i <= 1; i++) {
+      const d = addDays(ovDate, i)
+      const s = toYMD(d)
+      if (!periodMap[s] && !predictedSet.has(s)) {
+        map[s] = i === 0 ? 'peak' : 'fertile'
+      }
+    }
+    return map
+  }, [records, avgCycle, periodMap, predictedSet])
+
+  const phase = useMemo(() => {
+    if (!records.length) return ''
+    const r = records[0]
+    const s = new Date(r.startDate); s.setHours(0, 0, 0, 0)
+    const e = r.endDate ? new Date(r.endDate) : addDays(s, avgDuration - 1)
+    e.setHours(23, 59, 59, 999)
+    const t = new Date(todayDate); t.setHours(12, 0, 0, 0)
+    if (t < s) return '等待中'
+    if (t <= e) return '月经期'
+    const days = Math.floor((t.getTime() - s.getTime()) / 86400000)
+    if (days <= 13) return '卵泡期'
+    if (days <= 16) return '排卵期'
+    if (days <= 28) return '黄体期'
+    return '可能延迟'
+  }, [records, avgDuration, todayDate])
+
+  const nextPred = useMemo(() => {
+    if (!records.length) return null
+    const lastStart = new Date(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
+    const predDate = addDays(lastStart, avgCycle)
+    const daysUntil = Math.ceil((predDate.getTime() - todayDate.getTime()) / 86400000)
+    // 可育窗口开始（排卵日 - 4 天）
+    const ovDate = addDays(predDate, -14)
+    const fertileStart = addDays(ovDate, -4)
+    return {
+      daysUntil,
+      dateStr: toYMD(predDate),
+      fertileStartStr: toYMD(fertileStart),
+      ovulationStr: toYMD(ovDate),
+    }
+  }, [records, avgCycle, todayDate])
+
+  const prevMonth = () => {
+    if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11) }
+    else setCalMonth(m => m - 1)
   }
 
-  // 预测下次月经
-  const predictNext = () => {
-    if (records.length === 0) return
-    
-    const lastRecord = records[0]
-    const lastDate = new Date(lastRecord.startDate)
-    const predictedDate = new Date(lastDate.getTime() + averageCycle * 24 * 60 * 60 * 1000)
-    const today = new Date()
-    const daysUntil = Math.ceil((predictedDate - today) / (1000 * 60 * 60 * 24))
-    
-    setNextPrediction({
-      date: predictedDate,
-      daysUntil: daysUntil
-    })
+  const nextMonth = () => {
+    if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0) }
+    else setCalMonth(m => m + 1)
   }
 
-  // 计算当前阶段：月经期仅当今天在「开始日期～结束日期」区间内
-  const calculatePhase = () => {
-    if (records.length === 0) return
+  // renderCell：将 BaseCalendar 提供的基础 cell 转换成经期日历的具体 UI
+  const renderMenstrualCell = (cell: CalCell, idx: number) => {
+    if (cell.type === 'empty') {
+      return <View key={idx} className='day-cell empty' />
+    }
+    const ds = cell.dateStr
+    const periodInfo = periodMap[ds]
+    const isPeriod = !!periodInfo
+    const periodDayNum = periodInfo?.dayNum ?? 0
+    const record = periodInfo?.record ?? null
+    const isPredicted = predictedSet.has(ds)
+    const fertileType = fertileMap[ds] ?? null
+    const isFuture = ds > todayStr
 
-    const lastRecord = records[0]
-    const start = new Date(lastRecord.startDate)
-    const end = lastRecord.endDate
-      ? new Date(lastRecord.endDate)
-      : new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000)
-    const today = new Date()
-    start.setHours(0, 0, 0, 0)
-    end.setHours(23, 59, 59, 999)
-    today.setHours(12, 0, 0, 0)
+    const prevDs = toYMD(addDays(new Date(ds), -1))
+    const nextDs = toYMD(addDays(new Date(ds), 1))
 
-    if (today < start) {
-      setCurrentPhase('等待中')
-      return
+    const cls = ['day-cell']
+    if (cell.isToday) cls.push('today')
+    if (isFuture && !isPeriod && !isPredicted && !fertileType) cls.push('future')
+    if (isPeriod) {
+      cls.push('period')
+      if (cell.colIndex > 0 && !!periodMap[prevDs]) cls.push('period-has-prev')
+      if (cell.colIndex < 6 && !!periodMap[nextDs]) cls.push('period-has-next')
     }
-    if (today >= start && today <= end) {
-      setCurrentPhase('月经期')
-      return
+    if (isPredicted) {
+      cls.push('predicted')
+      if (cell.colIndex > 0 && predictedSet.has(prevDs)) cls.push('pred-has-prev')
+      if (cell.colIndex < 6 && predictedSet.has(nextDs)) cls.push('pred-has-next')
     }
-    const daysSince = Math.floor((today - start) / (1000 * 60 * 60 * 24))
-    if (daysSince <= 14) {
-      setCurrentPhase('卵泡期')
-    } else if (daysSince <= 16) {
-      setCurrentPhase('排卵期')
-    } else if (daysSince <= 28) {
-      setCurrentPhase('黄体期')
-    } else {
-      setCurrentPhase('可能延迟')
+    if (fertileType) {
+      cls.push(fertileType === 'peak' ? 'fertile-peak' : 'fertile')
+      if (cell.colIndex > 0 && !!fertileMap[prevDs]) cls.push('fertile-has-prev')
+      if (cell.colIndex < 6 && !!fertileMap[nextDs]) cls.push('fertile-has-next')
     }
+
+    const handleCellClick = () => {
+      if (isPeriod && record) {
+        setSheetRecord(record)
+      } else if (!isPeriod && !isPredicted && !isFuture) {
+        if (isPreview) return
+        Taro.navigateTo({ url: `/pages/menstrual/add?defaultDate=${ds}` })
+      }
+    }
+
+    return (
+      <View key={idx} className={cls.join(' ')} onClick={handleCellClick}>
+        <View className='cell-inner'>
+          <View className='day-circle'>
+            <Text className='day-num'>{cell.day}</Text>
+          </View>
+        </View>
+        {isPeriod && periodDayNum === 1 && <Text className='period-day-tag'>D1</Text>}
+        {fertileType === 'peak' && <View className='ov-peak-dot' />}
+      </View>
+    )
   }
 
   const handleAdd = () => {
@@ -153,62 +266,37 @@ export default function Menstrual() {
         content: '登录后可记录与管理经期信息，是否现在登录？',
         confirmText: '去登录',
         cancelText: '先看看',
-        success: (res) => {
-          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
-        }
+        success: (res) => { if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' }) }
       })
       return
     }
     Taro.navigateTo({ url: '/pages/menstrual/add' })
   }
 
-  const handleEdit = (record) => {
-    if (isPreview) {
-      Taro.showModal({
-        title: '登录后使用',
-        content: '登录后才可编辑记录，是否现在登录？',
-        confirmText: '去登录',
-        cancelText: '先看看',
-        success: (res) => {
-          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
-        }
-      })
-      return
-    }
-    // 将记录数据编码为JSON字符串，通过URL参数传递
-    const recordData = encodeURIComponent(JSON.stringify(record))
-    Taro.navigateTo({
-      url: `/pages/menstrual/add?mode=edit&record=${recordData}`
-    })
+  const handleEdit = () => {
+    if (!sheetRecord) return
+    setSheetRecord(null)
+    Taro.navigateTo({ url: `/pages/menstrual/add?mode=edit&record=${encodeURIComponent(JSON.stringify(sheetRecord))}` })
   }
 
-  const handleDelete = async (id) => {
-    if (isPreview) {
-      Taro.showModal({
-        title: '登录后使用',
-        content: '登录后才可删除记录，是否现在登录？',
-        confirmText: '去登录',
-        cancelText: '先看看',
-        success: (res) => {
-          if (res.confirm) Taro.navigateTo({ url: '/pages/login/index' })
-        }
-      })
-      return
-    }
+  const handleDelete = () => {
+    if (!sheetRecord) return
+    const id = sheetRecord.id
+    setSheetRecord(null)
     Taro.showModal({
       title: '确认删除',
       content: '确定要删除这条记录吗？',
       success: async (res) => {
         if (res.confirm) {
           try {
-            const deleteRes = await del(`/api/menstrual/${id}`)
-            if (deleteRes && deleteRes.success) {
-              setRecords(records.filter(r => r.id !== id))
-              Taro.showToast({ title: deleteRes.message || '删除成功', icon: 'success' })
+            const r = await del(`/api/menstrual/${id}`)
+            if (r?.success) {
+              setRecords(prev => prev.filter(rec => rec.id !== id))
+              Taro.showToast({ title: '删除成功', icon: 'success' })
             } else {
-              Taro.showToast({ title: deleteRes?.message || '删除失败', icon: 'none' })
+              Taro.showToast({ title: r?.message || '删除失败', icon: 'none' })
             }
-          } catch (error) {
+          } catch {
             Taro.showToast({ title: '删除失败，请重试', icon: 'none' })
           }
         }
@@ -216,11 +304,9 @@ export default function Menstrual() {
     })
   }
 
-  const getDaysAgo = (dateStr) => {
-    const date = new Date(dateStr)
-    const today = new Date()
-    const days = Math.floor((today - date) / (1000 * 60 * 60 * 24))
-    return days === 0 ? '今天' : `${days}天前`
+  const getDuration = (r: any): number | null => {
+    if (!r.endDate) return null
+    return Math.round((new Date(r.endDate).getTime() - new Date(r.startDate).getTime()) / 86400000) + 1
   }
 
   return (
@@ -232,111 +318,204 @@ export default function Menstrual() {
           onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
         />
       )}
-      <View className='page-header'>
-        <Text className='page-title'>🌸 经期记录</Text>
+
+      {/* 顶部占位，让内容不被导航栏遮挡 */}
+
+      {/* 日历卡片 */}
+      <View className='calendar-card'>
+        <BaseCalendar
+          year={calYear}
+          month={calMonth}
+          onPrevMonth={prevMonth}
+          onNextMonth={nextMonth}
+          weekStartsSunday
+          showAdjacentDays={false}
+          renderCell={renderMenstrualCell}
+          footer={
+            <View className='legend-row'>
+              <View className='legend-item'>
+                <View className='legend-dot ld-period' />
+                <Text className='legend-txt'>月经期</Text>
+              </View>
+              <View className='legend-item'>
+                <View className='legend-dot ld-predicted' />
+                <Text className='legend-txt'>预测经期</Text>
+              </View>
+              {ENABLE_FERTILE_WINDOW && (
+                <>
+                  <View className='legend-item'>
+                    <View className='legend-dot ld-fertile' />
+                    <Text className='legend-txt'>可育窗口</Text>
+                  </View>
+                  <View className='legend-item'>
+                    <View className='legend-dot ld-ov' />
+                    <Text className='legend-txt'>排卵日</Text>
+                  </View>
+                </>
+              )}
+            </View>
+          }
+        />
       </View>
 
-      {/* 周期统计卡片 */}
-      <View className='cycle-card'>
-        <View className='cycle-header'>
-          <Text className='cycle-title'>周期概览</Text>
-          <Text className='cycle-phase'>{currentPhase}</Text>
-        </View>
-        
-        <View className='cycle-stats'>
-          <View className='stat-item'>
-            <Text className='stat-value'>{averageCycle}</Text>
-            <Text className='stat-label'>平均周期(天)</Text>
+      {/* 信息卡片：统计 + 预测 */}
+      <View className='pred-card'>
+        {/* 三项统计 */}
+        <View className='pred-stats-row'>
+          <View className='pred-stat-item'>
+            <Text className={`pred-stat-val ${phase === '月经期' ? 'phase-pink' : ''}`}>{phase || '--'}</Text>
+            <Text className='pred-stat-lbl'>当前阶段</Text>
           </View>
-          {nextPrediction && (
-            <View className='stat-item'>
-              <Text className='stat-value'>{nextPrediction.daysUntil}</Text>
-              <Text className='stat-label'>距下次(天)</Text>
-            </View>
-          )}
-          <View className='stat-item'>
-            <Text className='stat-value'>{records.length}</Text>
-            <Text className='stat-label'>记录次数</Text>
+          <View className='pred-stat-sep' />
+          <View className='pred-stat-item'>
+            <Text className='pred-stat-val'>{avgCycle}</Text>
+            <Text className='pred-stat-lbl'>周期(天)</Text>
+          </View>
+          <View className='pred-stat-sep' />
+          <View className='pred-stat-item'>
+            <Text className='pred-stat-val'>{avgDuration}</Text>
+            <Text className='pred-stat-lbl'>经期(天)</Text>
           </View>
         </View>
 
-        {nextPrediction && nextPrediction.daysUntil > 0 && (
-          <View className='prediction'>
-            <Text className='prediction-text'>
-              预计下次月经：{formatDate(nextPrediction.date)}
-            </Text>
+        {/* 分隔线 */}
+        {nextPred && <View className='pred-divider' />}
+
+        {/* 下次月经预测 */}
+        {nextPred && (
+          <View className='pred-row'>
+            <View className='pred-item'>
+              <Text className='pred-icon'>🌸</Text>
+              <View>
+                <Text className='pred-label'>预计下次月经</Text>
+                <Text className='pred-value'>{fmtShort(nextPred.dateStr)}</Text>
+              </View>
+              {nextPred.daysUntil > 0 ? (
+                <Text className='pred-badge'>{nextPred.daysUntil}天后</Text>
+              ) : (
+                <Text className='pred-badge pred-badge-soon'>即将到来</Text>
+              )}
+            </View>
           </View>
+        )}
+
+        {/* 可育窗口（受开关控制）*/}
+        {ENABLE_FERTILE_WINDOW && nextPred && (
+          <>
+            <View className='pred-divider' />
+            <View className='pred-row'>
+              <View className='pred-item'>
+                <Text className='pred-icon'>🥚</Text>
+                <View>
+                  <Text className='pred-label'>预测可育窗口</Text>
+                  <Text className='pred-value'>{fmtShort(nextPred.fertileStartStr)} - {fmtShort(nextPred.ovulationStr)}</Text>
+                </View>
+              </View>
+            </View>
+          </>
         )}
       </View>
 
-      <Button className='add-btn' onClick={handleAdd}>
-        <Text className='add-icon'>+</Text>
-        <Text>记录月经</Text>
-      </Button>
+      {/* 记录月经按钮 */}
+      <View className='add-btn' onClick={handleAdd}>
+        <Text className='add-btn-icon'>+</Text>
+        <Text className='add-btn-text'>记录月经</Text>
+      </View>
 
-      <ScrollView scrollY className='record-list'>
-        <View className='list-header'>
-          <Text className='list-title'>历史记录</Text>
+      {/* 历史记录列表 */}
+      {records.length > 0 && (
+        <View className='history-section'>
+          <Text className='history-title'>历史记录</Text>
+          <ScrollView scrollY>
+            {records.map((r) => {
+              const dur = getDuration(r)
+              return (
+                <View key={r.id} className='history-item' onClick={() => setSheetRecord(r)}>
+                  <View className='history-left'>
+                    <View className='history-dot' />
+                    <View>
+                      <Text className='history-date'>{fmtRange(r.startDate, r.endDate)}</Text>
+                      <Text className='history-meta'>
+                        {dur ? `${dur}天` : '未记录结束'}
+                        {r.symptoms?.length > 0 ? `  ·  ${r.symptoms.slice(0, 2).join('、')}${r.symptoms.length > 2 ? '...' : ''}` : ''}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text className='history-arrow'>›</Text>
+                </View>
+              )
+            })}
+          </ScrollView>
         </View>
+      )}
 
-        {records.map((record) => (
-          <View key={record.id} className='record-item'>
-            <View className='record-header'>
-              <View className='record-date-info'>
-                <Text className='record-start-date'>
-                  {formatDate(new Date(record.startDate))}
-                  {record.endDate
-                    ? ` - ${formatDate(new Date(record.endDate))}`
-                    : ''}
-                </Text>
-                {record.endDate && (
-                  <Text className='record-duration'>
-                    持续 {Math.ceil((new Date(record.endDate) - new Date(record.startDate)) / (1000 * 60 * 60 * 24)) + 1} 天
-                  </Text>
-                )}
+      {records.length === 0 && (
+        <View className='empty-state'>
+          <Text className='empty-icon'>🌺</Text>
+          <Text className='empty-text'>还没有记录，点击上方按钮开始添加吧～</Text>
+        </View>
+      )}
+
+      {/* 记录详情底部弹层 */}
+      {sheetRecord && (
+        <View className='sheet-mask' onClick={() => setSheetRecord(null)}>
+          <View className='sheet' onClick={(e) => (e as any)?.stopPropagation?.()}>
+            <View className='sheet-handle' />
+            <View className='sheet-header'>
+              <Text className='sheet-title'>经期记录</Text>
+              <View className='sheet-close' onClick={() => setSheetRecord(null)}>
+                <Text className='sheet-close-icon'>×</Text>
               </View>
-              <Text className='record-time-ago'>{getDaysAgo(record.startDate)}</Text>
             </View>
 
-            {record.cycleLength && (
-              <View className='record-cycle'>
-                <Text className='cycle-label'>周期：</Text>
-                <Text className='cycle-value'>{record.cycleLength} 天</Text>
+            <View className='sheet-body'>
+              <View className='detail-row'>
+                <Text className='detail-label'>开始日期</Text>
+                <Text className='detail-value'>{fmtShort(sheetRecord.startDate)}</Text>
               </View>
-            )}
-
-            {record.symptoms && record.symptoms.length > 0 && (
-              <View className='record-symptoms'>
-                {record.symptoms.map((symptom, index) => (
-                  <View key={index} className='symptom-tag'>
-                    <Text>{symptom}</Text>
+              {sheetRecord.endDate && (
+                <View className='detail-row'>
+                  <Text className='detail-label'>结束日期</Text>
+                  <Text className='detail-value'>{fmtShort(sheetRecord.endDate)}</Text>
+                </View>
+              )}
+              {sheetRecord.endDate && (
+                <View className='detail-row'>
+                  <Text className='detail-label'>持续天数</Text>
+                  <Text className='detail-value'>
+                    {Math.round((new Date(sheetRecord.endDate).getTime() - new Date(sheetRecord.startDate).getTime()) / 86400000) + 1} 天
+                  </Text>
+                </View>
+              )}
+              {sheetRecord.symptoms?.length > 0 && (
+                <View className='detail-row detail-row-wrap'>
+                  <Text className='detail-label'>症状</Text>
+                  <View className='symptoms-wrap'>
+                    {sheetRecord.symptoms.map((s, i) => (
+                      <Text key={i} className='symptom-chip'>{s}</Text>
+                    ))}
                   </View>
-                ))}
-              </View>
-            )}
+                </View>
+              )}
+              {sheetRecord.note ? (
+                <View className='detail-row'>
+                  <Text className='detail-label'>备注</Text>
+                  <Text className='detail-value detail-note'>{sheetRecord.note}</Text>
+                </View>
+              ) : null}
+            </View>
 
-            {record.note && (
-              <Text className='record-note'>{record.note}</Text>
-            )}
-
-            <View className='record-actions'>
-              <View className='edit-btn' onClick={() => handleEdit(record)}>
+            <View className='sheet-actions'>
+              <View className='sheet-btn sheet-edit' onClick={handleEdit}>
                 <Text>编辑</Text>
               </View>
-              <View className='delete-btn' onClick={() => handleDelete(record.id)}>
+              <View className='sheet-btn sheet-delete' onClick={handleDelete}>
                 <Text>删除</Text>
               </View>
             </View>
           </View>
-        ))}
-
-        {records.length === 0 && (
-          <View className='empty-state'>
-            <Text className='empty-icon'>🌺</Text>
-            <Text className='empty-text'>还没有记录，快来添加吧～</Text>
-          </View>
-        )}
-      </ScrollView>
+        </View>
+      )}
     </View>
   )
 }

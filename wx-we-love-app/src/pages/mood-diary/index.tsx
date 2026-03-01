@@ -5,24 +5,14 @@ import { get } from '../../utils/request'
 import { getWeekDayLong } from '../../utils/date'
 import { MOODS } from './constants'
 import PreviewBanner from '../../components/PreviewBanner'
+import BaseCalendar, { type CalCell } from '../../components/BaseCalendar'
 import { PREVIEW } from '../../config/preview'
 import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
-const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日']
-
-function getDaysInMonth(year: number, month: number) {
-  return new Date(year, month, 0).getDate()
-}
-
-function getFirstWeekday(year: number, month: number) {
-  return (new Date(year, month - 1, 1).getDay() + 6) % 7
-}
-
 export default function MoodDiary() {
   const [displayYear, setDisplayYear] = useState(new Date().getFullYear())
   const [displayMonth, setDisplayMonth] = useState(new Date().getMonth() + 1)
-  const [touchStartX, setTouchStartX] = useState(0)
   const [showMoodModal, setShowMoodModal] = useState(false)
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false)
   const [monthEntriesSelf, setMonthEntriesSelf] = useState<Record<string, { moodId: string }>>({})
@@ -94,27 +84,6 @@ export default function MoodDiary() {
     }
   })
 
-  const calendarGrid = useMemo(() => {
-    const daysInMonth = getDaysInMonth(displayYear, displayMonth)
-    const firstWeekday = getFirstWeekday(displayYear, displayMonth)
-    const prevMonth = displayMonth === 1 ? 12 : displayMonth - 1
-    const prevYear = displayMonth === 1 ? displayYear - 1 : displayYear
-    const prevDaysInMonth = getDaysInMonth(prevYear, prevMonth)
-    const cells: { type: 'prev' | 'curr' | 'next'; day: number }[] = []
-    for (let i = 0; i < firstWeekday; i++) {
-      cells.push({ type: 'prev', day: prevDaysInMonth - firstWeekday + 1 + i })
-    }
-    for (let d = 1; d <= daysInMonth; d++) {
-      cells.push({ type: 'curr', day: d })
-    }
-    const total = cells.length
-    const rest = total % 7 === 0 ? 0 : 7 - (total % 7)
-    for (let i = 1; i <= rest; i++) {
-      cells.push({ type: 'next', day: i })
-    }
-    return cells
-  }, [displayYear, displayMonth])
-
   const goPrevMonth = () => {
     if (displayMonth === 1) {
       setDisplayYear((y) => y - 1)
@@ -138,47 +107,62 @@ export default function MoodDiary() {
     setDisplayMonth(today.month)
   }
 
-  const onTouchStart = (e: any) => {
-    setTouchStartX(e.touches[0].clientX)
-  }
-
-  const onTouchEnd = (e: any) => {
-    const endX = e.changedTouches[0].clientX
-    const delta = endX - touchStartX
-    if (delta > 60) goPrevMonth()
-    else if (delta < -60) goNextMonth()
-  }
-
-  const isToday = (type: string, day: number) =>
-    type === 'curr' &&
-    displayYear === today.year &&
-    displayMonth === today.month &&
-    day === today.day
-
   const todayDateStr = useMemo(() => {
     const d = new Date()
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }, [])
 
-  const getDateStr = (type: string, day: number) => {
-    if (type !== 'curr') return ''
-    return `${displayYear}-${String(displayMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-  }
-
-  const isPastOrToday = (type: string, day: number) => {
-    if (type !== 'curr') return false
-    const dateStr = getDateStr(type, day)
-    if (!dateStr) return false
-    return dateStr <= todayDateStr
-  }
-
-  const getMoodEmoji = (type: string, day: number, who: 'self' | 'matched') => {
-    const dateStr = getDateStr(type, day)
+  const getMoodEmoji = (dateStr: string, who: 'self' | 'matched') => {
     const entries = who === 'self' ? monthEntriesSelf : monthEntriesMatched
     const entry = dateStr ? entries[dateStr] : null
     if (!entry) return null
     const mood = MOODS.find((m) => m.id === entry.moodId)
     return mood ? mood.emoji : null
+  }
+
+  // 渲染心情日历的每个格子
+  const renderMoodCell = (cell: CalCell, idx: number) => {
+    if (cell.type === 'empty') {
+      return <View key={idx} className='day-cell' />
+    }
+    const isPrevNext = cell.type === 'prev' || cell.type === 'next'
+    const dateStr = cell.dateStr
+    const selfEmoji = !isPrevNext ? getMoodEmoji(dateStr, 'self') : null
+    const matchedEmoji = !isPrevNext ? getMoodEmoji(dateStr, 'matched') : null
+    const showSelfCircle = !isPrevNext && dateStr <= todayDateStr && !selfEmoji
+
+    return (
+      <View
+        key={idx}
+        className={`day-cell ${isPrevNext ? cell.type : 'curr'} ${cell.isToday ? 'today' : ''}`}
+      >
+        <Text className='day-num'>{cell.day}</Text>
+        <View className='day-mood'>
+          <View className='day-mood-row day-mood-self'>
+            {selfEmoji ? (
+              <Text
+                className='day-mood-emoji day-mood-emoji-click'
+                onClick={() => Taro.navigateTo({ url: '/pages/mood-diary/list' })}
+              >
+                {selfEmoji}
+              </Text>
+            ) : showSelfCircle ? (
+              <View className='day-mood-circle' onClick={() => openMoodModalForDate(dateStr)} />
+            ) : null}
+          </View>
+          <View className='day-mood-row day-mood-matched'>
+            {matchedEmoji ? (
+              <Text
+                className='day-mood-emoji day-mood-emoji-click'
+                onClick={() => Taro.navigateTo({ url: '/pages/mood-diary/list' })}
+              >
+                {matchedEmoji}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      </View>
+    )
   }
 
   const openMoodModalForDate = (dateStr: string) => {
@@ -298,66 +282,17 @@ export default function MoodDiary() {
         </View>
       </View>
 
-      <View
+      <BaseCalendar
         className='calendar-wrap'
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-      >
-        <View className='weekday-row'>
-          {WEEKDAYS.map((w) => (
-            <Text key={w} className='weekday-cell'>
-              {w}
-            </Text>
-          ))}
-        </View>
-        <View className='calendar-grid'>
-          {calendarGrid.map((cell, i) => {
-            const dateStr = getDateStr(cell.type, cell.day)
-            const selfEmoji = cell.type === 'curr' ? getMoodEmoji(cell.type, cell.day, 'self') : null
-            const matchedEmoji = cell.type === 'curr' ? getMoodEmoji(cell.type, cell.day, 'matched') : null
-            const showSelfCircle = cell.type === 'curr' && isPastOrToday(cell.type, cell.day) && !selfEmoji && dateStr
-            return (
-              <View
-                key={i}
-                className={`day-cell ${cell.type} ${isToday(cell.type, cell.day) ? 'today' : ''}`}
-              >
-                <Text className='day-num'>{cell.day}</Text>
-                <View className='day-mood'>
-                  <View className='day-mood-row day-mood-self'>
-                    {selfEmoji ? (
-                      <Text
-                        className='day-mood-emoji day-mood-emoji-click'
-                        onClick={() => {
-                          Taro.navigateTo({ url: '/pages/mood-diary/list' })
-                        }}
-                      >
-                        {selfEmoji}
-                      </Text>
-                    ) : showSelfCircle ? (
-                      <View
-                        className='day-mood-circle'
-                        onClick={() => openMoodModalForDate(dateStr)}
-                      />
-                    ) : null}
-                  </View>
-                  <View className='day-mood-row day-mood-matched'>
-                    {matchedEmoji ? (
-                      <Text
-                        className='day-mood-emoji day-mood-emoji-click'
-                        onClick={() => {
-                          Taro.navigateTo({ url: '/pages/mood-diary/list' })
-                        }}
-                      >
-                        {matchedEmoji}
-                      </Text>
-                    ) : null}
-                  </View>
-                </View>
-              </View>
-            )
-          })}
-        </View>
-      </View>
+        year={displayYear}
+        month={displayMonth - 1}
+        onPrevMonth={goPrevMonth}
+        onNextMonth={goNextMonth}
+        showNavArrows={false}
+        enableSwipe
+        showAdjacentDays
+        renderCell={renderMoodCell}
+      />
 
       <View className='fab-wrap' onClick={handleFabClick}>
         <View className='fab'>

@@ -52,6 +52,7 @@
 }
 
 /* 除 page-header 和 fab-wrap 外均为日历区域，填满剩余空间 */
+/* BaseCalendar 传入 className='calendar-wrap'，这里通过该 class 覆盖内部样式 */
 .calendar-wrap {
   flex: 1;
   min-height: 0;
@@ -63,94 +64,97 @@
   padding: 24rpx;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
   box-sizing: border-box;
-}
 
-.weekday-row {
-  flex-shrink: 0;
-  display: flex;
-  margin-bottom: 32rpx;
-  .weekday-cell {
+  /* 覆盖 BaseCalendar 星期行 */
+  .base-cal-weekdays {
+    flex-shrink: 0;
+    margin-bottom: 32rpx;
+    padding: 0;
+  }
+  .base-cal-weekday {
     flex: 1;
-    text-align: center;
     font-size: 26rpx;
     color: #8E8E93;
     font-weight: 500;
+    padding: 0;
+    &.weekend { color: #8E8E93; } // 心情日记不区分周末颜色
+  }
+
+  /* 覆盖 BaseCalendar 网格 */
+  .base-cal-grid {
+    flex: 1;
+    min-height: 0;
+    grid-template-rows: repeat(6, 1fr);
+    align-content: stretch;
+    row-gap: 0;
+    padding: 0;
   }
 }
 
-.calendar-grid {
-  flex: 1;
+/* 心情日历格子（由 renderMoodCell 生成，沿用原有 class 名） */
+.calendar-wrap .day-cell {
   min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(6, 1fr);
-  gap: 0;
-  align-content: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8rpx 4rpx 12rpx;
+  box-sizing: border-box;
 
-  .day-cell {
-    min-height: 0;
+  .day-num {
+    font-size: 28rpx;
+    color: #2D2D2D;
+    flex-shrink: 0;
+    margin-bottom: 8rpx;
+    width: 56rpx;
+    height: 56rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .day-mood {
+    flex: 1;
+    min-height: 80rpx;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 8rpx 4rpx 12rpx;
-    box-sizing: border-box;
-
-    .day-num {
-      font-size: 28rpx;
-      color: #2D2D2D;
-      flex-shrink: 0;
-      margin-bottom: 8rpx;
-      width: 56rpx;
-      height: 56rpx;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-    }
-    .day-mood {
+    justify-content: center;
+    gap: 4rpx;
+    .day-mood-row {
       flex: 1;
-      min-height: 80rpx;
-      width: 100%;
+      min-height: 36rpx;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4rpx;
-      .day-mood-row {
-        flex: 1;
-        min-height: 36rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-      }
-      .day-mood-emoji {
-        font-size: 28rpx;
-      }
-      .day-mood-emoji-click {
-        cursor: pointer;
-      }
-      .day-mood-circle {
-        width: 48rpx;
-        height: 48rpx;
-        border-radius: 50%;
-        border: 2rpx solid #C7C7CC;
-        background: transparent;
-        box-sizing: border-box;
-      }
+      width: 100%;
     }
-    &.prev .day-num,
-    &.next .day-num {
-      color: #C7C7CC;
-      font-size: 24rpx;
+    .day-mood-emoji {
+      font-size: 28rpx;
     }
-    &.today .day-num {
-      background: #FF6B9D;
-      color: #fff;
+    .day-mood-emoji-click {
+      cursor: pointer;
+    }
+    .day-mood-circle {
+      width: 48rpx;
+      height: 48rpx;
       border-radius: 50%;
-      font-weight: 600;
+      border: 2rpx solid #C7C7CC;
+      background: transparent;
+      box-sizing: border-box;
     }
+  }
+  &.prev .day-num,
+  &.next .day-num {
+    color: #C7C7CC;
+    font-size: 24rpx;
+  }
+  &.today .day-num {
+    background: #FF6B9D;
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 600;
   }
 }
 

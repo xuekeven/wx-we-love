@@ -2,15 +2,28 @@ import { View, Text, Button, Picker, Textarea, ScrollView } from '@tarojs/compon
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { post, put } from '../../utils/request'
-import { formatDate } from '../../utils/date'
 import PreviewBanner from '../../components/PreviewBanner'
 import { PREVIEW } from '../../config/preview'
 import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './add.scss'
 
+function toYMD(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function fmtDisplay(ds: string): string {
+  if (!ds) return ''
+  const parts = ds.split('-')
+  if (parts.length !== 3) return ds
+  return `${parts[0]}年${parseInt(parts[1])}月${parseInt(parts[2])}日`
+}
+
 export default function MenstrualAdd() {
   const today = new Date()
-  const [startDate, setStartDate] = useState(formatDate(today))
+  const [startDate, setStartDate] = useState(toYMD(today))
   const [endDate, setEndDate] = useState('')
   const [selectedSymptoms, setSelectedSymptoms] = useState([])
   const [note, setNote] = useState('')
@@ -26,7 +39,7 @@ export default function MenstrualAdd() {
     } else {
       setPreviewMode(false)
     }
-    // 检查是否为编辑模式
+    // 检查是否为编辑模式或带默认日期新增
     const pages = Taro.getCurrentPages()
     const currentPage = pages[pages.length - 1]
     const options = currentPage.options || {}
@@ -40,23 +53,17 @@ export default function MenstrualAdd() {
         setEndDate(recordData.endDate || '')
         setSelectedSymptoms(recordData.symptoms || [])
         setNote(recordData.note || '')
-
-        // 设置导航栏标题
-        Taro.setNavigationBarTitle({
-          title: '编辑月经记录'
-        })
+        Taro.setNavigationBarTitle({ title: '编辑月经记录' })
       } catch (error) {
         console.log('解析记录数据失败:', error)
-        Taro.showToast({
-          title: '加载数据失败',
-          icon: 'none'
-        })
+        Taro.showToast({ title: '加载数据失败', icon: 'none' })
       }
     } else {
-      // 设置导航栏标题
-      Taro.setNavigationBarTitle({
-        title: '记录月经'
-      })
+      // 从日历点击日期进入时，预填开始日期
+      if (options.defaultDate) {
+        setStartDate(options.defaultDate)
+      }
+      Taro.setNavigationBarTitle({ title: '记录月经' })
     }
   }, [])
 
@@ -213,13 +220,13 @@ export default function MenstrualAdd() {
             <Picker
               mode='date'
               value={startDate}
-              end={formatDate(new Date())}
+              end={toYMD(new Date())}
               onChange={handleStartDateChange}
               disabled={isPreview}
             >
               <View className='picker-value'>
                 <Text className={startDate ? 'value-text' : 'placeholder-text'}>
-                  {startDate || '请选择开始日期'}
+                  {startDate ? fmtDisplay(startDate) : '请选择开始日期'}
                 </Text>
                 <Text className='arrow'>›</Text>
               </View>
@@ -235,13 +242,13 @@ export default function MenstrualAdd() {
               mode='date'
               value={endDate}
               start={startDate}
-              end={formatDate(new Date())}
+              end={toYMD(new Date())}
               onChange={handleEndDateChange}
               disabled={isPreview}
             >
               <View className='picker-value'>
                 <Text className={endDate ? 'value-text' : 'placeholder-text'}>
-                  {endDate || '请选择结束日期'}
+                  {endDate ? fmtDisplay(endDate) : '请选择结束日期'}
                 </Text>
                 <Text className='arrow'>›</Text>
               </View>
