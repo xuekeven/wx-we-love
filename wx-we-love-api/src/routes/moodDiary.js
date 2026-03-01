@@ -3,6 +3,7 @@ const router = express.Router();
 const { MoodDiary, MoodDiaryComment, User } = require('../models');
 const authMiddleware = require('../middleware/auth');
 const { Op } = require('sequelize');
+const { normalizeUrl } = require('../utils/url');
 
 // 获取某月心情日记列表：本人 + 匹配对象
 router.get('/', authMiddleware, async (req, res) => {
@@ -156,7 +157,7 @@ router.get('/all', authMiddleware, async (req, res) => {
         content: item.content || '',
         userId: item.userId,
         authorName: author?.currentName || '未知',
-        authorAvatar: author?.currentAvatar || '',
+        authorAvatar: normalizeUrl(author?.currentAvatar || ''),
         readByMatched: isBySelf ? !!item.readByMatchedAt : true,
         comments: commentsByDiary[item.id] || []
       };

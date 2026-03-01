@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const https = require('https');
 const crypto = require('crypto');
 const { User, Anniversary, Menstrual, MoodDiary, MoodDiaryComment } = require('../models');
+const { normalizeUrl } = require('../utils/url');
 
 // 生成匹配码（6位数字）
 function generateMatchCode() {
@@ -137,7 +138,7 @@ router.post('/login', async (req, res) => {
           openId: user.openId,
           uuid: user.uuid,
           currentName: user.currentName,
-          currentAvatar: user.currentAvatar,
+          currentAvatar: normalizeUrl(user.currentAvatar),
           phone: user.phone,
           matchCode: user.matchCode,
           isMatched: user.isMatched,
@@ -186,9 +187,9 @@ router.get('/info', async (req, res) => {
           isMatched: user.isMatched,
           matchedUserId: user.matchedUserId,
           currentName: user.currentName || '',
-          currentAvatar: user.currentAvatar || '',
+          currentAvatar: normalizeUrl(user.currentAvatar || ''),
           matchedName: matchedUser ? (matchedUser.currentName || '') : '',
-          matchedAvatar: matchedUser ? (matchedUser.currentAvatar || '') : '',
+          matchedAvatar: matchedUser ? normalizeUrl(matchedUser.currentAvatar || '') : '',
           matchedUser: matchedUser ? { id: matchedUser.id } : null,
           loveDate: user.loveDate,
           functionOrder: user.functionOrder
@@ -305,7 +306,7 @@ router.post('/match', async (req, res) => {
           matchedUser: {
             id: targetUser.id,
             currentName: targetUser.currentName,
-            currentAvatar: targetUser.currentAvatar
+            currentAvatar: normalizeUrl(targetUser.currentAvatar)
           }
         }
       });
@@ -356,7 +357,7 @@ router.post('/info', async (req, res) => {
         message: '更新成功',
         data: {
           currentName: user.currentName,
-          currentAvatar: user.currentAvatar,
+          currentAvatar: normalizeUrl(user.currentAvatar),
           loveDate: user.loveDate,
           functionOrder: user.functionOrder
         }

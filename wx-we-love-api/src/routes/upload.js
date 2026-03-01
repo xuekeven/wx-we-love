@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { CURRENT_BASE_URL } = require('../utils/url');
 
 // 上传目录（项目根目录下的 uploads）
 const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads');
@@ -41,8 +42,7 @@ router.post('/', upload.single('file'), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: '请选择要上传的图片' });
     }
-    const baseUrl = process.env.API_BASE_URL || `${req.protocol || 'http'}://${req.get('host') || `localhost:${process.env.PORT || 4000}`}`;
-    const url = `${baseUrl.replace(/\/$/, '')}/uploads/${req.file.filename}`;
+    const url = `${CURRENT_BASE_URL.replace(/\/$/, '')}/uploads/${req.file.filename}`;
     res.json({
       success: true,
       message: '上传成功',
