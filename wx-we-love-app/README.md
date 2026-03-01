@@ -75,7 +75,7 @@ wx-we-love-app/
 
 ## 后端API
 
-后端API地址: `http://39.102.122.22:3000`
+后端API地址: `https://www.kaitool.top`
 
 详见后端项目 `wx-we-love-api`
 
