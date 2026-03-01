@@ -2,7 +2,7 @@
   "libVersion": "3.13.1",
   "projectname": "wx-we-love-app",
   "setting": {
-    "urlCheck": false,
+    "urlCheck": true,
     "coverView": false,
     "lazyloadPlaceholderEnable": false,
     "skylineRenderEnable": false,
