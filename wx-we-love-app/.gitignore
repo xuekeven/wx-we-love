@@ -12,4 +12,4 @@ node_modules/
 .settings/
 .vscode/
 .history/
-
+project.private.config.json

@@ -4,7 +4,7 @@ export default {
   },
   defineConstants: {
     // 生产环境API地址
-    API_BASE_URL: '"https://www.kaitool.top"'
+    API_BASE_URL: '"https://www.kaitool.top/welove"'
   },
   mini: {},
   h5: {

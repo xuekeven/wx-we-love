@@ -1,89 +1,119 @@
-# 💕 情侣恋爱空间小程序
+# wx-we-love-app
 
-一个专为情侣设计的微信小程序，记录你们的美好时光。
+情侣恋爱空间微信小程序前端（Taro + React + TypeScript）。
 
-## 功能特性
+## 项目概览
 
-### 主页
-- 💗 情侣专属顶栏
-- 📅 实时日期显示
-- 💑 恋爱天数统计
-- 🎯 6大核心功能模块
+本项目为微信小程序端，已接入后端 API，当前包含登录匹配、主页、纪念日、经期记录、心情日记、个人中心等核心功能页面。
 
-### 核心功能
-1. **💝 心愿清单** - 记录想一起做的事
-2. **🌹 约会记录** - 保存甜蜜回忆
-3. **🎂 纪念日** - 铭记重要时刻
-4. **📝 记事本** - 记录生活点滴
-5. **🐷 存钱罐** - 为梦想储蓄
-6. **🌸 经期记录** - 关爱女性健康
+当前路由入口见 `src/app.config.ts`，主要页面包括：
 
-### 个人中心
-- 👤 情侣资料管理
-- ⚙️ 个性化设置
-- 🔔 消息提醒
+- `pages/login`：微信登录
+- `pages/match`：匹配页面
+- `pages/index`：首页
+- `pages/anniversary`：纪念日
+- `pages/menstrual`：经期记录
+- `pages/mood-diary`：心情日记
+- `pages/my`：我的
 
 ## 技术栈
 
-- **框架**: Taro 3.6
-- **语言**: TypeScript + React
-- **样式**: Sass
-- **构建**: Webpack 5
+- 框架：Taro `3.6.23`
+- UI：React `18`
+- 语言：TypeScript
+- 样式：Sass
+- 构建：Webpack 5
 
-## 开发指南
+## 环境要求
 
-### 安装依赖
+- Node.js 16+
+- npm 8+
+- 微信开发者工具（用于预览/调试）
+
+## 安装与运行
+
 ```bash
 npm install
 ```
 
-### 开发模式
+### 小程序开发模式
+
 ```bash
 npm run dev:weapp
 ```
 
-### 生产构建
+### 小程序生产构建
+
 ```bash
 npm run build:weapp
 ```
 
-## 项目结构
+### H5 调试与构建（可选）
 
+```bash
+npm run dev:h5
+npm run build:h5
 ```
+
+### 代码质量
+
+```bash
+npm run type-check
+npm run lint
+npm run lint:fix
+npm run format
+```
+
+## 后端 API 配置
+
+前端 API 基址配置在 `src/config.js`。
+
+- `development`：默认仍指向 `https://www.kaitool.top/welove`
+- `production`：默认指向 `https://www.kaitool.top/welove`
+
+如需本地联调，可改为局域网地址（真机不能访问 `localhost`）：
+
+```js
+development: {
+  apiBaseUrl: 'http://192.168.x.x:4000'
+}
+```
+
+## 目录结构
+
+```text
 wx-we-love-app/
 ├── src/
-│   ├── pages/          # 页面
-│   │   ├── index/      # 主页
-│   │   ├── anniversary/# 纪念日
-│   │   ├── menstrual/  # 经期记录
-│   │   ├── moment/     # Moment(开发中)
-│   │   └── my/         # 我的
-│   ├── utils/          # 工具函数
-│   ├── app.tsx         # 应用入口
-│   └── app.scss        # 全局样式
-├── config/             # 配置文件
+│   ├── app.tsx
+│   ├── app.config.ts
+│   ├── config.js                  # API 地址配置
+│   ├── pages/                     # 业务页面
+│   │   ├── login/
+│   │   ├── match/
+│   │   ├── index/
+│   │   ├── anniversary/
+│   │   ├── menstrual/
+│   │   ├── mood-diary/
+│   │   ├── moment/
+│   │   └── my/
+│   ├── components/                # 公共组件
+│   ├── store/                     # 全局状态
+│   └── utils/                     # 请求与工具方法
+├── config/                        # Taro 构建配置
 └── package.json
 ```
 
-## 设计特色
+## 与后端协作
 
-- 🎨 现代渐变色设计
-- 💖 粉色系温馨主题
-- ✨ 流畅的动画效果
-- 📱 响应式布局
-- 🌈 精美的视觉交互
+后端项目位于仓库 `wx-we-love-api`，默认端口 `4000`，主要接口前缀：
 
-## 后端API
+- `/api/user`
+- `/api/anniversaries`
+- `/api/menstrual`
+- `/api/mood-diary`
+- `/api/upload`
 
-后端API地址: `https://www.kaitool.top`
-
-详见后端项目 `wx-we-love-api`
-
-## 开发者
-
-Made with ❤️ by Cursor AI
-
-## License
+## 许可证
 
 MIT
 

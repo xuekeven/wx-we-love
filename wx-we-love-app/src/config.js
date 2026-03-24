@@ -16,11 +16,11 @@ const LOCAL_IP = '192.168.3.11' // ⚠️ 请修改为你的本机IP地址（不
 const config = {
   development: {
     // 开发环境：使用远程服务器
-    apiBaseUrl: 'https://www.kaitool.top'
+    apiBaseUrl: 'https://www.kaitool.top/welove'
   },
   production: {
     // 生产环境：使用正式服务器
-    apiBaseUrl: 'https://www.kaitool.top'
+    apiBaseUrl: 'https://www.kaitool.top/welove'
   }
 }
 
