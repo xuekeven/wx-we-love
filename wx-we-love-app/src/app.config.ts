@@ -45,6 +45,7 @@ export default {
         selectedIconPath: 'assets/icons/my-active.png'
       }
     ]
-  }
+  },
+  lazyCodeLoading: 'requiredComponents'
 }
 

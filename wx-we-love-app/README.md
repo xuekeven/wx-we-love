@@ -55,15 +55,6 @@ npm run dev:h5
 npm run build:h5
 ```
 
-### 代码质量
-
-```bash
-npm run type-check
-npm run lint
-npm run lint:fix
-npm run format
-```
-
 ## 后端 API 配置
 
 前端 API 基址配置在 `src/config.js`。
