@@ -1,0 +1,153 @@
+# TechStack（数据库、数据模型与 JWT 安全）
+
+本文档合并自以下三份文档并做了统一整理：
+
+- `数据库使用指南.md`
+- `数据模型说明.md`
+- `JWT_SECRET说明.md`
+
+目标：给前后端协作提供一份可快速检索的技术基线说明。
+
+## 1. 后端技术栈总览
+
+- 运行时：Node.js
+- Web 框架：Express
+- ORM：Sequelize
+- 数据库：
+  - 默认：SQLite（文件库）
+  - 可选：MySQL（配置 `DB_HOST` 后启用）
+- 认证：JWT（`jsonwebtoken`）
+- 文件上传：Multer
+
+## 2. 数据库策略与环境选择
+
+### 开发环境（默认）
+
+- 推荐使用 SQLite 文件库，开箱即用，适合本地调试。
+- 典型配置在 `src/config/database.js`，示例：
+
+```js
+new Sequelize({
+  dialect: 'sqlite',
+  storage: './database.sqlite',
+  logging: false
+})
+```
+
+### 生产环境（推荐）
+
+- 建议使用 MySQL，稳定性与并发能力更好。
+- 通过环境变量切换：
+
+```env
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=wx_we_love
+DB_USER=root
+DB_PASSWORD=your_password
+```
+
+### 启动行为
+
+- 服务启动时会执行 `sequelize.sync({ alter: true })` 同步模型到表结构。
+- 如需严格迁移流程，建议后续引入 migration（而不是长期依赖 `alter`）。
+
+## 3. 数据模型（前端协作视角）
+
+当前核心模型位于 `src/models/`：
+
+- `User`：用户与情侣关系、资料信息、功能排序
+- `Anniversary`：纪念日数据
+- `Menstrual`：经期记录
+- `MoodDiary`：心情日记主体
+- `MoodDiaryComment`：心情日记评论
+
+### 常见字段类型对照
+
+| Sequelize | TypeScript 常见映射 | 说明 |
+|---|---|---|
+| `DataTypes.INTEGER` | `number` | 整数 |
+| `DataTypes.STRING` | `string` | 字符串 |
+| `DataTypes.TEXT` | `string` | 长文本 |
+| `DataTypes.DATEONLY` | `string` | 日期（`YYYY-MM-DD`） |
+| `DataTypes.DATE` | `string \| Date` | 日期时间 |
+| `DataTypes.BOOLEAN` | `boolean` | 布尔值 |
+| `DataTypes.JSON` | `Record<string, unknown>` | JSON 对象 |
+| `DataTypes.UUID` | `string` | UUID |
+
+### 协作建议
+
+- 前端以接口返回结构为准，不直接假设数据库字段名永不变化。
+- 时间字段统一做格式化（后端返回 ISO 时前端再按 UI 场景渲染）。
+- 对可空字段做好兜底（如头像、备注、扩展信息）。
+
+## 4. JWT 与 `JWT_SECRET` 安全基线
+
+### JWT 在项目中的作用
+
+- 登录成功后，后端签发 token。
+- 受保护接口通过 `Authorization: Bearer <token>` 校验身份。
+
+### `JWT_SECRET` 的关键原则
+
+- 必须配置，不应使用默认值。
+- 建议长度至少 32 位，推荐 64 位随机十六进制。
+- 开发/生产环境必须使用不同密钥。
+- 不得提交到 Git，不得写死在代码中，不得打印到日志。
+
+### 生成安全密钥（推荐）
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### 示例配置
+
+```env
+JWT_SECRET=replace_with_your_strong_random_secret
+```
+
+### 轮换策略（泄露或怀疑泄露时）
+
+1. 生成新密钥并更新环境变量。
+2. 重启后端服务。
+3. 旧 token 全部失效，用户需重新登录。
+4. 排查异常访问日志。
+
+## 5. 数据操作与调试方式
+
+### 常见 ORM 操作
+
+- 查询：`findAll` / `findOne` / `findByPk`
+- 创建：`create`
+- 更新：`update`
+- 删除：`destroy`
+
+### 调试工具建议
+
+- SQLite / MySQL 可视化：TablePlus、DBeaver
+- MySQL 官方：Workbench
+- 命令行方式：
+  - SQLite：`sqlite3 database.sqlite`
+  - MySQL：`mysql -u root -p`
+
+## 6. 常见问题速查
+
+- 数据重启后丢失：
+  - 检查是否误用了 SQLite 内存库（`:memory:`）。
+- 连接 MySQL 失败：
+  - 检查 MySQL 服务状态、账号密码、`DB_*` 配置与数据库是否存在。
+- token 校验失败：
+  - 检查请求头是否携带 Bearer token、`JWT_SECRET` 是否一致、token 是否过期。
+
+## 7. 推荐落地清单
+
+- [ ] `.env` 中已配置强随机 `JWT_SECRET`
+- [ ] 生产环境启用 MySQL，开发环境按需使用 SQLite
+- [ ] 前端统一走封装请求层并带上 token
+- [ ] 发布前检查 `sequelize.sync({ alter: true })` 风险
+- [ ] 关键数据与日志已有备份策略
+
+---
+
+如需扩展本文件，建议按“架构层 / 数据层 / 安全层 / 运维层”继续拆分章节，避免信息再次分散。
