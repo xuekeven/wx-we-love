@@ -36,7 +36,7 @@ const uploadsDir = path.join(__dirname, '..', 'uploads');
 app.use('/uploads', express.static(uploadsDir));
 
 // 数据库同步
-sequelize.sync({ alter: true })
+sequelize.sync()
   .then(() => {
     console.log('✅ Database synchronized');
   })
