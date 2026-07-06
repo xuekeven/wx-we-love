@@ -1,18 +1,18 @@
-// 2025 极简优雅设计变量
+// Soft app theme
 $primary-color: #FF6B9D;
-$primary-light: #FFB3D1;
-$primary-dark: #E85A8A;
-$background: #FAF8FC;
+$primary-light: #FFE6EF;
+$primary-dark: #D94F7F;
+$background: #FFF8FA;
 $card-bg: #FFFFFF;
-$text-primary: #2D2D2D;
-$text-secondary: #8E8E93;
-$border-color: #F0F0F0;
-$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-$shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-$shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-$radius-sm: 12px;
-$radius-md: 20px;
-$radius-lg: 28px;
+$text-primary: #2B2B32;
+$text-secondary: #8F7F89;
+$border-color: #F4DCE6;
+$shadow-sm: 0 8px 24px rgba(84, 44, 60, 0.05);
+$shadow-md: 0 14px 34px rgba(84, 44, 60, 0.08);
+$shadow-lg: 0 24px 70px rgba(84, 44, 60, 0.14);
+$radius-sm: 14px;
+$radius-md: 22px;
+$radius-lg: 30px;
 $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
 page {
@@ -29,11 +29,18 @@ view, text, button, input, image, scroll-view {
   box-sizing: border-box;
 }
 
+button {
+  &::after {
+    border: none;
+  }
+}
+
 // 简洁卡片样式
 .card {
   background: $card-bg;
   border-radius: $radius-md;
   box-shadow: $shadow-sm;
+  border: 1px solid rgba(244, 220, 230, 0.78);
   transition: $transition;
   
   &:active {
@@ -50,3 +57,9 @@ view, text, button, input, image, scroll-view {
   background-clip: text;
 }
 
+.app-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 214, 229, 0.55), transparent 34%),
+    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 46%, #FFF8FA 100%);
+}

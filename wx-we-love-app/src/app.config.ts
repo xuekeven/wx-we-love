@@ -28,19 +28,19 @@ export default {
     list: [
       {
         pagePath: 'pages/index/index',
-        text: 'Home',
+        text: '首页',
         iconPath: 'assets/icons/home.png',
         selectedIconPath: 'assets/icons/home-active.png'
       },
       {
         pagePath: 'pages/moment/index',
-        text: 'Moment',
+        text: '瞬间',
         iconPath: 'assets/icons/moment.png',
         selectedIconPath: 'assets/icons/moment-active.png'
       },
       {
         pagePath: 'pages/my/index',
-        text: 'My',
+        text: '我的',
         iconPath: 'assets/icons/my.png',
         selectedIconPath: 'assets/icons/my-active.png'
       }
@@ -48,4 +48,3 @@ export default {
   },
   lazyCodeLoading: 'requiredComponents'
 }
-

@@ -1,7 +1,8 @@
 .profile-form-mask {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(43, 31, 38, 0.36);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,21 +14,22 @@
     max-height: 80vh;
     overflow-y: auto;
     background: #FFFFFF;
-    border-radius: 24px;
-    padding: 40px 32px 32px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+    border: 1px solid rgba(244, 220, 230, 0.86);
+    border-radius: 30px;
+    padding: 42px 34px 34px;
+    box-shadow: 0 24px 70px rgba(84, 44, 60, 0.18);
 
     .modal-title {
       font-size: 34px;
       font-weight: 700;
-      color: #2D2D2D;
+      color: #2B2B32;
       display: block;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
 
     .modal-subtitle {
       font-size: 24px;
-      color: #8E8E93;
+      color: #8F7F89;
       display: block;
       margin-bottom: 32px;
     }
@@ -37,32 +39,35 @@
 
       .form-label {
         font-size: 26px;
-        color: #2D2D2D;
+        color: #5D5158;
+        font-weight: 600;
         margin-bottom: 20px;
         display: block;
       }
 
       .form-input {
         width: 100%;
-        height: 72px;
-        padding: 0 20px;
-        border-radius: 16px;
-        background: #F7F7F7;
+        height: 78px;
+        padding: 0 24px;
+        border-radius: 20px;
+        background: #FFF8FA;
+        border: 1px solid rgba(244, 220, 230, 0.92);
         font-size: 28px;
-        color: #2D2D2D;
+        color: #2B2B32;
       }
 
       .form-picker {
-        height: 72px;
-        line-height: 72px;
-        padding: 0 20px;
-        border-radius: 16px;
-        background: #F7F7F7;
+        height: 78px;
+        line-height: 78px;
+        padding: 0 24px;
+        border-radius: 20px;
+        background: #FFF8FA;
+        border: 1px solid rgba(244, 220, 230, 0.92);
         font-size: 28px;
-        color: #2D2D2D;
+        color: #2B2B32;
 
         &.placeholder {
-          color: #8E8E93;
+          color: #B19EA9;
         }
       }
 
@@ -75,18 +80,19 @@
           width: 96px;
           height: 96px;
           border-radius: 50%;
-          background: #F7F7F7;
+          background: #FFF8FA;
+          border: 1px solid rgba(244, 220, 230, 0.92);
         }
 
         .upload-avatar-btn {
           height: 64px;
           line-height: 64px;
           padding: 0 28px;
-          border-radius: 16px;
+          border-radius: 999px;
           font-size: 26px;
-          background: #FFFFFF;
+          background: #FFF4F8;
           color: #FF6B9D;
-          border: 1px solid #FF6B9D;
+          border: 1px solid rgba(255, 107, 157, 0.34);
           margin: 0;
 
           &::after {
@@ -103,10 +109,10 @@
 
       .modal-btn {
         flex: 1;
-        height: 72px;
-        line-height: 72px;
+        height: 78px;
+        line-height: 78px;
         font-size: 28px;
-        border-radius: 18px;
+        border-radius: 999px;
         border: none;
 
         &::after {
@@ -114,13 +120,14 @@
         }
 
         &.cancel {
-          background: #F7F7F7;
-          color: #2D2D2D;
+          background: #FFF4F8;
+          color: #5D5158;
         }
 
         &.confirm {
-          background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
+          background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%);
           color: #FFFFFF;
+          box-shadow: 0 10px 24px rgba(217, 79, 127, 0.20);
         }
 
         &[disabled] {

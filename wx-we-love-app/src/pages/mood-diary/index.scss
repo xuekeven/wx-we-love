@@ -2,158 +2,210 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #FAF8FC;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 218, 232, 0.62), transparent 34%),
+    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
   box-sizing: border-box;
+  padding: 0 0 calc(220rpx + env(safe-area-inset-bottom));
 }
 
 .preview-banner-inset {
   margin: 24px 24px 0;
 }
 
-/* 与纪念日、经期记录一致：系统导航栏下方为 page-header */
-.page-header {
-  flex-shrink: 0;
-  padding: 48rpx 24rpx 24rpx;
-  background: #FAF8FC;
-
-  .page-header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .page-header-left {
-    .page-header-month {
-      font-size: 40rpx;
-      font-weight: 700;
-      color: #2D2D2D;
-      line-height: 1.2;
-    }
-    .page-header-year {
-      font-size: 24rpx;
-      color: #8E8E93;
-      margin-top: 4rpx;
-      display: block;
-    }
-  }
-
-  .page-header-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    .page-header-today {
-      font-size: 24rpx;
-      color: white;
-      font-weight: 500;
-      background: #FF6B9D;
-      border-radius: 24rpx;
-    }
-  }
-}
-
-/* 除 page-header 和 fab-wrap 外均为日历区域，填满剩余空间 */
-/* BaseCalendar 传入 className='calendar-wrap'，这里通过该 class 覆盖内部样式 */
-.calendar-wrap {
+/* 与经期记录共用 BaseCalendar 结构，仅格子内容不同 */
+.calendar-card {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  margin: 0 24rpx 24rpx;
-  border-radius: 24rpx;
-  padding: 24rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.92);
+  margin: 24rpx 24rpx 0;
+  border-radius: 32rpx;
+  padding: 0 0 24rpx;
+  border: 1rpx solid rgba(244, 220, 230, 0.86);
+  box-shadow: 0 14rpx 34rpx rgba(84, 44, 60, 0.07);
+  overflow: hidden;
   box-sizing: border-box;
 
-  /* 覆盖 BaseCalendar 星期行 */
-  .base-cal-weekdays {
-    flex-shrink: 0;
-    margin-bottom: 32rpx;
-    padding: 0;
-  }
-  .base-cal-weekday {
+  .base-calendar {
     flex: 1;
-    font-size: 26rpx;
-    color: #8E8E93;
-    font-weight: 500;
-    padding: 0;
-    &.weekend { color: #8E8E93; } // 心情日记不区分周末颜色
+    min-height: 0;
   }
 
-  /* 覆盖 BaseCalendar 网格 */
+  .base-cal-month-label {
+    color: #2B2B32;
+  }
+
+  .base-cal-arrow {
+    background: #FFF4F8;
+    border: 1rpx solid rgba(244, 220, 230, 0.86);
+
+    &:active {
+      background: #FFEAF2;
+    }
+  }
+
+  .base-cal-arrow-text {
+    color: #5D5158;
+  }
+
+  .base-cal-weekdays {
+    margin-bottom: 8rpx;
+    padding: 0 16rpx;
+  }
+
+  .base-cal-weekday {
+    font-size: 24rpx;
+    color: #8F7F89;
+    padding: 8rpx 0;
+
+    &.weekend {
+      color: #FF6B9D;
+    }
+  }
+
   .base-cal-grid {
     flex: 1;
     min-height: 0;
     grid-template-rows: repeat(6, 1fr);
     align-content: stretch;
-    row-gap: 0;
-    padding: 0;
+    padding: 0 16rpx;
+    row-gap: 4rpx;
   }
 }
 
-/* 心情日历格子（由 renderMoodCell 生成，沿用原有 class 名） */
-.calendar-wrap .day-cell {
-  min-height: 0;
+.calendar-today-btn {
+  height: 56rpx;
+  line-height: 56rpx;
+  padding: 0 22rpx;
+  margin: 0;
+  border-radius: 999rpx;
+  background: #FF6B9D;
+  color: #FFFFFF;
+  font-size: 24rpx;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 8rpx 22rpx rgba(217, 79, 127, 0.18);
+
+  &::after {
+    border: none;
+  }
+}
+
+.mood-calendar .day-cell {
+  position: relative;
+  min-height: 96rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 8rpx 4rpx 12rpx;
+  justify-content: center;
+  padding: 8rpx 0;
   box-sizing: border-box;
 
-  .day-num {
-    font-size: 28rpx;
-    color: #2D2D2D;
-    flex-shrink: 0;
-    margin-bottom: 8rpx;
-    width: 56rpx;
-    height: 56rpx;
+  &.empty {
+    pointer-events: none;
+  }
+
+  .cell-inner {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .day-circle {
+    width: 56rpx;
+    height: 56rpx;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .day-num {
+    font-size: 28rpx;
+    color: #2B2B32;
     line-height: 1;
   }
+
   .day-mood {
-    flex: 1;
-    min-height: 80rpx;
+    min-height: 56rpx;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4rpx;
+    gap: 16rpx;
+    margin-top: 12rpx;
+
     .day-mood-row {
-      flex: 1;
-      min-height: 36rpx;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
+      width: 34rpx;
+      height: 24rpx;
     }
+
     .day-mood-emoji {
-      font-size: 28rpx;
+      font-size: 24rpx;
+      line-height: 1;
     }
+
     .day-mood-emoji-click {
       cursor: pointer;
     }
+
     .day-mood-circle {
-      width: 48rpx;
-      height: 48rpx;
+      width: 18rpx;
+      height: 18rpx;
       border-radius: 50%;
-      border: 2rpx solid #C7C7CC;
-      background: transparent;
+      background: #FFF8FA;
+      border: 2rpx solid #E9CCD8;
       box-sizing: border-box;
     }
   }
+
   &.prev .day-num,
   &.next .day-num {
     color: #C7C7CC;
     font-size: 24rpx;
   }
-  &.today .day-num {
+
+  &.future .day-num {
+    color: #C7C7CC;
+  }
+
+  &.today .day-circle {
+    border: 2rpx solid #FF6B9D;
+
+    .day-num {
+      color: #FF6B9D;
+      font-weight: 700;
+    }
+  }
+
+  &:not(.future) .day-mood-circle {
+    background: #FFF2F7;
+    border-color: #FFB6CF;
+  }
+
+  &.has-mood .day-circle {
+    background: #FFF2F7;
+  }
+
+  &.has-mood.today .day-circle {
     background: #FF6B9D;
-    color: #fff;
-    border-radius: 50%;
+    border-color: #FF6B9D;
+
+    .day-num {
+      color: #FFFFFF;
+    }
+  }
+
+  &.has-mood.today .day-num {
     font-weight: 600;
   }
 }
@@ -171,8 +223,8 @@
     width: 100rpx;
     height: 100rpx;
     border-radius: 50%;
-    background: linear-gradient(135deg, #FFB88C 0%, #FF9A6C 100%);
-    box-shadow: 0 8rpx 24rpx rgba(255, 154, 108, 0.4);
+    background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%);
+    box-shadow: 0 14rpx 30rpx rgba(217, 79, 127, 0.26);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -189,7 +241,8 @@
   right: 0;
   top: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(43, 31, 38, 0.36);
+  backdrop-filter: blur(10px);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -202,6 +255,7 @@
   width: 100%;
   max-width: 640rpx;
   background: #fff;
+  border: 1rpx solid rgba(244, 220, 230, 0.86);
   border-radius: 32rpx;
   padding: 48rpx 40rpx 56rpx;
   box-sizing: border-box;
@@ -219,14 +273,12 @@
     display: block;
     font-size: 32rpx;
     font-weight: 600;
-    color: #2D2D2D;
-    text-decoration: underline;
-    text-underline-offset: 8rpx;
+    color: #2B2B32;
   }
   .mood-modal-week {
     display: block;
     font-size: 24rpx;
-    color: #8E8E93;
+    color: #8F7F89;
     margin-top: 8rpx;
   }
 }
@@ -239,7 +291,7 @@
   justify-content: center;
   .mood-modal-close-x {
     font-size: 48rpx;
-    color: #8E8E93;
+    color: #8F7F89;
     line-height: 1;
   }
 }
@@ -249,7 +301,7 @@
   text-align: center;
   font-size: 36rpx;
   font-weight: 600;
-  color: #2D2D2D;
+  color: #2B2B32;
   margin-bottom: 40rpx;
 }
 
@@ -267,7 +319,8 @@
     width: 100rpx;
     height: 100rpx;
     border-radius: 24rpx;
-    background: #F5F5F5;
+    background: #FFF6FA;
+    border: 1rpx solid rgba(244, 220, 230, 0.86);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -278,7 +331,7 @@
   }
   .mood-modal-name {
     font-size: 26rpx;
-    color: #2D2D2D;
+    color: #2B2B32;
     font-weight: 500;
   }
 }
@@ -288,6 +341,7 @@
   width: 100%;
   max-width: 560rpx;
   background: #fff;
+  border: 1rpx solid rgba(244, 220, 230, 0.86);
   border-radius: 32rpx;
   padding: 48rpx 40rpx 32rpx;
   box-sizing: border-box;
@@ -297,7 +351,7 @@
   display: block;
   text-align: center;
   font-size: 32rpx;
-  color: #2D2D2D;
+  color: #2B2B32;
   line-height: 1.5;
   margin-bottom: 48rpx;
 }
@@ -325,11 +379,11 @@
 }
 
 .edit-confirm-cancel {
-  background: #F5F5F5;
-  color: #8E8E93;
+  background: #FFF4F8;
+  color: #8F7F89;
 }
 
 .edit-confirm-ok {
-  background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
+  background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%);
   color: #fff;
 }

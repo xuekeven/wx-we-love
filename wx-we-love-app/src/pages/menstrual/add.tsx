@@ -21,6 +21,15 @@ function fmtDisplay(ds: string): string {
   return `${parts[0]}年${parseInt(parts[1])}月${parseInt(parts[2])}日`
 }
 
+function parseYMD(ds: string): Date {
+  const [y, m, d] = String(ds).slice(0, 10).split('-').map(Number)
+  return new Date(y, (m || 1) - 1, d || 1)
+}
+
+function daysBetween(startDs: string, endDs: string): number {
+  return Math.round((parseYMD(endDs).getTime() - parseYMD(startDs).getTime()) / 86400000)
+}
+
 export default function MenstrualAdd() {
   const today = new Date()
   const [startDate, setStartDate] = useState(toYMD(today))
@@ -113,12 +122,12 @@ export default function MenstrualAdd() {
       return false
     }
 
-    if (endDate && new Date(endDate) < new Date(startDate)) {
+    if (endDate && parseYMD(endDate) < parseYMD(startDate)) {
       Taro.showToast({ title: '结束日期不能早于开始日期', icon: 'none' })
       return false
     }
 
-    const startDateObj = new Date(startDate)
+    const startDateObj = parseYMD(startDate)
     const todayObj = new Date()
     todayObj.setHours(0, 0, 0, 0)
     
@@ -259,7 +268,7 @@ export default function MenstrualAdd() {
             <View className='duration-tip'>
               <Text className='tip-icon'>⏱</Text>
               <Text className='tip-text'>
-                持续 {Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))} 天
+                持续 {daysBetween(startDate, endDate) + 1} 天
               </Text>
             </View>
           )}

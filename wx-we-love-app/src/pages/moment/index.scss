@@ -1,19 +1,41 @@
 .moment-page {
   min-height: 100vh;
-  background: #FAF8FC;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 218, 232, 0.62), transparent 34%),
+    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 28px;
+  box-sizing: border-box;
 
   .coming-soon {
     text-align: center;
-    padding: 80px 40px;
+    width: 100%;
+    max-width: 620px;
+    padding: 64px 40px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(244, 220, 230, 0.86);
+    border-radius: 34px;
+    box-shadow: 0 24px 70px rgba(84, 44, 60, 0.12);
 
-    .coming-soon-icon {
-      font-size: 140px;
-      display: block;
-      margin-bottom: 32px;
-      opacity: 0.6;
+    .moment-symbol {
+      width: 132px;
+      height: 132px;
+      margin: 0 auto 32px;
+      border-radius: 40px;
+      background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 16px 34px rgba(217, 79, 127, 0.22);
+
+      .moment-symbol-text {
+        font-size: 66px;
+        font-weight: 800;
+        color: #FFFFFF;
+        line-height: 1;
+      }
     }
 
     .coming-soon-text {
@@ -21,14 +43,47 @@
       font-weight: 700;
       display: block;
       margin-bottom: 20px;
-      color: #2D2D2D;
-      letter-spacing: -0.5px;
+      color: #2B2B32;
+      letter-spacing: 0;
     }
 
     .coming-soon-desc {
       font-size: 26px;
-      color: #8E8E93;
+      color: #8F7F89;
       display: block;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    .moment-preview-list {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      text-align: left;
+      background: #FFF8FA;
+      border: 1px solid rgba(244, 220, 230, 0.72);
+      border-radius: 24px;
+      padding: 24px;
+    }
+
+    .moment-preview-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .moment-preview-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #FF6B9D;
+      flex-shrink: 0;
+    }
+
+    .moment-preview-text {
+      font-size: 26px;
+      color: #5D5158;
+      line-height: 1.4;
     }
   }
 }

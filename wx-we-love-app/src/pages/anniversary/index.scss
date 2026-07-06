@@ -1,11 +1,13 @@
 .anniversary-page {
   min-height: 100vh;
-  background: #FAF8FC;
-  padding: 24px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 218, 232, 0.62), transparent 34%),
+    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
+  padding: 28px;
 
   .page-header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
     padding-top: 48px;
 
     .page-title {
@@ -13,21 +15,21 @@
       font-weight: 700;
       display: block;
       margin-bottom: 12px;
-      color: #2D2D2D;
-      letter-spacing: -0.5px;
+      color: #2B2B32;
+      letter-spacing: 0;
     }
 
     .page-subtitle {
       font-size: 26px;
-      color: #8E8E93;
+      color: #8F7F89;
       display: block;
     }
   }
 
   .add-btn {
-    background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
+    background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%);
     color: #fff;
-    border-radius: 20px;
+    border-radius: 999px;
     padding: 20px;
     font-size: 30px;
     font-weight: 600;
@@ -37,7 +39,7 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    box-shadow: 0 2px 8px rgba(255, 107, 157, 0.2);
+    box-shadow: 0 12px 28px rgba(217, 79, 127, 0.22);
     transition: all 0.2s ease;
 
     &::after {
@@ -57,11 +59,12 @@
     height: calc(100vh - 360px);
 
     .anniversary-item {
-      background: #FFFFFF;
-      border-radius: 20px;
-      padding: 24px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(244, 220, 230, 0.86);
+      border-radius: 28px;
+      padding: 26px;
+      margin-bottom: 18px;
+      box-shadow: 0 12px 30px rgba(84, 44, 60, 0.06);
       display: flex;
       align-items: center;
       gap: 20px;
@@ -69,14 +72,15 @@
 
       &:active {
         transform: scale(0.98);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 16px 34px rgba(84, 44, 60, 0.08);
       }
 
       .item-icon {
         width: 80px;
         height: 80px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #FFF0F5 0%, #FFE5F0 100%);
+        background: linear-gradient(135deg, #FFF7FA 0%, #FFE8F1 100%);
+        border: 1px solid rgba(244, 220, 230, 0.86);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -93,14 +97,14 @@
         .item-title {
           font-size: 30px;
           font-weight: 600;
-          color: #2D2D2D;
+          color: #2B2B32;
           display: block;
           margin-bottom: 8px;
         }
 
         .item-date {
           font-size: 24px;
-          color: #8E8E93;
+          color: #8F7F89;
           display: block;
           margin-bottom: 8px;
         }
@@ -108,7 +112,7 @@
         .item-countdown {
           .countdown-text {
             font-size: 24px;
-            color: #FF6B9D;
+            color: #D94F7F;
             font-weight: 500;
           }
         }
@@ -117,9 +121,10 @@
       .item-actions {
         .delete-btn {
           padding: 10px 24px;
-          background: #FF4757;
-          color: #fff;
-          border-radius: 12px;
+          background: #FFF2F7;
+          color: #D94F5F;
+          border: 1px solid rgba(255, 198, 207, 0.88);
+          border-radius: 999px;
           font-size: 24px;
           font-weight: 500;
           transition: all 0.2s ease;
@@ -145,7 +150,7 @@
 
       .empty-text {
         font-size: 26px;
-        color: #8E8E93;
+        color: #8F7F89;
         display: block;
       }
     }

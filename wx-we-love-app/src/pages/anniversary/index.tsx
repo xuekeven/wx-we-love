@@ -120,7 +120,7 @@ export default function Anniversary() {
         />
       )}
       <View className='page-header'>
-        <Text className='page-title'>🎂 纪念日</Text>
+        <Text className='page-title'>纪念日</Text>
         <Text className='page-subtitle'>铭记每一个重要时刻</Text>
       </View>
 

@@ -13,6 +13,39 @@ import './index.scss'
 const ENABLE_FERTILE_WINDOW = false
 // ────────────────────────────────────────────────────
 
+const PHASE_INFOS = [
+  {
+    name: '月经期',
+    desc: '子宫内膜脱落形成月经，可能伴随腹痛、疲惫、腰酸或情绪低落。',
+    tips: '适合保暖、补水、轻量活动，疼痛明显时优先休息。'
+  },
+  {
+    name: '卵泡期',
+    desc: '月经结束后雌激素逐渐上升，精力和状态通常会慢慢恢复。',
+    tips: '适合安排运动、学习和需要专注的事情。'
+  },
+  {
+    name: '排卵期',
+    desc: '接近排卵的阶段，分泌物可能变多，部分人会有轻微腹胀或排卵痛。',
+    tips: '注意身体信号；如果有备孕或避孕需求，这一阶段需要更留意。'
+  },
+  {
+    name: '黄体期',
+    desc: '排卵后到月经来潮前，孕激素水平较高，可能更容易疲惫、乳房胀痛、食欲变化或情绪波动。',
+    tips: '适合规律作息、轻运动，减少高糖和重口味饮食。'
+  },
+  {
+    name: '等待中',
+    desc: '距离预测经期还有一段时间，当前阶段会随着记录增多而更准确。',
+    tips: '保持记录，系统会根据历史周期持续修正预测。'
+  },
+  {
+    name: '可能延迟',
+    desc: '当前日期已经超过常规预测范围，可能受压力、作息、疾病或旅行等因素影响。',
+    tips: '如果延迟较久或伴随明显不适，建议结合实际情况咨询医生。'
+  }
+]
+
 function toYMD(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -20,8 +53,23 @@ function toYMD(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
+function parseYMD(ds: string): Date {
+  const [y, m, d] = String(ds).slice(0, 10).split('-').map(Number)
+  return new Date(y, (m || 1) - 1, d || 1)
+}
+
 function addDays(d: Date, n: number): Date {
   return new Date(d.getTime() + n * 86400000)
+}
+
+function daysBetween(startDs: string, endDs: string): number {
+  const start = parseYMD(startDs)
+  const end = parseYMD(endDs)
+  return Math.round((end.getTime() - start.getTime()) / 86400000)
+}
+
+function sortRecords(list: any[]): any[] {
+  return [...list].sort((a, b) => parseYMD(b.startDate).getTime() - parseYMD(a.startDate).getTime())
 }
 
 function fmtShort(ds: string): string {
@@ -50,6 +98,7 @@ export default function Menstrual() {
   const [calYear, setCalYear] = useState(todayDate.getFullYear())
   const [calMonth, setCalMonth] = useState(todayDate.getMonth())
   const [sheetRecord, setSheetRecord] = useState<any>(null)
+  const [showPhaseInfo, setShowPhaseInfo] = useState(false)
   const isPreview = usePreviewMode()
   const hasShownRef = useRef(false)
 
@@ -82,7 +131,7 @@ export default function Menstrual() {
       setPreviewMode(false)
       const res = await get('/api/menstrual')
       if (res?.success && Array.isArray(res.data)) {
-        setRecords(res.data)
+        setRecords(sortRecords(res.data))
       } else {
         setRecords([])
       }
@@ -95,10 +144,10 @@ export default function Menstrual() {
     if (records.length < 2) return 28
     const diffs: number[] = []
     for (let i = 0; i < records.length - 1; i++) {
-      diffs.push(Math.round(
-        Math.abs(new Date(records[i].startDate).getTime() - new Date(records[i + 1].startDate).getTime()) / 86400000
-      ))
+      const diff = daysBetween(records[i + 1].startDate, records[i].startDate)
+      if (diff >= 15 && diff <= 60) diffs.push(diff)
     }
+    if (!diffs.length) return 28
     return Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length)
   }, [records])
 
@@ -106,7 +155,7 @@ export default function Menstrual() {
     const withEnd = records.filter(r => r.endDate)
     if (!withEnd.length) return 5
     const total = withEnd.reduce((sum, r) => {
-      return sum + Math.round((new Date(r.endDate).getTime() - new Date(r.startDate).getTime()) / 86400000) + 1
+      return sum + daysBetween(r.startDate, r.endDate) + 1
     }, 0)
     return Math.round(total / withEnd.length)
   }, [records])
@@ -115,8 +164,8 @@ export default function Menstrual() {
   const periodMap = useMemo<Record<string, { record: any; dayNum: number }>>(() => {
     const map: Record<string, { record: any; dayNum: number }> = {}
     for (const r of records) {
-      const s = new Date(r.startDate); s.setHours(0, 0, 0, 0)
-      const e = r.endDate ? new Date(r.endDate) : addDays(s, avgDuration - 1)
+      const s = parseYMD(r.startDate); s.setHours(0, 0, 0, 0)
+      const e = r.endDate ? parseYMD(r.endDate) : addDays(s, avgDuration - 1)
       e.setHours(0, 0, 0, 0)
       let dayNum = 1
       for (let d = new Date(s); d <= e; d = addDays(d, 1)) {
@@ -131,7 +180,7 @@ export default function Menstrual() {
   const predictedSet = useMemo<Set<string>>(() => {
     const set = new Set<string>()
     if (!records.length) return set
-    const lastStart = new Date(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
+    const lastStart = parseYMD(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
     const predStart = addDays(lastStart, avgCycle)
     const predEnd = addDays(predStart, avgDuration - 1)
     for (let d = new Date(predStart); d <= predEnd; d = addDays(d, 1)) {
@@ -145,7 +194,7 @@ export default function Menstrual() {
   // 排卵日 = 下次经期开始 - 14 天；受 ENABLE_FERTILE_WINDOW 开关控制
   const fertileMap = useMemo<Record<string, 'fertile' | 'peak'>>(() => {
     if (!ENABLE_FERTILE_WINDOW || !records.length) return {}
-    const lastStart = new Date(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
+    const lastStart = parseYMD(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
     const nextPeriodStart = addDays(lastStart, avgCycle)
     const ovDate = addDays(nextPeriodStart, -14)
     const map: Record<string, 'fertile' | 'peak'> = {}
@@ -162,8 +211,8 @@ export default function Menstrual() {
   const phase = useMemo(() => {
     if (!records.length) return ''
     const r = records[0]
-    const s = new Date(r.startDate); s.setHours(0, 0, 0, 0)
-    const e = r.endDate ? new Date(r.endDate) : addDays(s, avgDuration - 1)
+    const s = parseYMD(r.startDate); s.setHours(0, 0, 0, 0)
+    const e = r.endDate ? parseYMD(r.endDate) : addDays(s, avgDuration - 1)
     e.setHours(23, 59, 59, 999)
     const t = new Date(todayDate); t.setHours(12, 0, 0, 0)
     if (t < s) return '等待中'
@@ -177,7 +226,7 @@ export default function Menstrual() {
 
   const nextPred = useMemo(() => {
     if (!records.length) return null
-    const lastStart = new Date(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
+    const lastStart = parseYMD(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
     const predDate = addDays(lastStart, avgCycle)
     const daysUntil = Math.ceil((predDate.getTime() - todayDate.getTime()) / 86400000)
     // 可育窗口开始（排卵日 - 4 天）
@@ -215,8 +264,8 @@ export default function Menstrual() {
     const fertileType = fertileMap[ds] ?? null
     const isFuture = ds > todayStr
 
-    const prevDs = toYMD(addDays(new Date(ds), -1))
-    const nextDs = toYMD(addDays(new Date(ds), 1))
+    const prevDs = toYMD(addDays(parseYMD(ds), -1))
+    const nextDs = toYMD(addDays(parseYMD(ds), 1))
 
     const cls = ['day-cell']
     if (cell.isToday) cls.push('today')
@@ -306,7 +355,7 @@ export default function Menstrual() {
 
   const getDuration = (r: any): number | null => {
     if (!r.endDate) return null
-    return Math.round((new Date(r.endDate).getTime() - new Date(r.startDate).getTime()) / 86400000) + 1
+    return daysBetween(r.startDate, r.endDate) + 1
   }
 
   return (
@@ -363,7 +412,14 @@ export default function Menstrual() {
         {/* 三项统计 */}
         <View className='pred-stats-row'>
           <View className='pred-stat-item'>
-            <Text className={`pred-stat-val ${phase === '月经期' ? 'phase-pink' : ''}`}>{phase || '--'}</Text>
+            <View className='phase-title-row'>
+              <Text className={`pred-stat-val ${phase === '月经期' ? 'phase-pink' : ''}`}>{phase || '--'}</Text>
+              {phase && (
+                <View className='phase-help-btn' onClick={() => setShowPhaseInfo(true)}>
+                  <Text className='phase-help-icon'>?</Text>
+                </View>
+              )}
+            </View>
             <Text className='pred-stat-lbl'>当前阶段</Text>
           </View>
           <View className='pred-stat-sep' />
@@ -386,7 +442,7 @@ export default function Menstrual() {
           <View className='pred-row'>
             <View className='pred-item'>
               <Text className='pred-icon'>🌸</Text>
-              <View>
+              <View className='pred-main'>
                 <Text className='pred-label'>预计下次月经</Text>
                 <Text className='pred-value'>{fmtShort(nextPred.dateStr)}</Text>
               </View>
@@ -483,7 +539,7 @@ export default function Menstrual() {
                 <View className='detail-row'>
                   <Text className='detail-label'>持续天数</Text>
                   <Text className='detail-value'>
-                    {Math.round((new Date(sheetRecord.endDate).getTime() - new Date(sheetRecord.startDate).getTime()) / 86400000) + 1} 天
+                    {daysBetween(sheetRecord.startDate, sheetRecord.endDate) + 1} 天
                   </Text>
                 </View>
               )}
@@ -513,6 +569,34 @@ export default function Menstrual() {
                 <Text>删除</Text>
               </View>
             </View>
+          </View>
+        </View>
+      )}
+
+      {showPhaseInfo && (
+        <View className='sheet-mask' onClick={() => setShowPhaseInfo(false)}>
+          <View className='sheet phase-sheet' onClick={(e) => (e as any)?.stopPropagation?.()}>
+            <View className='sheet-handle' />
+            <View className='sheet-header'>
+              <Text className='sheet-title'>周期阶段说明</Text>
+              <View className='sheet-close' onClick={() => setShowPhaseInfo(false)}>
+                <Text className='sheet-close-icon'>×</Text>
+              </View>
+            </View>
+
+            <ScrollView scrollY className='phase-sheet-body'>
+              <Text className='phase-list-title'>全部阶段</Text>
+              {PHASE_INFOS.slice(0, 4).map(item => (
+                <View key={item.name} className={`phase-info-item ${item.name === phase ? 'active' : ''}`}>
+                  <View className='phase-info-head'>
+                    <Text className='phase-info-name'>{item.name}</Text>
+                    {item.name === phase && <Text className='phase-info-tag'>当前</Text>}
+                  </View>
+                  <Text className='phase-info-desc'>{item.desc}</Text>
+                  <Text className='phase-info-tip'>{item.tips}</Text>
+                </View>
+              ))}
+            </ScrollView>
           </View>
         </View>
       )}

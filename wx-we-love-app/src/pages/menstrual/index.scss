@@ -1,6 +1,8 @@
 .menstrual-page {
   min-height: 100vh;
-  background: #FAF8FC;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 218, 232, 0.62), transparent 34%),
+    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
   padding: 0 0 120rpx;
   box-sizing: border-box;
 }
@@ -8,11 +10,12 @@
 
 /* ─── 日历卡片（BaseCalendar 容器） ─────────────────────────────────── */
 .calendar-card {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.92);
   margin: 24rpx 24rpx 0;
   border-radius: 32rpx;
   padding: 0 0 24rpx;
-  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.06);
+  border: 1rpx solid rgba(244, 220, 230, 0.86);
+  box-shadow: 0 14rpx 34rpx rgba(84, 44, 60, 0.07);
   overflow: hidden;
 }
 
@@ -36,8 +39,8 @@
     display: none;
   }
 
-  &.period::before { background: rgba(255, 107, 157, 0.18); }
-  &.predicted::before { background: rgba(255, 107, 157, 0.08); }
+  &.period::before { background: rgba(255, 107, 157, 0.16); }
+  &.predicted::before { background: rgba(255, 107, 157, 0.07); }
 
   &.period.period-has-prev.period-has-next::before,
   &.predicted.pred-has-prev.pred-has-next::before { display: block; left: 0; right: 0; }
@@ -89,7 +92,7 @@
 
 .day-num {
   font-size: 28rpx;
-  color: #2D2D2D;
+  color: #2B2B32;
   line-height: 1;
 }
 
@@ -105,6 +108,7 @@
 /* 经期 */
 .day-cell.period .day-circle {
   background: #FF6B9D;
+  box-shadow: 0 8rpx 18rpx rgba(217, 79, 127, 0.20);
   .day-num { color: #fff; font-weight: 700; }
 }
 
@@ -177,16 +181,17 @@
   .ld-fertile { background: rgba(255, 179, 71, 0.4); }
   .ld-ov { background: #FFB347; }
 
-  .legend-txt { font-size: 22rpx; color: #8E8E93; }
+  .legend-txt { font-size: 22rpx; color: #8F7F89; }
 }
 
 /* ─── 预测 + 统计信息卡片 ─────────────────────────────────── */
 .pred-card {
   margin: 20rpx 24rpx 0;
-  background: #fff;
-  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1rpx solid rgba(244, 220, 230, 0.86);
+  border-radius: 28rpx;
   padding: 0 28rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 12rpx 30rpx rgba(84, 44, 60, 0.06);
 
   /* 三项统计行 */
   .pred-stats-row {
@@ -206,23 +211,54 @@
   .pred-stat-val {
     font-size: 40rpx;
     font-weight: 700;
-    color: #2D2D2D;
+    color: #2B2B32;
     display: block;
     line-height: 1;
 
     &.phase-pink { font-size: 30rpx; color: #FF6B9D; }
   }
 
+  .phase-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8rpx;
+    min-height: 40rpx;
+  }
+
+  .phase-help-btn {
+    width: 30rpx;
+    height: 30rpx;
+    border-radius: 50%;
+    background: #FFF2F7;
+    border: 1rpx solid rgba(255, 182, 207, 0.86);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    &:active {
+      opacity: 0.7;
+    }
+  }
+
+  .phase-help-icon {
+    font-size: 20rpx;
+    color: #FF6B9D;
+    font-weight: 700;
+    line-height: 1;
+  }
+
   .pred-stat-lbl {
     font-size: 22rpx;
-    color: #8E8E93;
+    color: #8F7F89;
     display: block;
   }
 
   .pred-stat-sep {
     width: 1rpx;
     height: 60rpx;
-    background: #F0F0F0;
+    background: rgba(244, 220, 230, 0.72);
     flex-shrink: 0;
   }
 
@@ -233,13 +269,18 @@
 
   .pred-divider {
     height: 1rpx;
-    background: #F5F5F5;
+    background: rgba(244, 220, 230, 0.72);
   }
 
   .pred-item {
     display: flex;
     align-items: center;
     gap: 20rpx;
+  }
+
+  .pred-main {
+    flex: 1;
+    min-width: 0;
   }
 
   .pred-icon {
@@ -249,7 +290,7 @@
 
   .pred-label {
     font-size: 24rpx;
-    color: #8E8E93;
+    color: #8F7F89;
     display: block;
     margin-bottom: 6rpx;
   }
@@ -257,7 +298,7 @@
   .pred-value {
     font-size: 30rpx;
     font-weight: 600;
-    color: #2D2D2D;
+    color: #2B2B32;
     display: block;
   }
 
@@ -266,7 +307,7 @@
     flex-shrink: 0;
     font-size: 24rpx;
     color: #FF6B9D;
-    background: #FFF0F5;
+    background: #FFF2F7;
     padding: 8rpx 20rpx;
     border-radius: 24rpx;
     font-weight: 500;
@@ -288,7 +329,7 @@
   height: 96rpx;
   background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
   border-radius: 48rpx;
-  box-shadow: 0 8rpx 24rpx rgba(255, 107, 157, 0.3);
+  box-shadow: 0 12rpx 28rpx rgba(217, 79, 127, 0.22);
 
   &:active {
     transform: scale(0.98);
@@ -302,15 +343,16 @@
 /* ─── 历史记录 ─────────────────────────────────── */
 .history-section {
   margin: 24rpx 24rpx 0;
-  background: #fff;
-  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1rpx solid rgba(244, 220, 230, 0.86);
+  border-radius: 28rpx;
   padding: 28rpx 28rpx 8rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 12rpx 30rpx rgba(84, 44, 60, 0.06);
 
   .history-title {
     font-size: 28rpx;
     font-weight: 700;
-    color: #2D2D2D;
+    color: #2B2B32;
     display: block;
     margin-bottom: 20rpx;
   }
@@ -320,7 +362,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 20rpx 0;
-    border-bottom: 1rpx solid #F5F5F5;
+    border-bottom: 1rpx solid rgba(244, 220, 230, 0.72);
 
     &:last-child { border-bottom: none; }
     &:active { opacity: 0.7; }
@@ -345,20 +387,20 @@
   .history-date {
     font-size: 28rpx;
     font-weight: 600;
-    color: #2D2D2D;
+    color: #2B2B32;
     display: block;
     margin-bottom: 6rpx;
   }
 
   .history-meta {
     font-size: 24rpx;
-    color: #8E8E93;
+    color: #8F7F89;
     display: block;
   }
 
   .history-arrow {
     font-size: 36rpx;
-    color: #C7C7CC;
+    color: #BFAEB7;
     flex-shrink: 0;
     margin-left: 16rpx;
   }
@@ -378,7 +420,7 @@
 
   .empty-text {
     font-size: 26rpx;
-    color: #8E8E93;
+    color: #8F7F89;
     display: block;
   }
 }
@@ -387,7 +429,8 @@
 .sheet-mask {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(43, 31, 38, 0.36);
+  backdrop-filter: blur(10px);
   z-index: 100;
   display: flex;
   align-items: flex-end;
@@ -404,7 +447,7 @@
 .sheet-handle {
   width: 64rpx;
   height: 8rpx;
-  background: #E0E0E0;
+  background: #E9CCD8;
   border-radius: 4rpx;
   margin: 20rpx auto 0;
 }
@@ -414,9 +457,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 24rpx 32rpx 16rpx;
-  border-bottom: 1rpx solid #F5F5F5;
+  border-bottom: 1rpx solid rgba(244, 220, 230, 0.72);
 
-  .sheet-title { font-size: 32rpx; font-weight: 700; color: #2D2D2D; }
+  .sheet-title { font-size: 32rpx; font-weight: 700; color: #2B2B32; }
 
   .sheet-close {
     width: 56rpx;
@@ -425,9 +468,9 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: #F5F5F5;
+    background: #FFF4F8;
 
-    .sheet-close-icon { font-size: 36rpx; color: #8E8E93; line-height: 1; }
+    .sheet-close-icon { font-size: 36rpx; color: #8F7F89; line-height: 1; }
   }
 }
 
@@ -439,14 +482,14 @@
     align-items: center;
     justify-content: space-between;
     padding: 20rpx 0;
-    border-bottom: 1rpx solid #F9F9F9;
+    border-bottom: 1rpx solid rgba(244, 220, 230, 0.58);
 
     &:last-child { border-bottom: none; }
     &.detail-row-wrap { align-items: flex-start; flex-wrap: wrap; gap: 16rpx; }
   }
 
-  .detail-label { font-size: 28rpx; color: #8E8E93; flex-shrink: 0; }
-  .detail-value { font-size: 28rpx; color: #2D2D2D; font-weight: 500; text-align: right; }
+  .detail-label { font-size: 28rpx; color: #8F7F89; flex-shrink: 0; }
+  .detail-value { font-size: 28rpx; color: #2B2B32; font-weight: 500; text-align: right; }
   .detail-note { flex: 1; text-align: right; line-height: 1.5; }
 
   .symptoms-wrap {
@@ -458,7 +501,7 @@
   }
 
   .symptom-chip {
-    background: #FFF0F5;
+    background: #FFF2F7;
     color: #FF6B9D;
     font-size: 24rpx;
     padding: 8rpx 20rpx;
@@ -483,6 +526,74 @@
     &:active { opacity: 0.8; }
   }
 
-  .sheet-edit { background: #FF6B9D; color: #fff; }
-  .sheet-delete { background: #FFF0F5; color: #FF4757; }
+  .sheet-edit { background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%); color: #fff; }
+  .sheet-delete { background: #FFF2F7; color: #D94F5F; }
+}
+
+.phase-sheet {
+  max-height: 82vh;
+}
+
+.phase-sheet-body {
+  max-height: 66vh;
+  padding: 24rpx 32rpx 32rpx;
+  box-sizing: border-box;
+}
+
+.phase-info-desc,
+.phase-info-tip {
+  font-size: 26rpx;
+  color: #5F5359;
+  line-height: 1.55;
+  display: block;
+}
+
+.phase-info-tip {
+  color: #8F7F89;
+  margin-top: 10rpx;
+}
+
+.phase-list-title {
+  font-size: 28rpx;
+  color: #2B2B32;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.phase-info-item {
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid rgba(244, 220, 230, 0.72);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.active {
+    .phase-info-name {
+      color: #FF6B9D;
+    }
+  }
+}
+
+.phase-info-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 10rpx;
+}
+
+.phase-info-name {
+  font-size: 30rpx;
+  color: #2B2B32;
+  font-weight: 700;
+}
+
+.phase-info-tag {
+  font-size: 20rpx;
+  color: #FF6B9D;
+  background: #FFF2F7;
+  border-radius: 999rpx;
+  padding: 4rpx 12rpx;
+  line-height: 1.2;
 }

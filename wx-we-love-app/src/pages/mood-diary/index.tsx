@@ -123,20 +123,26 @@ export default function MoodDiary() {
   // 渲染心情日历的每个格子
   const renderMoodCell = (cell: CalCell, idx: number) => {
     if (cell.type === 'empty') {
-      return <View key={idx} className='day-cell' />
+      return <View key={idx} className='day-cell empty' />
     }
     const isPrevNext = cell.type === 'prev' || cell.type === 'next'
     const dateStr = cell.dateStr
     const selfEmoji = !isPrevNext ? getMoodEmoji(dateStr, 'self') : null
     const matchedEmoji = !isPrevNext ? getMoodEmoji(dateStr, 'matched') : null
     const showSelfCircle = !isPrevNext && dateStr <= todayDateStr && !selfEmoji
+    const isFuture = !isPrevNext && dateStr > todayDateStr
+    const hasMood = !!selfEmoji || !!matchedEmoji
 
     return (
       <View
         key={idx}
-        className={`day-cell ${isPrevNext ? cell.type : 'curr'} ${cell.isToday ? 'today' : ''}`}
+        className={`day-cell mood-day ${isPrevNext ? cell.type : 'curr'} ${cell.isToday ? 'today' : ''} ${isFuture ? 'future' : ''} ${hasMood ? 'has-mood' : ''}`}
       >
-        <Text className='day-num'>{cell.day}</Text>
+        <View className='cell-inner'>
+          <View className='day-circle'>
+            <Text className='day-num'>{cell.day}</Text>
+          </View>
+        </View>
         <View className='day-mood'>
           <View className='day-mood-row day-mood-self'>
             {selfEmoji ? (
@@ -270,29 +276,22 @@ export default function MoodDiary() {
           onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
         />
       )}
-      <View className='page-header'>
-        <View className='page-header-row'>
-          <View className='page-header-left'>
-            <Text className='page-header-month'>{displayMonth}月</Text>
-            <Text className='page-header-year'>{displayYear}年</Text>
-          </View>
-          <View className='page-header-right' onClick={goToday}>
-            <Button className='page-header-today'>回到今天</Button>
-          </View>
-        </View>
+      <View className='calendar-card'>
+        <BaseCalendar
+          className='mood-calendar'
+          year={displayYear}
+          month={displayMonth - 1}
+          onPrevMonth={goPrevMonth}
+          onNextMonth={goNextMonth}
+          weekStartsSunday
+          enableSwipe
+          showAdjacentDays={false}
+          headerRight={
+            <Button className='calendar-today-btn' onClick={goToday}>今天</Button>
+          }
+          renderCell={renderMoodCell}
+        />
       </View>
-
-      <BaseCalendar
-        className='calendar-wrap'
-        year={displayYear}
-        month={displayMonth - 1}
-        onPrevMonth={goPrevMonth}
-        onNextMonth={goNextMonth}
-        showNavArrows={false}
-        enableSwipe
-        showAdjacentDays
-        renderCell={renderMoodCell}
-      />
 
       <View className='fab-wrap' onClick={handleFabClick}>
         <View className='fab'>

@@ -173,26 +173,16 @@ export default function Index() {
             onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
           />
         )}
-        {/* 日期区域 */}
-        <View className='date-section'>
-          <View className='date-main'>
-            <Text className='date-day'>{currentDate.getDate()}</Text>
-            <View className='date-info'>
-              <Text className='date-solar'>
-                {currentDate.getFullYear()}年{String(currentDate.getMonth() + 1).padStart(2, '0')}月{String(currentDate.getDate()).padStart(2, '0')}日
-              </Text>
-              <Text className='date-week'>
-                第{getWeekOfYear(currentDate)}周 {getWeekDay(currentDate)}
-              </Text>
-            </View>
-          </View>
-          <View className='weather-icon'>
-            <Text className='emoji'>😊</Text>
-          </View>
-        </View>
-
         {/* 相识天数 */}
         <View className='love-days-section'>
+          <View className='love-date-meta'>
+            <Text className='love-date-text'>
+              {currentDate.getFullYear()}年{String(currentDate.getMonth() + 1).padStart(2, '0')}月{String(currentDate.getDate()).padStart(2, '0')}日
+            </Text>
+            <Text className='love-date-sub'>
+              第{getWeekOfYear(currentDate)}周 {getWeekDay(currentDate)}
+            </Text>
+          </View>
           <View className='love-days-content'>
             <View className='love-text-container'>
               <Text className='love-text'>今天是在一起的第</Text>

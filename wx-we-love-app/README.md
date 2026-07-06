@@ -70,6 +70,12 @@ development: {
 }
 ```
 
+生产发布前，请确认：
+
+- `production.apiBaseUrl` 是正式 HTTPS API 地址
+- 该域名已添加到微信公众平台的 request 合法域名
+- 后端 `/health` 可通过公网 HTTPS 访问
+
 ## 目录结构
 
 ```text
@@ -104,7 +110,17 @@ wx-we-love-app/
 - `/api/mood-diary`
 - `/api/upload`
 
+## 小程序发布
+
+```bash
+npm ci
+npm run build:weapp
+```
+
+构建产物在 `dist/`。使用微信开发者工具打开本项目，确认 `project.config.json` 中的 `appid` 正确后上传版本，并在微信公众平台提交审核。
+
+完整部署流程见仓库根目录 [DEPLOYMENT.md](../DEPLOYMENT.md)。
+
 ## 许可证
 
 MIT
-

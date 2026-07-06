@@ -1,15 +1,18 @@
 .match-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
-  padding: 40px 24px;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 204, 222, 0.86), transparent 34%),
+    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 52%, #FFF8FA 100%);
+  padding: 44px 28px;
 
   .match-container {
     max-width: 600px;
     margin: 0 auto;
-    background: #FFFFFF;
-    border-radius: 32px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(244, 220, 230, 0.88);
+    border-radius: 34px;
     padding: 60px 40px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 24px 70px rgba(84, 44, 60, 0.13);
 
     .match-header {
       text-align: center;
@@ -18,14 +21,14 @@
       .match-title {
         font-size: 48px;
         font-weight: 700;
-        color: #2D2D2D;
+        color: #2B2B32;
         display: block;
         margin-bottom: 16px;
       }
 
       .match-subtitle {
         font-size: 28px;
-        color: #8E8E93;
+        color: #8F7F89;
         display: block;
       }
     }
@@ -33,12 +36,13 @@
     .my-match-code-section {
       margin-bottom: 50px;
       padding: 32px;
-      background: #FFF5F8;
-      border-radius: 20px;
+      background: #FFF7FA;
+      border: 1px solid rgba(244, 220, 230, 0.82);
+      border-radius: 24px;
 
       .section-title {
         font-size: 28px;
-        color: #2D2D2D;
+        color: #2B2B32;
         font-weight: 600;
         display: block;
         margin-bottom: 24px;
@@ -51,13 +55,13 @@
         margin-bottom: 24px;
         padding: 24px;
         background: #FFFFFF;
-        border-radius: 16px;
-        border: 2px solid #FF6B9D;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 107, 157, 0.42);
 
         .match-code-text {
           font-size: 48px;
           font-weight: 700;
-          color: #FF6B9D;
+          color: #D94F7F;
           letter-spacing: 12px;
           text-align: center;
           font-family: monospace;
@@ -87,7 +91,7 @@
         line-height: 80px;
         background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
         color: #fff;
-        border-radius: 16px;
+        border-radius: 999px;
         font-size: 28px;
         font-weight: 600;
         border: none;
@@ -115,8 +119,8 @@
         height: 72px;
         line-height: 72px;
         background: #F8F8F8;
-        color: #666;
-        border-radius: 16px;
+        color: #6B5A63;
+        border-radius: 999px;
         font-size: 28px;
         font-weight: 500;
         border: 2px solid #F0F0F0;
@@ -138,12 +142,13 @@
     .input-match-section {
       margin-bottom: 50px;
       padding: 32px;
-      background: #FFF5F8;
-      border-radius: 20px;
+      background: #FFF7FA;
+      border: 1px solid rgba(244, 220, 230, 0.82);
+      border-radius: 24px;
 
       .section-title {
         font-size: 28px;
-        color: #2D2D2D;
+        color: #2B2B32;
         font-weight: 600;
         display: block;
         margin-bottom: 24px;
@@ -153,9 +158,9 @@
         width: 100%;
         height: 88px;
         padding: 0 24px;
-        border-radius: 16px;
-        background: #F8F8F8;
-        border: 2px solid #F0F0F0;
+        border-radius: 20px;
+        background: #FFFFFF;
+        border: 1px solid rgba(244, 220, 230, 0.92);
         font-size: 36px;
         text-align: center;
         letter-spacing: 12px;
@@ -178,7 +183,7 @@
         line-height: 88px;
         background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
         color: #fff;
-        border-radius: 20px;
+        border-radius: 999px;
         font-size: 28px;
         font-weight: 600;
         border: none;
@@ -202,12 +207,13 @@
 
     .match-tips {
       padding: 32px;
-      background: #F8F8F8;
-      border-radius: 20px;
+      background: #FFF7FA;
+      border: 1px solid rgba(244, 220, 230, 0.82);
+      border-radius: 24px;
 
       .tips-title {
         font-size: 28px;
-        color: #2D2D2D;
+        color: #2B2B32;
         font-weight: 600;
         display: block;
         margin-bottom: 20px;
@@ -215,7 +221,7 @@
 
       .tips-item {
         font-size: 26px;
-        color: #8E8E93;
+        color: #8F7F89;
         line-height: 1.8;
         display: block;
         margin-bottom: 12px;

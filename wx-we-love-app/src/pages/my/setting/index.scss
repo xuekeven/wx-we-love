@@ -1,20 +1,22 @@
 .setting-page {
   min-height: 100vh;
-  background: #FAF8FC;
-  padding: 24px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 218, 232, 0.62), transparent 34%),
+    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
+  padding: 28px;
 
   .setting-section {
     margin-bottom: 24px;
 
     .unmatch-btn {
-      background: #FFFFFF;
-      color: #FF9500;
-      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #C77B1D;
+      border-radius: 999px;
       padding: 24px;
       font-size: 30px;
       font-weight: 600;
-      border: none;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(245, 214, 168, 0.88);
+      box-shadow: 0 10px 28px rgba(84, 44, 60, 0.055);
       transition: all 0.2s ease;
       width: 100%;
 
@@ -32,14 +34,14 @@
     }
 
     .logout-btn {
-      background: #FFFFFF;
-      color: #FF4757;
-      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #D94F5F;
+      border-radius: 999px;
       padding: 24px;
       font-size: 30px;
       font-weight: 600;
-      border: none;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(255, 198, 207, 0.88);
+      box-shadow: 0 10px 28px rgba(84, 44, 60, 0.055);
       transition: all 0.2s ease;
       width: 100%;
 
