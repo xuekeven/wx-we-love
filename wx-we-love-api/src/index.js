@@ -26,6 +26,7 @@ if (!envCheck.WX_APPID || !envCheck.WX_SECRET) {
 }
 
 const { sequelize } = require('./models');
+const { DataTypes } = require('sequelize');
 const authMiddleware = require('./middleware/auth');
 
 const app = express();
@@ -35,10 +36,32 @@ const PORT = process.env.PORT || 4000;
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 app.use('/uploads', express.static(uploadsDir));
 
+async function ensureUserIdColumn(tableName) {
+  const queryInterface = sequelize.getQueryInterface();
+
+  try {
+    const table = await queryInterface.describeTable(tableName);
+    if (!table.userId) {
+      await queryInterface.addColumn(tableName, 'userId', {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        comment: '用户 id'
+      });
+      console.log(`✅ Added ${tableName}.userId column`);
+    }
+  } catch (error) {
+    console.warn(`⚠️ Failed to ensure ${tableName}.userId column:`, error.message);
+  }
+}
+
 // 数据库同步
 sequelize.sync()
   .then(() => {
     console.log('✅ Database synchronized');
+    return Promise.all([
+      ensureUserIdColumn('Anniversaries'),
+      ensureUserIdColumn('Menstruals')
+    ]);
   })
   .catch(err => {
     console.error('❌ Database synchronization failed:', err);
@@ -112,4 +135,3 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 module.exports = app;
-

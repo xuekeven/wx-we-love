@@ -7,6 +7,11 @@ const Menstrual = sequelize.define('Menstrual', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '用户 id'
+  },
   startDate: {
     type: DataTypes.DATEONLY,
     allowNull: false
@@ -30,4 +35,3 @@ const Menstrual = sequelize.define('Menstrual', {
 });
 
 module.exports = Menstrual;
-

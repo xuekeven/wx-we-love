@@ -31,6 +31,7 @@
 
 ```bash
 npm install
+cp .env.example .env
 ```
 
 ### 开发模式（自动重启）
@@ -52,7 +53,7 @@ npm start
 
 ## 环境变量
 
-项目未提供 `.env.example`，请手动创建 `.env`。常用变量如下：
+复制 `.env.example` 为 `.env` 后按环境修改。常用变量如下：
 
 ```env
 # 服务端口
@@ -156,7 +157,24 @@ BASE_URL=https://www.kaitool.top/welove
 
 - 默认使用 SQLite 文件库（`database.sqlite`），并非内存库
 - 配置 `DB_HOST` 后会自动切换为 MySQL
-- 启动时执行 `sequelize.sync({ alter: true })`，会按模型同步表结构
+- 启动时执行 `sequelize.sync()` 创建缺失表
+- 为兼容旧数据，启动时会检查 `Anniversaries.userId` 与 `Menstruals.userId` 字段，不存在时自动补充
+- 当前项目没有完整迁移系统，生产环境升级前请先备份数据库
+
+## 生产部署
+
+推荐使用 PM2 运行：
+
+```bash
+npm ci
+mkdir -p logs
+pm2 start ecosystem.config.js
+pm2 save
+```
+
+服务默认监听 `4000` 端口，建议通过 Nginx 反向代理到 HTTPS 域名，再把该域名配置到微信公众平台的 request 合法域名中。
+
+完整部署流程见仓库根目录 [DEPLOYMENT.md](../DEPLOYMENT.md)。
 
 ## 项目结构
 
@@ -180,12 +198,10 @@ wx-we-love-api/
 
 ## 相关文档
 
-- `启动说明.md`
-- `数据库使用指南.md`
-- `数据模型说明.md`
-- `服务器部署指南.md`
+- [部署文档](../DEPLOYMENT.md)
+- `TechStack.md`
+- `数据库常用命令.md`
 
 ## License
 
 MIT
-

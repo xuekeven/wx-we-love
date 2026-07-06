@@ -7,6 +7,11 @@ const Anniversary = sequelize.define('Anniversary', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: '用户 id'
+  },
   title: {
     type: DataTypes.STRING,
     allowNull: false
@@ -30,4 +35,3 @@ const Anniversary = sequelize.define('Anniversary', {
 });
 
 module.exports = Anniversary;
-

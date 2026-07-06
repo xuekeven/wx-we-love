@@ -49,8 +49,9 @@ DB_PASSWORD=your_password
 
 ### 启动行为
 
-- 服务启动时会执行 `sequelize.sync({ alter: true })` 同步模型到表结构。
-- 如需严格迁移流程，建议后续引入 migration（而不是长期依赖 `alter`）。
+- 服务启动时会执行 `sequelize.sync()` 创建缺失表。
+- 为兼容旧数据，启动时会检查 `Anniversaries.userId` 与 `Menstruals.userId` 字段，不存在时自动补充。
+- 生产环境升级前必须先备份数据库；如需严格迁移流程，建议后续引入 migration。
 
 ## 3. 数据模型（前端协作视角）
 
@@ -145,7 +146,7 @@ JWT_SECRET=replace_with_your_strong_random_secret
 - [ ] `.env` 中已配置强随机 `JWT_SECRET`
 - [ ] 生产环境启用 MySQL，开发环境按需使用 SQLite
 - [ ] 前端统一走封装请求层并带上 token
-- [ ] 发布前检查 `sequelize.sync({ alter: true })` 风险
+- [ ] 发布前备份数据库，并检查模型变更是否需要迁移脚本
 - [ ] 关键数据与日志已有备份策略
 
 ---
