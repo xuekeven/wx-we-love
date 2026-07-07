@@ -29,6 +29,7 @@
 - Node.js 16+
 - npm 8+
 - 微信开发者工具（用于预览/调试）
+- 已部署可访问的后端 HTTPS API
 
 ## 安装与运行
 
@@ -75,6 +76,15 @@ development: {
 - `production.apiBaseUrl` 是正式 HTTPS API 地址
 - 该域名已添加到微信公众平台的 request 合法域名
 - 后端 `/health` 可通过公网 HTTPS 访问
+- 后端发版前已按需完成数据库和 `uploads/` 备份，见 `../wx-we-love-api/docs/数据备份.md`
+
+当前生产 API 示例：
+
+```js
+production: {
+  apiBaseUrl: 'https://www.kaitool.top/welove'
+}
+```
 
 ## 目录结构
 
@@ -102,7 +112,7 @@ wx-we-love-app/
 
 ## 与后端协作
 
-后端项目位于仓库 `wx-we-love-api`，默认端口 `4000`，主要接口前缀：
+后端项目位于仓库 `wx-we-love-api`，默认端口 `4000`，生产环境通过 Nginx/HTTPS 对外暴露。主要接口前缀：
 
 - `/api/user`
 - `/api/anniversaries`
@@ -110,7 +120,20 @@ wx-we-love-app/
 - `/api/mood-diary`
 - `/api/upload`
 
+后端生产环境当前使用 Docker MySQL。数据库查询、备份和恢复说明见：
+
+- [后端数据库常用命令](../wx-we-love-api/docs/数据库常用命令.md)
+- [后端数据备份](../wx-we-love-api/docs/数据备份.md)
+
 ## 小程序发布
+
+发布前先确认后端已经完成发版和健康检查：
+
+```bash
+curl https://www.kaitool.top/welove/health
+```
+
+然后构建小程序：
 
 ```bash
 npm ci
@@ -120,6 +143,35 @@ npm run build:weapp
 构建产物在 `dist/`。使用微信开发者工具打开本项目，确认 `project.config.json` 中的 `appid` 正确后上传版本，并在微信公众平台提交审核。
 
 完整部署流程见仓库根目录 [DEPLOYMENT.md](../DEPLOYMENT.md)。
+
+## 发新版检查清单
+
+- [ ] 后端生产服务已备份数据库和 `uploads/`
+- [ ] 后端接口 `/health` 正常
+- [ ] `src/config.js` 的 `production.apiBaseUrl` 指向正式 HTTPS API
+- [ ] 微信公众平台已配置 request 合法域名
+- [ ] 本地执行 `npm run build:weapp` 成功
+- [ ] 微信开发者工具预览核心流程正常
+- [ ] 上传版本并提交审核
+
+## 常见问题
+
+### 真机请求失败
+
+- 不要使用 `localhost` 作为真机 API 地址
+- 确认 API 是 HTTPS
+- 确认域名已加入微信公众平台 request 合法域名
+- 确认后端 `/health` 正常
+
+### 构建成功但小程序仍请求旧接口
+
+- 检查 `src/config.js` 的 `production.apiBaseUrl`
+- 确认使用的是 `npm run build:weapp`
+- 重新打开微信开发者工具项目，避免使用旧缓存
+
+### 前端发版是否需要动数据库
+
+纯前端样式或交互改动不需要动数据库。只有后端模型、接口数据隔离、字段变更等改动才需要关注数据库备份或迁移。
 
 ## 许可证
 

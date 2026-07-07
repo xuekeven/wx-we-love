@@ -18,7 +18,7 @@
 
 - Node.js + Express
 - Sequelize ORM
-- 数据库：MySQL（配置 `DB_HOST` 时）或 SQLite（默认）
+- 数据库：生产环境使用 Docker MySQL；本地开发可使用 SQLite 文件库
 - 鉴权：JWT
 - 文件上传：Multer
 
@@ -66,7 +66,7 @@ WX_SECRET=your_wechat_secret
 # JWT（建议务必配置）
 JWT_SECRET=your_jwt_secret
 
-# MySQL（配置 DB_HOST 后启用 MySQL）
+# MySQL（生产环境使用 Docker MySQL 时，DB_HOST 通常填宿主机可访问地址）
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_NAME=wx_we_love
@@ -155,11 +155,13 @@ BASE_URL=https://www.kaitool.top/welove
 
 ## 数据库说明
 
-- 默认使用 SQLite 文件库（`database.sqlite`），并非内存库
+- 本地未配置 `DB_HOST` 时，默认使用 SQLite 文件库（`database.sqlite`）
 - 配置 `DB_HOST` 后会自动切换为 MySQL
+- 生产环境当前按 Docker MySQL 使用，常用容器名为 `mysql-server`，数据库名为 `wx_we_love`
 - 启动时执行 `sequelize.sync()` 创建缺失表
 - 为兼容旧数据，启动时会检查 `Anniversaries.userId` 与 `Menstruals.userId` 字段，不存在时自动补充
 - 当前项目没有完整迁移系统，生产环境升级前请先备份数据库
+- Docker MySQL 查询与备份命令见 `docs/数据库常用命令.md` 和 `docs/数据备份.md`
 
 ## 生产部署
 
@@ -173,6 +175,7 @@ pm2 save
 ```
 
 服务默认监听 `4000` 端口，建议通过 Nginx 反向代理到 HTTPS 域名，再把该域名配置到微信公众平台的 request 合法域名中。
+发版前请先备份 MySQL 数据库和 `uploads/` 上传目录，详见 [数据备份](./docs/数据备份.md)。
 
 完整部署流程见仓库根目录 [DEPLOYMENT.md](../DEPLOYMENT.md)。
 
@@ -199,8 +202,9 @@ wx-we-love-api/
 ## 相关文档
 
 - [部署文档](../DEPLOYMENT.md)
-- `TechStack.md`
-- `数据库常用命令.md`
+- [技术栈与数据模型](./TechStack.md)
+- [数据库常用命令](./docs/数据库常用命令.md)
+- [数据备份](./docs/数据备份.md)
 
 ## License
 
