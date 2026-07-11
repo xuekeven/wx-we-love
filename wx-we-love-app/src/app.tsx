@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import Taro from '@tarojs/taro'
-import { fetchUserInfo, clearUserData, getPreviewMode, setPreviewMode } from './store/global'
+import { fetchUserInfo, clearUserData, setPreviewMode } from './store/global'
 import './app.scss'
 
 function App(props) {
@@ -17,10 +17,8 @@ function App(props) {
     const currentRoute = currentPages[currentPages.length - 1]?.route
 
     if (!token) {
-      const isPreview = getPreviewMode()
-      if (!isPreview && currentRoute !== 'pages/login/index') {
-        Taro.redirectTo({ url: '/pages/login/index' })
-      }
+      // 未登录时保留当前页面，由各页面展示浏览态；小程序默认从首页进入。
+      setPreviewMode(true)
       return
     }
 
@@ -46,16 +44,16 @@ function App(props) {
       if (error.statusCode === 401 || error.statusCode === 404) {
         Taro.removeStorageSync('token')
         clearUserData()
-        setPreviewMode(false)
-        if (currentRoute !== 'pages/login/index') {
-          Taro.redirectTo({ url: '/pages/login/index' })
+        setPreviewMode(true)
+        if (currentRoute !== 'pages/index/index') {
+          Taro.switchTab({ url: '/pages/index/index' })
         }
       } else if (error.message && (error.message.includes('未登录') || error.message.includes('Token无效'))) {
         Taro.removeStorageSync('token')
         clearUserData()
-        setPreviewMode(false)
-        if (currentRoute !== 'pages/login/index') {
-          Taro.redirectTo({ url: '/pages/login/index' })
+        setPreviewMode(true)
+        if (currentRoute !== 'pages/index/index') {
+          Taro.switchTab({ url: '/pages/index/index' })
         }
       }
     }

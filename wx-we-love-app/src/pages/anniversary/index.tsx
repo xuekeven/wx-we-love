@@ -114,6 +114,7 @@ export default function Anniversary() {
     <View className='anniversary-page'>
       {isPreview && (
         <PreviewBanner
+          className='preview-banner-inset'
           text={PREVIEW.anniversary}
           buttonText={PREVIEW.loginButtonText}
           onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}

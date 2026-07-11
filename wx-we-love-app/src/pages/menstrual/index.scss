@@ -3,8 +3,12 @@
   background:
     radial-gradient(circle at 12% 0%, rgba(255, 218, 232, 0.62), transparent 34%),
     linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
-  padding: 0 0 120rpx;
+  padding: 24rpx 0 80rpx;
   box-sizing: border-box;
+}
+
+.menstrual-page > .preview-banner-inset {
+  margin: 0 24rpx;
 }
 
 
@@ -540,25 +544,11 @@
   box-sizing: border-box;
 }
 
-.phase-info-desc,
-.phase-info-tip {
+.phase-info-desc {
   font-size: 26rpx;
   color: #5F5359;
   line-height: 1.55;
   display: block;
-}
-
-.phase-info-tip {
-  color: #8F7F89;
-  margin-top: 10rpx;
-}
-
-.phase-list-title {
-  font-size: 28rpx;
-  color: #2B2B32;
-  font-weight: 700;
-  display: block;
-  margin-bottom: 16rpx;
 }
 
 .phase-info-item {

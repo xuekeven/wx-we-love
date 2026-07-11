@@ -3,8 +3,6 @@ import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { get, post } from '../../utils/request'
 import { MOODS } from './constants'
-import PreviewBanner from '../../components/PreviewBanner'
-import { PREVIEW } from '../../config/preview'
 import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './write.scss'
 
@@ -20,6 +18,8 @@ export default function MoodDiaryWrite() {
     const token = Taro.getStorageSync('token')
     if (!token) {
       setPreviewMode(true)
+      Taro.switchTab({ url: '/pages/index/index' })
+      return
     } else {
       setPreviewMode(false)
     }
@@ -107,14 +107,6 @@ export default function MoodDiaryWrite() {
 
   return (
     <View className='write-page'>
-      {isPreview && (
-        <PreviewBanner
-          className='preview-banner-inset'
-          text={PREVIEW.moodDiaryWrite}
-          buttonText={PREVIEW.loginButtonText}
-          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
-        />
-      )}
       <View className='write-content'>
         <View className='write-date-row'>
           <Text className='write-date-day'>{dateDisplay.day}</Text>

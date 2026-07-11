@@ -2,8 +2,6 @@ import { View, Text, Button, Picker, Textarea, ScrollView } from '@tarojs/compon
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { post, put } from '../../utils/request'
-import PreviewBanner from '../../components/PreviewBanner'
-import { PREVIEW } from '../../config/preview'
 import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './add.scss'
 
@@ -45,6 +43,8 @@ export default function MenstrualAdd() {
     const token = Taro.getStorageSync('token')
     if (!token) {
       setPreviewMode(true)
+      Taro.switchTab({ url: '/pages/index/index' })
+      return
     } else {
       setPreviewMode(false)
     }
@@ -203,14 +203,6 @@ export default function MenstrualAdd() {
 
   return (
     <ScrollView scrollY className='menstrual-add-page'>
-      {isPreview && (
-        <PreviewBanner
-          className='preview-banner-inset'
-          text={PREVIEW.menstrualAdd}
-          buttonText={PREVIEW.loginButtonText}
-          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
-        />
-      )}
       <View className='page-header'>
         <Text className='page-title'>🌸 {isEditMode ? '编辑月经记录' : '记录月经'}</Text>
         <Text className='page-subtitle'>{isEditMode ? '修改记录信息' : '记录健康每一天'}</Text>

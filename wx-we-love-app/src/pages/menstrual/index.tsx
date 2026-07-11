@@ -16,33 +16,27 @@ const ENABLE_FERTILE_WINDOW = false
 const PHASE_INFOS = [
   {
     name: '月经期',
-    desc: '子宫内膜脱落形成月经，可能伴随腹痛、疲惫、腰酸或情绪低落。',
-    tips: '适合保暖、补水、轻量活动，疼痛明显时优先休息。'
+    desc: '子宫内膜脱落形成月经，可能伴随腹痛、疲惫、腰酸或情绪变化。'
   },
   {
     name: '卵泡期',
-    desc: '月经结束后雌激素逐渐上升，精力和状态通常会慢慢恢复。',
-    tips: '适合安排运动、学习和需要专注的事情。'
+    desc: '月经结束后，卵泡逐渐发育、雌激素通常开始上升，但精力和感受因人而异。'
   },
   {
     name: '排卵期',
-    desc: '接近排卵的阶段，分泌物可能变多，部分人会有轻微腹胀或排卵痛。',
-    tips: '注意身体信号；如果有备孕或避孕需求，这一阶段需要更留意。'
+    desc: '接近排卵时，分泌物可能发生变化，部分人会有轻微腹胀或一侧下腹不适，也可能没有明显感觉。'
   },
   {
     name: '黄体期',
-    desc: '排卵后到月经来潮前，孕激素水平较高，可能更容易疲惫、乳房胀痛、食欲变化或情绪波动。',
-    tips: '适合规律作息、轻运动，减少高糖和重口味饮食。'
+    desc: '排卵后到月经来潮前，激素水平发生变化，部分人可能出现疲惫、乳房胀痛、食欲或情绪变化。'
   },
   {
     name: '等待中',
-    desc: '距离预测经期还有一段时间，当前阶段会随着记录增多而更准确。',
-    tips: '保持记录，系统会根据历史周期持续修正预测。'
+    desc: '距离预测经期还有一段时间，当前阶段会随着记录增多而更准确。'
   },
   {
     name: '可能延迟',
-    desc: '当前日期已经超过常规预测范围，可能受压力、作息、疾病或旅行等因素影响。',
-    tips: '如果延迟较久或伴随明显不适，建议结合实际情况咨询医生。'
+    desc: '当前日期已经超过常规预测范围，可能受压力、作息、疾病或旅行等因素影响。'
   }
 ]
 
@@ -362,6 +356,7 @@ export default function Menstrual() {
     <View className='menstrual-page'>
       {isPreview && (
         <PreviewBanner
+          className='preview-banner-inset'
           text={PREVIEW.menstrual}
           buttonText={PREVIEW.loginButtonText}
           onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
@@ -514,7 +509,7 @@ export default function Menstrual() {
 
       {/* 记录详情底部弹层 */}
       {sheetRecord && (
-        <View className='sheet-mask' onClick={() => setSheetRecord(null)}>
+        <View className='sheet-mask' catchMove onClick={() => setSheetRecord(null)}>
           <View className='sheet' onClick={(e) => (e as any)?.stopPropagation?.()}>
             <View className='sheet-handle' />
             <View className='sheet-header'>
@@ -574,7 +569,7 @@ export default function Menstrual() {
       )}
 
       {showPhaseInfo && (
-        <View className='sheet-mask' onClick={() => setShowPhaseInfo(false)}>
+        <View className='sheet-mask' catchMove onClick={() => setShowPhaseInfo(false)}>
           <View className='sheet phase-sheet' onClick={(e) => (e as any)?.stopPropagation?.()}>
             <View className='sheet-handle' />
             <View className='sheet-header'>
@@ -585,7 +580,6 @@ export default function Menstrual() {
             </View>
 
             <ScrollView scrollY className='phase-sheet-body'>
-              <Text className='phase-list-title'>全部阶段</Text>
               {PHASE_INFOS.slice(0, 4).map(item => (
                 <View key={item.name} className={`phase-info-item ${item.name === phase ? 'active' : ''}`}>
                   <View className='phase-info-head'>
@@ -593,7 +587,6 @@ export default function Menstrual() {
                     {item.name === phase && <Text className='phase-info-tag'>当前</Text>}
                   </View>
                   <Text className='phase-info-desc'>{item.desc}</Text>
-                  <Text className='phase-info-tip'>{item.tips}</Text>
                 </View>
               ))}
             </ScrollView>

@@ -5,6 +5,14 @@
     linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
   padding: 28px;
 
+  > .preview-banner-inset {
+    margin: 0;
+
+    + .page-header {
+      padding-top: 24px;
+    }
+  }
+
   .page-header {
     text-align: center;
     margin-bottom: 28px;

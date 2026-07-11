@@ -185,7 +185,7 @@ export default function Login() {
               Taro.switchTab({ url: '/pages/index/index' })
             }}
           >
-            暂不登录，我先看看
+            返回浏览
           </Button>
         </View>
       </View>
