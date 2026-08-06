@@ -7,7 +7,7 @@
 - 微信登录、限时匹配码、匹配与解绑
 - 首页恋爱天数与功能导航
 - 纪念日新增、编辑、删除和倒计时
-- 私人经期记录与周期预测
+- 情侣双方共享的经期记录与周期预测
 - 关系隔离的心情日记、评论和情侣瞬间
 - 资料维护、图片上传、退出登录、数据导出和账号删除
 
@@ -71,7 +71,7 @@ config/
 - 微信开发者工具中验证登录、匹配、纪念日、日记、瞬间、上传和隐私操作。
 - `project.config.json` 使用正式 AppID，`project.private.config.json` 不提交到 Git。
 
-完整流程见 [DEPLOYMENT.md](../DEPLOYMENT.md)，数据规则见 [PRIVACY.md](../PRIVACY.md)。
+完整流程见 [DEPLOYMENT.md](../DEPLOYMENT.md)。
 
 ## License
 

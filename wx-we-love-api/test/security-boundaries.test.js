@@ -270,18 +270,37 @@ test('anniversaries are shared only within the active couple', async () => {
   assert.deepEqual(unrelatedBody.data, []);
 });
 
-test('menstrual records remain private to their owner', async () => {
-  const { userA, userB } = await createCouple('menstrual-a', 'menstrual-b');
+test('menstrual records are shared only within the active couple', async () => {
+  const first = await createCouple('menstrual-a', 'menstrual-b');
+  const second = await createCouple('menstrual-c', 'menstrual-d');
+  const { userA, userB } = first;
   const record = await Menstrual.create({ userId: userA.id, startDate: '2026-08-01' });
 
   const ownerResponse = await request(`/api/menstrual/${record.id}`, { headers: authHeaders(userA) });
   const partnerResponse = await request(`/api/menstrual/${record.id}`, { headers: authHeaders(userB) });
   const partnerListResponse = await request('/api/menstrual', { headers: authHeaders(userB) });
+  const unrelatedResponse = await request(`/api/menstrual/${record.id}`, { headers: authHeaders(second.userA) });
   const partnerListBody = await partnerListResponse.json();
 
   assert.equal(ownerResponse.status, 200);
-  assert.equal(partnerResponse.status, 404);
-  assert.deepEqual(partnerListBody.data, []);
+  assert.equal(partnerResponse.status, 200);
+  assert.equal(partnerListBody.data[0].id, record.id);
+  assert.equal(unrelatedResponse.status, 404);
+
+  const updateResponse = await request(`/api/menstrual/${record.id}`, {
+    method: 'PUT',
+    headers: { ...authHeaders(userB), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ startDate: '2026-08-01', endDate: '2026-08-05', symptoms: [], note: 'partner update' })
+  });
+  assert.equal(updateResponse.status, 200);
+  assert.equal((await Menstrual.findByPk(record.id)).note, 'partner update');
+
+  const deleteResponse = await request(`/api/menstrual/${record.id}`, {
+    method: 'DELETE',
+    headers: authHeaders(userB)
+  });
+  assert.equal(deleteResponse.status, 200);
+  assert.equal(await Menstrual.findByPk(record.id), null);
 });
 
 test('moments are relationship-scoped and only their author can delete them', async () => {

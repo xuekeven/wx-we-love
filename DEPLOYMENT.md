@@ -200,7 +200,7 @@ curl --fail https://api.example.com/health/ready
 - 设置明确保留周期并加密、限制访问。
 - 账号删除会立即清除在线数据库记录和用户上传目录；历史备份按既定周期到期删除，恢复时不得把已删除账号重新带回线上。
 
-更多隐私约束见 [PRIVACY.md](./PRIVACY.md)，数据库命令见 [wx-we-love-api/docs/数据库命令.md](./wx-we-love-api/docs/数据库命令.md)。
+数据库维护命令见 [wx-we-love-api/docs/数据库命令.md](./wx-we-love-api/docs/数据库命令.md)。
 
 ## 7. 故障排查
 

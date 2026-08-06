@@ -1,7 +1,9 @@
 const express = require('express');
+const { Op } = require('sequelize');
 const router = express.Router();
 const { Menstrual } = require('../models');
 const authMiddleware = require('../middleware/auth');
+const { getActiveMembership } = require('../services/couple');
 const {
   daysBetween,
   isValidDateOnly,
@@ -11,6 +13,15 @@ const {
 } = require('../utils/validation');
 
 router.use(authMiddleware);
+
+async function accessUserIds(userId) {
+  const { user, partner } = await getActiveMembership(userId);
+  return [...new Set([user?.id || userId, partner?.id].filter((id) => id !== undefined && id !== null))];
+}
+
+async function accessScope(userId) {
+  return { userId: { [Op.in]: await accessUserIds(userId) } };
+}
 
 function normalizePayload(body = {}) {
   const { startDate, endDate, symptoms, note } = body;
@@ -49,7 +60,7 @@ function validatePayload(data) {
   return null;
 }
 
-// 重新计算当前用户所有记录的周期
+// 重新计算指定记录创建者的周期
 async function recalculateCycles(userId) {
   try {
     const allRecords = await Menstrual.findAll({
@@ -76,7 +87,7 @@ async function recalculateCycles(userId) {
 router.get('/', async (req, res) => {
   try {
     const records = await Menstrual.findAll({
-      where: { userId: req.userId },
+      where: await accessScope(req.userId),
       order: [['startDate', 'DESC']]
     });
     res.json({
@@ -92,8 +103,8 @@ router.get('/', async (req, res) => {
 router.get('/stats/cycle', async (req, res) => {
   try {
     const records = await Menstrual.findAll({
-      where: { userId: req.userId },
-      order: [['startDate', 'ASC']]
+      where: await accessScope(req.userId),
+      order: [['userId', 'ASC'], ['startDate', 'ASC']]
     });
 
     if (records.length < 2) {
@@ -103,11 +114,20 @@ router.get('/stats/cycle', async (req, res) => {
       });
     }
 
+    const recordsByUser = new Map();
+    for (const record of records) {
+      const userRecords = recordsByUser.get(record.userId) || [];
+      userRecords.push(record);
+      recordsByUser.set(record.userId, userRecords);
+    }
+
     const cycles = [];
-    for (let i = 0; i < records.length - 1; i++) {
-      const days = daysBetween(records[i].startDate, records[i + 1].startDate);
-      if (days >= 15 && days <= 60) {
-        cycles.push(days);
+    for (const userRecords of recordsByUser.values()) {
+      for (let i = 0; i < userRecords.length - 1; i++) {
+        const days = daysBetween(userRecords[i].startDate, userRecords[i + 1].startDate);
+        if (days >= 15 && days <= 60) {
+          cycles.push(days);
+        }
       }
     }
 
@@ -129,7 +149,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const record = await Menstrual.findOne({
-      where: { id, userId: req.userId }
+      where: { id, ...(await accessScope(req.userId)) }
     });
     if (!record) {
       return res.status(404).json({ success: false, message: '记录不存在' });
@@ -183,7 +203,7 @@ router.put('/:id', async (req, res) => {
     }
     
     const record = await Menstrual.findOne({
-      where: { id, userId: req.userId }
+      where: { id, ...(await accessScope(req.userId)) }
     });
     if (!record) {
       return res.status(404).json({ success: false, message: '记录不存在' });
@@ -191,7 +211,7 @@ router.put('/:id', async (req, res) => {
     
     await record.update(data);
     
-    await recalculateCycles(req.userId);
+    await recalculateCycles(record.userId);
     
     const updatedRecord = await Menstrual.findByPk(id);
     
@@ -209,14 +229,16 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await Menstrual.destroy({
-      where: { id, userId: req.userId }
+    const record = await Menstrual.findOne({
+      where: { id, ...(await accessScope(req.userId)) }
     });
-    if (!deleted) {
+    if (!record) {
       return res.status(404).json({ success: false, message: '记录不存在' });
     }
-    
-    await recalculateCycles(req.userId);
+
+    const ownerId = record.userId;
+    await record.destroy();
+    await recalculateCycles(ownerId);
     
     res.json({
       success: true,

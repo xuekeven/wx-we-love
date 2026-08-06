@@ -8,19 +8,18 @@
 wx-we-love/
 ├── wx-we-love-app/     # Taro + React + TypeScript 小程序
 ├── wx-we-love-api/     # Express + Sequelize API
-├── DEPLOYMENT.md       # 生产部署说明
-└── PRIVACY.md          # 数据边界与隐私操作
+└── DEPLOYMENT.md       # 生产部署说明
 ```
 
 ## 主要功能
 
 - 微信登录、限时匹配码、情侣匹配与非破坏性解绑
 - 恋爱天数、纪念日、情侣瞬间和心情日记
-- 私人经期记录、周期预测和历史记录
+- 情侣共享的经期记录、周期预测和历史记录
 - 资料维护、头像与瞬间图片上传
 - 服务端退出登录、个人数据导出和账号删除
 
-共享数据以一次情侣关系为边界；解绑会保留历史记录，新伴侣无法看到旧关系数据。经期记录始终仅本人可见。完整规则见 [PRIVACY.md](./PRIVACY.md)。
+共享数据仅允许当前有效情侣关系的两名成员访问；经期记录也对情侣双方开放。解绑会保留历史记录，新伴侣无法看到旧关系中的纪念日、日记和瞬间。
 
 ## 本地开发
 
@@ -68,4 +67,3 @@ pnpm audit --prod
 - [前端说明](./wx-we-love-app/README.md)
 - [后端说明](./wx-we-love-api/README.md)
 - [部署文档](./DEPLOYMENT.md)
-- [隐私说明](./PRIVACY.md)
