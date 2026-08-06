@@ -78,9 +78,11 @@ FLUSH PRIVILEGES;
 每次升级前先备份数据库和上传目录：
 
 ```bash
-mysqldump --single-transaction -u wx_we_love -p wx_we_love > /var/backups/wx-we-love-$(date +%F-%H%M).sql
-tar -C /var/lib/wx-we-love -czf /var/backups/wx-we-love-uploads-$(date +%F-%H%M).tar.gz uploads
+cd /var/www/wx-we-love/wx-we-love-api
+pnpm backup
 ```
+
+脚本默认从 `mysql-server` Docker 容器导出数据库，读取 `.env` 中的数据库名和 `UPLOAD_DIR`，并将经过完整性校验的备份写入 `~/backup`。容器名或备份目录不同时，通过 `MYSQL_CONTAINER`、`BACKUP_DIR` 环境变量覆盖。
 
 服务启动时会连接数据库并执行 `SchemaMigrations` 中尚未应用的版本化迁移，迁移成功后才监听端口。首次启动或升级前可先在同结构的备份副本上验证。
 

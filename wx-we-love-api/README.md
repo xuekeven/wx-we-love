@@ -120,6 +120,22 @@ UPLOAD_DIR=./uploads
 - 同一用户、同一关系、同一天的重复心情日记会合并，评论会迁移到保留记录。
 - 发布涉及数据库变化的版本前，必须备份数据库和 `UPLOAD_DIR`。
 
+## 备份
+
+MySQL 使用官方 Docker 容器部署时，可以一条命令同时备份数据库和上传目录：
+
+```bash
+pnpm backup
+```
+
+脚本默认读取当前目录的 `.env`，从 `mysql-server` 容器导出数据库，并将备份写入 `~/backup`。SQL 完整性和上传压缩包都会自动校验；失败时不会留下 0 字节的正式备份文件。
+
+路径或容器名不同时可以覆盖默认值：
+
+```bash
+BACKUP_DIR=/path/to/backup MYSQL_CONTAINER=mysql-server pnpm backup
+```
+
 ## 验证
 
 ```bash
