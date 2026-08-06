@@ -32,11 +32,11 @@ export default function MenstrualAdd() {
   const today = new Date()
   const [startDate, setStartDate] = useState(toYMD(today))
   const [endDate, setEndDate] = useState('')
-  const [selectedSymptoms, setSelectedSymptoms] = useState([])
+  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([])
   const [note, setNote] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
-  const [recordId, setRecordId] = useState(null)
+  const [recordId, setRecordId] = useState<string | null>(null)
   const isPreview = usePreviewMode()
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function MenstrualAdd() {
     setEndDate(e.detail.value)
   }
 
-  const toggleSymptom = (symptomName) => {
+  const toggleSymptom = (symptomName: string) => {
     if (isPreview) return
     if (selectedSymptoms.includes(symptomName)) {
       setSelectedSymptoms(selectedSymptoms.filter(s => s !== symptomName))

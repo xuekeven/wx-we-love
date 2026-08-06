@@ -2,33 +2,38 @@ const express = require('express');
 const router = express.Router();
 const { Menstrual } = require('../models');
 const authMiddleware = require('../middleware/auth');
+const {
+  daysBetween,
+  isValidDateOnly,
+  parseDateOnly,
+  todayDateOnly,
+  validateOptionalText
+} = require('../utils/validation');
 
 router.use(authMiddleware);
 
-function isValidDateOnly(value) {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
-}
-
-function parseDateOnly(value) {
-  const [year, month, day] = String(value).slice(0, 10).split('-').map(Number);
-  return new Date(year, (month || 1) - 1, day || 1);
-}
-
-function daysBetween(startDate, endDate) {
-  return Math.round((parseDateOnly(endDate) - parseDateOnly(startDate)) / 86400000);
-}
-
-function normalizePayload(body) {
+function normalizePayload(body = {}) {
   const { startDate, endDate, symptoms, note } = body;
+  if (symptoms !== undefined && !Array.isArray(symptoms)) return { error: '症状格式无效' };
+  if (Array.isArray(symptoms) && symptoms.length > 20) return { error: '症状不能超过 20 项' };
+  const normalizedSymptoms = [];
+  for (const item of symptoms || []) {
+    const symptom = validateOptionalText(item, 30);
+    if (symptom.error) return { error: '单项症状不能超过 30 个字符' };
+    if (symptom.value) normalizedSymptoms.push(symptom.value);
+  }
+  const normalizedNote = validateOptionalText(note, 1000);
+  if (normalizedNote.error) return { error: '备注不能超过 1000 个字符' };
   return {
     startDate,
     endDate: endDate || null,
-    symptoms: Array.isArray(symptoms) ? symptoms : [],
-    note: typeof note === 'string' ? note.trim() : ''
+    symptoms: [...new Set(normalizedSymptoms)],
+    note: normalizedNote.value
   };
 }
 
 function validatePayload(data) {
+  if (data.error) return data.error;
   if (!isValidDateOnly(data.startDate)) {
     return '请提供有效的开始日期';
   }
@@ -38,9 +43,7 @@ function validatePayload(data) {
   if (data.endDate && parseDateOnly(data.endDate) < parseDateOnly(data.startDate)) {
     return '结束日期不能早于开始日期';
   }
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  if (parseDateOnly(data.startDate) > today) {
+  if (parseDateOnly(data.startDate) > parseDateOnly(todayDateOnly())) {
     return '开始日期不能晚于今天';
   }
   return null;

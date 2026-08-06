@@ -9,9 +9,9 @@ import { useEffect, useState } from 'react'
 /** /api/user/info 返回的 data 结构 */
 export interface UserInfoData {
   id?: number
-  openId?: string
   phone?: string
   matchCode?: string
+  matchCodeExpiresAt?: string | null
   isMatched?: boolean
   matchedUserId?: number | null
   currentName?: string

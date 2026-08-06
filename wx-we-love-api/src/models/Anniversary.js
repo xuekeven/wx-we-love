@@ -12,6 +12,11 @@ const Anniversary = sequelize.define('Anniversary', {
     allowNull: true,
     comment: '用户 id'
   },
+  coupleId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    comment: '创建时所属情侣关系 id'
+  },
   title: {
     type: DataTypes.STRING,
     allowNull: false

@@ -1,57 +1,94 @@
 .setting-page {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(255, 218, 232, 0.62), transparent 34%),
-    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
   padding: 28px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #FFF8FA 0%, #FFFFFF 55%, #FFF8FA 100%);
 
-  .setting-section {
-    margin-bottom: 24px;
+  .setting-group {
+    margin-bottom: 34px;
+  }
 
-    .unmatch-btn {
-      background: rgba(255, 255, 255, 0.92);
-      color: #C77B1D;
-      border-radius: 999px;
-      padding: 24px;
-      font-size: 30px;
-      font-weight: 600;
-      border: 1px solid rgba(245, 214, 168, 0.88);
-      box-shadow: 0 10px 28px rgba(84, 44, 60, 0.055);
-      transition: all 0.2s ease;
+  .group-title {
+    display: block;
+    margin: 0 0 12px 4px;
+    color: #81727A;
+    font-size: 24px;
+  }
+
+  .setting-btn {
+    width: 100%;
+    min-height: 84px;
+    margin-bottom: 14px;
+    border: 1px solid #E9E1E5;
+    border-radius: 8px;
+    background: #FFFFFF;
+    color: #4E444A;
+    font-size: 28px;
+    font-weight: 600;
+
+    &::after { border: none; }
+    &.warning { color: #A66718; border-color: #EED8B9; }
+    &.danger { color: #C83F50; border-color: #F0C9CF; }
+  }
+
+  .delete-mask {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 36px;
+    box-sizing: border-box;
+    background: rgba(36, 25, 31, 0.5);
+  }
+
+  .delete-dialog {
+    width: 100%;
+    padding: 30px;
+    border-radius: 8px;
+    background: #FFFFFF;
+  }
+
+  .delete-title {
+    display: block;
+    color: #2B2B32;
+    font-size: 32px;
+    font-weight: 700;
+  }
+
+  .delete-copy {
+    display: block;
+    margin-top: 14px;
+    color: #786A72;
+    font-size: 25px;
+  }
+
+  .delete-input {
+    height: 80px;
+    margin-top: 22px;
+    padding: 0 18px;
+    border: 1px solid #E1D5DB;
+    border-radius: 8px;
+    background: #FCFAFB;
+    font-size: 28px;
+  }
+
+  .delete-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 24px;
+
+    .cancel-btn,
+    .confirm-btn {
       width: 100%;
-
-      &::after {
-        border: none;
-      }
-
-      &:active {
-        transform: scale(0.98);
-      }
-
-      &[disabled] {
-        opacity: 0.6;
-      }
+      border-radius: 8px;
+      font-size: 27px;
+      &::after { border: none; }
     }
 
-    .logout-btn {
-      background: rgba(255, 255, 255, 0.92);
-      color: #D94F5F;
-      border-radius: 999px;
-      padding: 24px;
-      font-size: 30px;
-      font-weight: 600;
-      border: 1px solid rgba(255, 198, 207, 0.88);
-      box-shadow: 0 10px 28px rgba(84, 44, 60, 0.055);
-      transition: all 0.2s ease;
-      width: 100%;
-
-      &::after {
-        border: none;
-      }
-
-      &:active {
-        transform: scale(0.98);
-      }
-    }
+    .cancel-btn { background: #F2EEF0; color: #62565D; }
+    .confirm-btn { background: #C83F50; color: #FFFFFF; }
   }
 }

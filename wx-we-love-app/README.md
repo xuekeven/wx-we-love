@@ -1,178 +1,78 @@
 # wx-we-love-app
 
-情侣恋爱空间微信小程序前端（Taro + React + TypeScript）。
+情侣恋爱空间微信小程序前端，基于 Taro 4、React 18 和 TypeScript。
 
-## 项目概览
+## 功能
 
-本项目为微信小程序端，已接入后端 API，当前包含登录匹配、主页、纪念日、经期记录、心情日记、个人中心等核心功能页面。
-
-当前路由入口见 `src/app.config.ts`，主要页面包括：
-
-- `pages/login`：微信登录
-- `pages/match`：匹配页面
-- `pages/index`：首页
-- `pages/anniversary`：纪念日
-- `pages/menstrual`：经期记录
-- `pages/mood-diary`：心情日记
-- `pages/my`：我的
-
-## 技术栈
-
-- 框架：Taro `3.6.23`
-- UI：React `18`
-- 语言：TypeScript
-- 样式：Sass
-- 构建：Webpack 5
+- 微信登录、限时匹配码、匹配与解绑
+- 首页恋爱天数与功能导航
+- 纪念日新增、编辑、删除和倒计时
+- 私人经期记录与周期预测
+- 关系隔离的心情日记、评论和情侣瞬间
+- 资料维护、图片上传、退出登录、数据导出和账号删除
 
 ## 环境要求
 
-- Node.js 16+
-- npm 8+
-- 微信开发者工具（用于预览/调试）
-- 已部署可访问的后端 HTTPS API
+- Node.js 20.17+，推荐 Node.js 22 LTS
+- pnpm 11.20+
+- 微信开发者工具
+- 可访问的后端 API
 
-## 安装与运行
-
-```bash
-npm install
-```
-
-### 小程序开发模式
+## 安装与开发
 
 ```bash
-npm run dev:weapp
+pnpm install --frozen-lockfile
+TARO_APP_API_BASE_URL=http://127.0.0.1:4000 pnpm dev:weapp
 ```
 
-### 小程序生产构建
+真机不能访问电脑的 `localhost`，本地联调请使用电脑局域网 IP。
+
+## API 配置
+
+`src/config.ts` 从 `TARO_APP_API_BASE_URL` 读取 API 基址：
 
 ```bash
-npm run build:weapp
+TARO_APP_API_BASE_URL=https://api.example.com pnpm build:weapp
 ```
 
-### H5 调试与构建（可选）
+生产构建要求 HTTPS。正式域名还必须加入微信公众平台的 request 合法域名。
+
+## 验证与构建
 
 ```bash
-npm run dev:h5
-npm run build:h5
+pnpm typecheck
+TARO_APP_API_BASE_URL=https://api.example.com pnpm build:weapp
+pnpm audit --prod
 ```
 
-## 后端 API 配置
+构建产物位于 `dist/`，使用微信开发者工具预览和上传。
 
-前端 API 基址配置在 `src/config.js`。
-
-- `development`：默认仍指向 `https://www.kaitool.top/welove`
-- `production`：默认指向 `https://www.kaitool.top/welove`
-
-如需本地联调，可改为局域网地址（真机不能访问 `localhost`）：
-
-```js
-development: {
-  apiBaseUrl: 'http://192.168.x.x:4000'
-}
-```
-
-生产发布前，请确认：
-
-- `production.apiBaseUrl` 是正式 HTTPS API 地址
-- 该域名已添加到微信公众平台的 request 合法域名
-- 后端 `/health` 可通过公网 HTTPS 访问
-- 后端发版前已按需完成数据库和 `uploads/` 备份，见 `../wx-we-love-api/docs/数据备份.md`
-
-当前生产 API 示例：
-
-```js
-production: {
-  apiBaseUrl: 'https://www.kaitool.top/welove'
-}
-```
+Taro 4.2.1 对部分构建依赖使用精确版本。项目对已确认兼容的 Swiper 和 UUID 安全版本做了覆盖；不能兼容升级的告警应按构建链风险处理：仅从可信锁文件安装依赖，不向局域网或公网暴露开发服务器，并在 Taro 发布兼容更新后及时升级。不要执行会把 Taro 强制降级到 3.x 的 `pnpm audit --fix --force`。
 
 ## 目录结构
 
 ```text
-wx-we-love-app/
-├── src/
-│   ├── app.tsx
-│   ├── app.config.ts
-│   ├── config.js                  # API 地址配置
-│   ├── pages/                     # 业务页面
-│   │   ├── login/
-│   │   ├── match/
-│   │   ├── index/
-│   │   ├── anniversary/
-│   │   ├── menstrual/
-│   │   ├── mood-diary/
-│   │   ├── moment/
-│   │   └── my/
-│   ├── components/                # 公共组件
-│   ├── store/                     # 全局状态
-│   └── utils/                     # 请求与工具方法
-├── config/                        # Taro 构建配置
-└── package.json
+src/
+├── app.tsx
+├── app.config.ts
+├── config.ts
+├── components/
+├── pages/
+├── store/
+└── utils/
+config/
 ```
 
-## 与后端协作
+## 发布检查
 
-后端项目位于仓库 `wx-we-love-api`，默认端口 `4000`，生产环境通过 Nginx/HTTPS 对外暴露。主要接口前缀：
+- 后端 `/health/ready` 返回 200。
+- `TARO_APP_API_BASE_URL` 指向正式 HTTPS API。
+- `pnpm typecheck` 与 `pnpm build:weapp` 通过。
+- 微信开发者工具中验证登录、匹配、纪念日、日记、瞬间、上传和隐私操作。
+- `project.config.json` 使用正式 AppID，`project.private.config.json` 不提交到 Git。
 
-- `/api/user`
-- `/api/anniversaries`
-- `/api/menstrual`
-- `/api/mood-diary`
-- `/api/upload`
+完整流程见 [DEPLOYMENT.md](../DEPLOYMENT.md)，数据规则见 [PRIVACY.md](../PRIVACY.md)。
 
-后端生产环境当前使用 Docker MySQL。数据库查询、备份和恢复说明见：
-
-- [后端数据库常用命令](../wx-we-love-api/docs/数据库常用命令.md)
-- [后端数据备份](../wx-we-love-api/docs/数据备份.md)
-
-## 小程序发布
-
-发布前先确认后端已经完成发版和健康检查：
-
-```bash
-curl https://www.kaitool.top/welove/health
-```
-
-然后构建小程序：
-
-```bash
-npm ci
-npm run build:weapp
-```
-
-构建产物在 `dist/`。使用微信开发者工具打开本项目，确认 `project.config.json` 中的 `appid` 正确后上传版本，并在微信公众平台提交审核。
-
-完整部署流程见仓库根目录 [DEPLOYMENT.md](../DEPLOYMENT.md)。
-
-## 发新版检查清单
-
-- [ ] 后端生产服务已备份数据库和 `uploads/`
-- [ ] 后端接口 `/health` 正常
-- [ ] `src/config.js` 的 `production.apiBaseUrl` 指向正式 HTTPS API
-- [ ] 微信公众平台已配置 request 合法域名
-- [ ] 本地执行 `npm run build:weapp` 成功
-- [ ] 微信开发者工具预览核心流程正常
-- [ ] 上传版本并提交审核
-
-## 常见问题
-
-### 真机请求失败
-
-- 不要使用 `localhost` 作为真机 API 地址
-- 确认 API 是 HTTPS
-- 确认域名已加入微信公众平台 request 合法域名
-- 确认后端 `/health` 正常
-
-### 构建成功但小程序仍请求旧接口
-
-- 检查 `src/config.js` 的 `production.apiBaseUrl`
-- 确认使用的是 `npm run build:weapp`
-- 重新打开微信开发者工具项目，避免使用旧缓存
-
-### 前端发版是否需要动数据库
-
-纯前端样式或交互改动不需要动数据库。只有后端模型、接口数据隔离、字段变更等改动才需要关注数据库备份或迁移。
-
-## 许可证
+## License
 
 MIT

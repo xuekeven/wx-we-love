@@ -308,10 +308,10 @@ module.exports = {
     // 类型: Array
     // 说明: 应用更新后（git pull 等）执行的命令
     // 示例:
-    //   - ['npm install', 'pm2 restart app']: 安装依赖并重启
-    //   - ['npm run build']: 构建项目
+    //   - ['pnpm install --frozen-lockfile', 'pm2 restart app']: 安装依赖并重启
+    //   - ['pnpm build']: 构建项目
     // 默认: 无
-    // post_update: ['npm install', 'npm run build'],  // 示例（已注释）
+    // post_update: ['pnpm install --frozen-lockfile', 'pnpm build'],  // 示例（已注释）
     
     // force: 是否强制启动
     // 类型: Boolean

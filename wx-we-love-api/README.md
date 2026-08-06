@@ -1,93 +1,63 @@
 # wx-we-love-api
 
-情侣恋爱空间小程序后端 API 服务（Express + Sequelize）。
-
-## 项目概览
-
-服务入口为 `src/index.js`，默认端口 `4000`。当前已实现：
-
-- 微信登录与 JWT 鉴权
-- 情侣匹配/解绑
-- 用户资料管理（昵称、头像、恋爱日期、功能排序、手机号）
-- 纪念日管理
-- 经期记录管理
-- 心情日记（列表、写入、删除、评论、已读状态）
-- 图片上传（头像等）
-
-## 技术栈
-
-- Node.js + Express
-- Sequelize ORM
-- 数据库：生产环境使用 Docker MySQL；本地开发可使用 SQLite 文件库
-- 鉴权：JWT
-- 文件上传：Multer
+情侣恋爱空间小程序后端 API，基于 Express 5 和 Sequelize 6。
 
 ## 环境要求
 
-- Node.js 16+
-- npm 8+
+- Node.js 20.17+，推荐 Node.js 22 LTS
+- pnpm 11.20+
+- MySQL 5.7+/8.0，或本地 SQLite
 
 ## 安装与启动
 
 ```bash
-npm install
+pnpm install --frozen-lockfile
 cp .env.example .env
+pnpm dev
 ```
 
-### 开发模式（自动重启）
-
-```bash
-npm run dev
-```
-
-### 生产模式
-
-```bash
-npm start
-```
-
-### 启动验证
-
-- `GET /`：服务信息
-- `GET /health`：健康检查
+生产环境使用 `pnpm start`。启动流程会依次校验环境变量、连接数据库、执行版本化迁移，全部成功后才监听端口。
 
 ## 环境变量
 
-复制 `.env.example` 为 `.env` 后按环境修改。常用变量如下：
-
 ```env
-# 服务端口
+NODE_ENV=production
 PORT=4000
 
-# 微信登录（强烈建议配置）
 WX_APPID=your_wechat_appid
 WX_SECRET=your_wechat_secret
+JWT_SECRET=replace_with_at_least_32_random_characters
 
-# JWT（建议务必配置）
-JWT_SECRET=your_jwt_secret
-
-# MySQL（生产环境使用 Docker MySQL 时，DB_HOST 通常填宿主机可访问地址）
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_NAME=wx_we_love
-DB_USER=root
-DB_PASSWORD=your_password
+DB_USER=wx_we_love
+DB_PASSWORD=your_database_password
 
-# 未配置 DB_HOST 时使用 SQLite 文件
+# 未配置 DB_HOST 时使用 SQLite
 SQLITE_STORAGE=./database.sqlite
 
-# 生成图片 URL 的基础域名（可选）
-BASE_URL=https://www.kaitool.top/welove
+API_BASE_URL=https://api.example.com
+CORS_ORIGINS=https://admin.example.com
+UPLOAD_DIR=./uploads
+
 ```
+
+`JWT_SECRET` 至少 32 个字符。生产环境还必须配置 `WX_APPID`、`WX_SECRET` 和 `API_BASE_URL`。`CORS_ORIGINS` 是逗号分隔的浏览器来源；微信小程序请求通常不携带 `Origin`。
+
+## 健康检查
+
+- `GET /health/live`：进程存活，不检查数据库
+- `GET /health/ready`：数据库初始化和迁移完成后返回 200
+- `GET /health`：兼容别名，语义等同就绪探针
+
+负载均衡和发布检查应使用 `/health/ready`。
 
 ## API 概览
 
-基础路由：
+除登录接口和健康检查外，业务接口均要求 `Authorization: Bearer <token>`。
 
-- `GET /`
-- `GET /health`
-
-用户与匹配（`/api/user`）：
+### 用户与关系 `/api/user`
 
 - `POST /login`
 - `GET /info`
@@ -97,23 +67,31 @@ BASE_URL=https://www.kaitool.top/welove
 - `POST /unmatch`
 - `POST /function-order`
 - `POST /bind-phone`
+- `POST /logout`
+- `GET /export-data`
+- `POST /delete-account`
 
-纪念日（`/api/anniversaries`）：
+匹配码由密码学安全随机数生成，有效期十分钟。匹配和解绑使用数据库事务；解绑保留历史数据并结束当前关系。
+
+### 纪念日 `/api/anniversaries`
 
 - `GET /`
 - `POST /`
+- `PUT /:id`
 - `DELETE /:id`
 
-经期记录（`/api/menstrual`）：
+### 经期记录 `/api/menstrual`
 
 - `GET /`
+- `GET /stats/cycle`
 - `GET /:id`
 - `POST /`
 - `PUT /:id`
 - `DELETE /:id`
-- `GET /stats/cycle`
 
-心情日记（`/api/mood-diary`，需鉴权）：
+经期记录只允许创建者本人访问。
+
+### 心情日记 `/api/mood-diary`
 
 - `GET /`
 - `GET /all`
@@ -123,87 +101,56 @@ BASE_URL=https://www.kaitool.top/welove
 - `POST /comment`
 - `DELETE /:id`
 
-上传（`/api/upload`）：
+### 情侣瞬间 `/api/moments`
 
-- `POST /`（`multipart/form-data`，字段名 `file`）
+- `GET /`
+- `POST /`
+- `DELETE /:id`
 
-## 鉴权说明
+### 上传 `/api/upload`
 
-多数业务接口通过 `Authorization: Bearer <token>` 传递 JWT。  
-`/api/user/login` 登录成功后会返回 `token`。
+- `POST /`：`multipart/form-data`，字段名 `file`
 
-## 响应格式
+上传限制为 5 MB。服务按文件魔数识别 JPEG、PNG、GIF 和 WebP，不信任客户端文件名或 MIME 类型，并按用户隔离存储。
 
-成功示例：
+## 数据与迁移
 
-```json
-{
-  "success": true,
-  "message": "操作成功",
-  "data": {}
-}
-```
+- 首次启动会创建基础表；之后由 `SchemaMigrations` 记录并执行版本化迁移。
+- 当前迁移会建立 `Couple`、`Moment` 及关系隔离字段和索引，并回填兼容旧数据。
+- 同一用户、同一关系、同一天的重复心情日记会合并，评论会迁移到保留记录。
+- 发布涉及数据库变化的版本前，必须备份数据库和 `UPLOAD_DIR`。
 
-失败示例：
-
-```json
-{
-  "success": false,
-  "message": "错误信息"
-}
-```
-
-## 数据库说明
-
-- 本地未配置 `DB_HOST` 时，默认使用 SQLite 文件库（`database.sqlite`）
-- 配置 `DB_HOST` 后会自动切换为 MySQL
-- 生产环境当前按 Docker MySQL 使用，常用容器名为 `mysql-server`，数据库名为 `wx_we_love`
-- 启动时执行 `sequelize.sync()` 创建缺失表
-- 为兼容旧数据，启动时会检查 `Anniversaries.userId` 与 `Menstruals.userId` 字段，不存在时自动补充
-- 当前项目没有完整迁移系统，生产环境升级前请先备份数据库
-- Docker MySQL 查询与备份命令见 `docs/数据库常用命令.md` 和 `docs/数据备份.md`
-
-## 生产部署
-
-推荐使用 PM2 运行：
+## 验证
 
 ```bash
-npm ci
-mkdir -p logs
-pm2 start ecosystem.config.js
-pm2 save
+pnpm test
+pnpm audit --prod
 ```
 
-服务默认监听 `4000` 端口，建议通过 Nginx 反向代理到 HTTPS 域名，再把该域名配置到微信公众平台的 request 合法域名中。
-发版前请先备份 MySQL 数据库和 `uploads/` 上传目录，详见 [数据备份](./docs/数据备份.md)。
-
-完整部署流程见仓库根目录 [DEPLOYMENT.md](../DEPLOYMENT.md)。
+测试覆盖鉴权密钥、上传校验、匹配事务、关系隔离、解绑保留、迁移合并和账号删除。
 
 ## 项目结构
 
 ```text
-wx-we-love-api/
-├── src/
-│   ├── index.js
-│   ├── config/
-│   ├── middleware/
-│   ├── models/
-│   ├── routes/
-│   │   ├── user.js
-│   │   ├── anniversary.js
-│   │   ├── menstrual.js
-│   │   ├── moodDiary.js
-│   │   └── upload.js
-│   └── utils/
-├── uploads/              # 运行后自动创建
-└── package.json
+src/
+├── app.js
+├── index.js
+├── config/
+├── database/
+├── middleware/
+├── models/
+├── routes/
+├── services/
+└── utils/
+test/
 ```
 
 ## 相关文档
 
 - [部署文档](../DEPLOYMENT.md)
-- [技术栈与数据模型](./TechStack.md)
-- [数据库常用命令](./docs/数据库常用命令.md)
+- [隐私说明](../PRIVACY.md)
+- [技术栈与数据模型](./docs/技术栈.md)
+- [数据库命令](./docs/数据库命令.md)
 - [数据备份](./docs/数据备份.md)
 
 ## License

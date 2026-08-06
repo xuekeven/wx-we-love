@@ -22,6 +22,7 @@ interface DiaryEntry {
   moodId: string
   content: string
   userId: number
+  isBySelf: boolean
   authorName: string
   authorAvatar: string
   readByMatched: boolean
@@ -54,6 +55,7 @@ export default function MoodDiaryList() {
             authorName: '我',
             authorAvatar: '',
             readByMatched: false,
+            isBySelf: true,
             comments: []
           }
         ])
@@ -265,12 +267,14 @@ export default function MoodDiaryList() {
                       >
                         <Text className='list-item-action-bubble-inner'>💬</Text>
                       </View>
-                      <View
-                        className='list-item-action-icon list-item-action-more'
-                        onClick={() => showEntryActions(entry)}
-                      >
-                        <Text>⋯</Text>
-                      </View>
+                      {entry.isBySelf && (
+                        <View
+                          className='list-item-action-icon list-item-action-more'
+                          onClick={() => showEntryActions(entry)}
+                        >
+                          <Text>⋯</Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                   {(entry.comments?.length ?? 0) > 0 && (
@@ -303,7 +307,7 @@ export default function MoodDiaryList() {
             value={commentInput}
             onInput={(e) => setCommentInput(e.detail.value)}
             focus
-            confirmType='发送'
+            confirmType='send'
             onConfirm={submitComment}
           />
           <Button

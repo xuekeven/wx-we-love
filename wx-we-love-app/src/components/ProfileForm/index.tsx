@@ -2,6 +2,7 @@ import { View, Text, Button, Image, Input, Picker } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import config from '../../config'
+import type { ApiResponse } from '../../utils/request'
 import './index.scss'
 
 // 仅当为本地临时路径（需上传）时返回 true；http/https 的远程 URL 不再上传
@@ -99,14 +100,14 @@ export default function ProfileForm({
     let avatarToSave = avatar || ''
     if (showAvatar && avatarToSave && isLocalTempAvatar(avatarToSave)) {
       try {
-        const uploadRes = await new Promise((resolve, reject) => {
+        const uploadRes = await new Promise<ApiResponse<{ url: string }>>((resolve, reject) => {
           Taro.uploadFile({
             url: `${config.apiBaseUrl}/api/upload`,
             filePath: avatarToSave,
             name: 'file',
             header: token ? { Authorization: `Bearer ${token}` } : {},
             success: (res) => {
-              if (res.statusCode === 200) {
+              if (res.statusCode >= 200 && res.statusCode < 300) {
                 try {
                   const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
                   resolve(data)
@@ -114,8 +115,14 @@ export default function ProfileForm({
                   reject(new Error('解析上传结果失败'))
                 }
               } else {
-                const errData = typeof res.data === 'string' ? {} : (res.data || {})
-                reject(new Error(errData?.message || '上传失败'))
+                let message = '上传失败'
+                try {
+                  const errData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+                  message = errData?.message || message
+                } catch {
+                  // Keep the generic message when the server did not return JSON.
+                }
+                reject(new Error(message))
               }
             },
             fail: (err) => reject(err)

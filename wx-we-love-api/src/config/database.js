@@ -26,14 +26,4 @@ const sequelize = process.env.DB_HOST
       logging: false
     });
 
-// 测试连接
-sequelize.authenticate()
-  .then(() => {
-    console.log('✅ Database connection established successfully');
-  })
-  .catch(err => {
-    console.error('❌ Unable to connect to database:', err);
-  });
-
 module.exports = sequelize;
-

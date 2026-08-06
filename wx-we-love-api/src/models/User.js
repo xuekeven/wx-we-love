@@ -56,6 +56,11 @@ const User = sequelize.define('User', {
       key: 'id'
     }
   },
+  coupleId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    comment: '当前有效情侣关系 id'
+  },
   isMatched: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -71,8 +76,16 @@ const User = sequelize.define('User', {
     defaultValue: {
       '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6
     }
+  },
+  matchCodeExpiresAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  tokenVersion: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
   }
 });
 
 module.exports = User;
-

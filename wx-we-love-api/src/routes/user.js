@@ -1,555 +1,432 @@
-const express = require('express');
-const router = express.Router();
-const jwt = require('jsonwebtoken');
-const https = require('https');
 const crypto = require('crypto');
-const { User, Anniversary, Menstrual, MoodDiary, MoodDiaryComment } = require('../models');
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const { Op, Transaction } = require('sequelize');
+const { getJwtSecret } = require('../config/env');
+const authMiddleware = require('../middleware/auth');
+const { createRateLimit } = require('../middleware/rateLimit');
+const {
+  sequelize,
+  User,
+  Couple,
+  Anniversary,
+  Menstrual,
+  MoodDiary,
+  MoodDiaryComment,
+  Moment
+} = require('../models');
+const { getActiveMembership } = require('../services/couple');
+const { getPhoneNumber, getSessionByCode } = require('../services/wechat');
+const { deleteUserUploads } = require('../services/uploads');
 const { normalizeUrl } = require('../utils/url');
+const {
+  isValidDateOnly,
+  normalizeOptionalText,
+  parseDateOnly,
+  validateOptionalText
+} = require('../utils/validation');
 
-// 生成匹配码（6位数字）
-function generateMatchCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+const router = express.Router();
+const MATCH_CODE_TTL_MS = 10 * 60 * 1000;
+const DEFAULT_FUNCTION_ORDER = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6 };
+
+const loginRateLimit = createRateLimit({ name: 'login', windowMs: 10 * 60 * 1000, max: 20 });
+const matchRateLimit = createRateLimit({
+  name: 'match',
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  key: (req) => String(req.userId)
+});
+
+function createMatchCode() {
+  return String(crypto.randomInt(100000, 1000000));
 }
 
-// 通过 code 换取 openId 和 session_key
-function getOpenIdByCode(code) {
-  return new Promise((resolve, reject) => {
-    // 必须配置小程序 appid 和 secret
-    const appid = process.env.WX_APPID || '';
-    const secret = process.env.WX_SECRET || '';
-    
-    if (!appid || !secret) {
-      reject(new Error('未配置 WX_APPID 或 WX_SECRET'));
-      return;
+async function issueMatchCode(user, transaction) {
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const matchCode = createMatchCode();
+    const exists = await User.findOne({ where: { matchCode }, attributes: ['id'], transaction });
+    if (exists) continue;
+    const matchCodeExpiresAt = new Date(Date.now() + MATCH_CODE_TTL_MS);
+    await user.update({ matchCode, matchCodeExpiresAt }, { transaction });
+    return { matchCode, matchCodeExpiresAt };
+  }
+  throw new Error('无法生成唯一匹配码');
+}
+
+function signToken(user) {
+  return jwt.sign(
+    { userId: user.id, tokenVersion: user.tokenVersion },
+    getJwtSecret(),
+    { expiresIn: '30d', issuer: 'wx-we-love-api', audience: 'wx-we-love-app' }
+  );
+}
+
+function validateProfileUpdate(body) {
+  const updates = {};
+  if (body.currentName !== undefined) {
+    const name = validateOptionalText(body.currentName, 24);
+    if (name.error) return { error: '姓名不能超过 24 个字符' };
+    if (!name.value) return { error: '姓名不能为空' };
+    updates.currentName = name.value;
+  }
+  if (body.currentAvatar !== undefined) {
+    const avatar = validateOptionalText(body.currentAvatar, 2048);
+    if (avatar.error) return { error: '头像地址过长' };
+    if (avatar.value && !/^https:\/\//i.test(avatar.value)) return { error: '头像地址必须使用 HTTPS' };
+    updates.currentAvatar = avatar.value;
+  }
+  if (body.loveDate !== undefined) {
+    if (body.loveDate !== null && (!isValidDateOnly(body.loveDate) || parseDateOnly(body.loveDate) > new Date())) {
+      return { error: '恋爱纪念日无效' };
     }
-
-    // 调用微信 API 换取 openId
-    const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appid}&secret=${secret}&js_code=${code}&grant_type=authorization_code`;
-    
-    https.get(url, (res) => {
-      let data = '';
-      
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      res.on('end', () => {
-        try {
-          const result = JSON.parse(data);
-          const { openid, session_key, errcode, errmsg } = result;
-
-          if (errcode) {
-            console.error('微信登录失败:', errmsg);
-            reject(new Error(`微信登录失败: ${errmsg}`));
-            return;
-          }
-
-          resolve({ openId: openid, sessionKey: session_key });
-        } catch (error) {
-          console.error('解析微信响应失败:', error);
-          reject(error);
-        }
-      });
-    }).on('error', (error) => {
-      console.error('获取 openId 失败:', error);
-      reject(error);
-    });
-  });
+    updates.loveDate = body.loveDate;
+  }
+  if (body.functionOrder !== undefined) {
+    const order = body.functionOrder;
+    if (!order || typeof order !== 'object' || Array.isArray(order) || Object.keys(order).length > 20
+      || Object.values(order).some((value) => !Number.isInteger(value))) {
+      return { error: '功能排序格式无效' };
+    }
+    updates.functionOrder = order;
+  }
+  return { updates };
 }
 
-// 微信登录（code + 用户基本资料 + 可选uuid）
-router.post('/login', async (req, res) => {
+router.post('/login', loginRateLimit, async (req, res) => {
   try {
-    const { code, nickname, avatar, uuid } = req.body; // 微信返回的 nickname/avatar 存入 currentName/currentAvatar
-    
-    if (!code) {
-      return res.status(400).json({ success: false, message: '缺少code参数' });
+    const { code, uuid } = req.body || {};
+    if (typeof code !== 'string' || !code.trim()) {
+      return res.status(400).json({ success: false, message: '缺少 code 参数' });
     }
+    const { openId } = await getSessionByCode(code.trim());
+    if (!openId) return res.status(400).json({ success: false, message: '获取用户标识失败' });
 
-    // 通过 code 换取 openId 和 session_key
-    let openId;
-    let sessionKey = null;
-    try {
-      const result = await getOpenIdByCode(code);
-      openId = result.openId;
-      sessionKey = result.sessionKey || null;
-    } catch (error) {
-      console.error('获取 openId 失败:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: '微信登录失败，请重试' 
-      });
-    }
-
-    if (!openId) {
-      return res.status(400).json({ 
-        success: false, 
-        message: '获取用户标识失败' 
-      });
-    }
-
-    // 查找或创建用户
     let user = await User.findOne({ where: { openId } });
-    
     if (!user) {
-      // 生成匹配码
-      let matchCode = generateMatchCode();
-      // 确保匹配码唯一
-      while (await User.findOne({ where: { matchCode } })) {
-        matchCode = generateMatchCode();
-      }
-
-      user = await User.create({
-        openId,
-        uuid: uuid || null,
-        currentName: nickname || '微信用户',
-        currentAvatar: avatar || '',
-        sessionKey,
-        matchCode,
-        isMatched: false,
-        functionOrder: {
-          '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6
-        }
+      user = await sequelize.transaction(async (transaction) => {
+        const created = await User.create({
+          openId,
+          uuid: normalizeOptionalText(uuid, 32) || null,
+          currentName: '微信用户',
+          currentAvatar: '',
+          isMatched: false,
+          functionOrder: DEFAULT_FUNCTION_ORDER
+        }, { transaction });
+        await issueMatchCode(created, transaction);
+        return created;
       });
     } else {
-      // 未匹配用户：用本次登录上传的 nickname/avatar 更新；已匹配用户：不覆盖已有 currentName/currentAvatar
-      if (!user.isMatched) {
-        if (nickname !== undefined) user.currentName = nickname;
-        if (avatar !== undefined) user.currentAvatar = avatar;
+      await user.update({
+        uuid: normalizeOptionalText(uuid, 32) || user.uuid,
+        sessionKey: null
+      });
+      if (!user.coupleId && (!user.matchCodeExpiresAt || user.matchCodeExpiresAt <= new Date())) {
+        await issueMatchCode(user);
       }
-      if (uuid) user.uuid = uuid;
-      if (sessionKey) user.sessionKey = sessionKey;
-      await user.save();
     }
 
-    // 生成JWT token
-    const token = jwt.sign(
-      { userId: user.id, openId: user.openId },
-      process.env.JWT_SECRET || 'your_secret_key',
-      { expiresIn: '30d' }
-    );
-
+    const membership = await getActiveMembership(user.id);
     res.json({
       success: true,
       message: '登录成功',
       data: {
         user: {
           id: user.id,
-          openId: user.openId,
           uuid: user.uuid,
           currentName: user.currentName,
           currentAvatar: normalizeUrl(user.currentAvatar),
           phone: user.phone,
-          matchCode: user.matchCode,
-          isMatched: user.isMatched,
-          matchedUserId: user.matchedUserId
+          matchCode: membership.couple ? null : user.matchCode,
+          matchCodeExpiresAt: membership.couple ? null : user.matchCodeExpiresAt,
+          isMatched: !!membership.couple,
+          matchedUserId: membership.partner?.id || null
         },
-        token
+        token: signToken(user)
       }
     });
   } catch (error) {
-    console.error('登录失败:', error);
-    res.status(500).json({ success: false, message: '服务器错误' });
+    console.error('登录失败:', error.message);
+    res.status(error.code === 'CONFIGURATION_ERROR' ? 503 : 502).json({
+      success: false,
+      message: error.code === 'CONFIGURATION_ERROR' ? '服务配置错误' : '微信登录失败，请重试'
+    });
   }
 });
 
-// 获取当前用户信息（需要token）
+router.use(authMiddleware);
+
 router.get('/info', async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({ success: false, message: '未登录' });
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
-      const user = await User.findByPk(decoded.userId);
-      
-      if (!user) {
-        return res.status(404).json({ success: false, message: '用户不存在' });
+    const user = await User.findByPk(req.userId);
+    if (!user) return res.status(404).json({ success: false, message: '用户不存在' });
+    const { couple, partner } = await getActiveMembership(user.id);
+    res.json({
+      success: true,
+      data: {
+        id: user.id,
+        phone: user.phone,
+        matchCode: couple ? null : user.matchCode,
+        matchCodeExpiresAt: couple ? null : user.matchCodeExpiresAt,
+        isMatched: !!couple,
+        matchedUserId: partner?.id || null,
+        currentName: user.currentName || '',
+        currentAvatar: normalizeUrl(user.currentAvatar || ''),
+        matchedName: partner?.currentName || '',
+        matchedAvatar: normalizeUrl(partner?.currentAvatar || ''),
+        matchedUser: partner ? { id: partner.id } : null,
+        loveDate: couple?.loveDate || user.loveDate,
+        functionOrder: user.functionOrder
       }
-
-      // 如果已匹配，获取匹配对象的信息
-      let matchedUser = null;
-      if (user.isMatched && user.matchedUserId) {
-        matchedUser = await User.findByPk(user.matchedUserId);
-      }
-
-      // 统一属性名：当前用户 currentName/currentAvatar，匹配对象 matchedName/matchedAvatar
-      res.json({
-        success: true,
-        data: {
-          id: user.id,
-          openId: user.openId,
-          phone: user.phone,
-          matchCode: user.matchCode,
-          isMatched: user.isMatched,
-          matchedUserId: user.matchedUserId,
-          currentName: user.currentName || '',
-          currentAvatar: normalizeUrl(user.currentAvatar || ''),
-          matchedName: matchedUser ? (matchedUser.currentName || '') : '',
-          matchedAvatar: matchedUser ? normalizeUrl(matchedUser.currentAvatar || '') : '',
-          matchedUser: matchedUser ? { id: matchedUser.id } : null,
-          loveDate: user.loveDate,
-          functionOrder: user.functionOrder
-        }
-      });
-    } catch (error) {
-      return res.status(401).json({ success: false, message: 'Token无效' });
-    }
+    });
   } catch (error) {
     console.error('获取用户信息失败:', error);
     res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
 
-// 生成匹配码
-router.post('/generate-match-code', async (req, res) => {
+router.post('/generate-match-code', matchRateLimit, async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({ success: false, message: '未登录' });
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
-      const user = await User.findByPk(decoded.userId);
-      
-      if (!user) {
-        return res.status(404).json({ success: false, message: '用户不存在' });
-      }
-
-      if (user.isMatched) {
-        return res.status(400).json({ success: false, message: '已经匹配，无法生成新匹配码' });
-      }
-
-      // 生成新的匹配码
-      let matchCode = generateMatchCode();
-      while (await User.findOne({ where: { matchCode } })) {
-        matchCode = generateMatchCode();
-      }
-
-      await user.update({ matchCode });
-
-      res.json({
-        success: true,
-        message: '匹配码生成成功',
-        data: { matchCode }
-      });
-    } catch (error) {
-      return res.status(401).json({ success: false, message: 'Token无效' });
-    }
+    const user = await User.findByPk(req.userId);
+    const membership = await getActiveMembership(req.userId);
+    if (membership.couple) return res.status(409).json({ success: false, message: '已经匹配' });
+    const code = await issueMatchCode(user);
+    res.json({ success: true, message: '匹配码生成成功', data: code });
   } catch (error) {
     console.error('生成匹配码失败:', error);
     res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
 
-// 输入匹配码进行匹配
-router.post('/match', async (req, res) => {
+router.post('/match', matchRateLimit, async (req, res) => {
+  const matchCode = String(req.body?.matchCode || '').trim();
+  if (!/^\d{6}$/.test(matchCode)) {
+    return res.status(400).json({ success: false, message: '请输入有效的 6 位匹配码' });
+  }
+
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    const { matchCode } = req.body;
-    
-    if (!token) {
-      return res.status(401).json({ success: false, message: '未登录' });
-    }
+    const result = await sequelize.transaction({ isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE }, async (transaction) => {
+      const currentUser = await User.findByPk(req.userId, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!currentUser) return { status: 404, message: '用户不存在' };
+      if (currentUser.coupleId || currentUser.isMatched) return { status: 409, message: '已经匹配' };
+      if (currentUser.matchCode === matchCode) return { status: 400, message: '不能使用自己的匹配码' };
 
-    if (!matchCode) {
-      return res.status(400).json({ success: false, message: '请输入匹配码' });
-    }
+      const targetUser = await User.findOne({
+        where: { matchCode, matchCodeExpiresAt: { [Op.gt]: new Date() } },
+        transaction,
+        lock: transaction.LOCK.UPDATE
+      });
+      if (!targetUser) return { status: 404, message: '匹配码不存在或已过期' };
+      if (targetUser.coupleId || targetUser.isMatched) return { status: 409, message: '该用户已经匹配' };
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
-      const currentUser = await User.findByPk(decoded.userId);
-      
-      if (!currentUser) {
-        return res.status(404).json({ success: false, message: '用户不存在' });
-      }
-
-      if (currentUser.isMatched) {
-        return res.status(400).json({ success: false, message: '已经匹配，无法再次匹配' });
-      }
-
-      if (currentUser.matchCode === matchCode) {
-        return res.status(400).json({ success: false, message: '不能使用自己的匹配码' });
-      }
-
-      // 查找匹配码对应的用户
-      const targetUser = await User.findOne({ where: { matchCode } });
-      
-      if (!targetUser) {
-        return res.status(404).json({ success: false, message: '匹配码不存在' });
-      }
-
-      if (targetUser.isMatched) {
-        return res.status(400).json({ success: false, message: '该用户已经匹配' });
-      }
-
-      // 进行匹配
+      const couple = await Couple.create({ loveDate: currentUser.loveDate || targetUser.loveDate || null }, { transaction });
       await currentUser.update({
+        coupleId: couple.id,
         isMatched: true,
-        matchedUserId: targetUser.id
-      });
-
+        matchedUserId: targetUser.id,
+        matchCode: null,
+        matchCodeExpiresAt: null
+      }, { transaction });
       await targetUser.update({
+        coupleId: couple.id,
         isMatched: true,
-        matchedUserId: currentUser.id
-      });
+        matchedUserId: currentUser.id,
+        matchCode: null,
+        matchCodeExpiresAt: null
+      }, { transaction });
+      return { targetUser };
+    });
 
-      res.json({
-        success: true,
-        message: '匹配成功',
-        data: {
-          matchedUser: {
-            id: targetUser.id,
-            currentName: targetUser.currentName,
-            currentAvatar: normalizeUrl(targetUser.currentAvatar)
-          }
+    if (result.status) return res.status(result.status).json({ success: false, message: result.message });
+    res.json({
+      success: true,
+      message: '匹配成功',
+      data: {
+        matchedUser: {
+          id: result.targetUser.id,
+          currentName: result.targetUser.currentName,
+          currentAvatar: normalizeUrl(result.targetUser.currentAvatar)
         }
-      });
-    } catch (error) {
-      return res.status(401).json({ success: false, message: 'Token无效' });
-    }
+      }
+    });
   } catch (error) {
     console.error('匹配失败:', error);
-    res.status(500).json({ success: false, message: '服务器错误' });
+    res.status(409).json({ success: false, message: '匹配状态已变化，请刷新后重试' });
   }
 });
 
-// 更新用户信息（接受 currentName、currentAvatar 等，统一映射到数据库字段）
 router.post('/info', async (req, res) => {
+  const { updates, error } = validateProfileUpdate(req.body || {});
+  if (error) return res.status(400).json({ success: false, message: error });
+
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    const body = req.body;
-    
-    if (!token) {
-      return res.status(401).json({ success: false, message: '未登录' });
-    }
+    const user = await sequelize.transaction(async (transaction) => {
+      const current = await User.findByPk(req.userId, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!current) return null;
+      const userUpdates = { ...updates };
+      delete userUpdates.loveDate;
+      await current.update(userUpdates, { transaction });
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
-      const user = await User.findByPk(decoded.userId);
-      
-      if (!user) {
-        return res.status(404).json({ success: false, message: '用户不存在' });
-      }
-
-      const updates = {};
-      if (body.currentName !== undefined) updates.currentName = body.currentName;
-      if (body.currentAvatar !== undefined) updates.currentAvatar = body.currentAvatar;
-      if (body.loveDate !== undefined) updates.loveDate = body.loveDate;
-      if (body.functionOrder !== undefined) updates.functionOrder = body.functionOrder;
-      await user.update(updates);
-
-      // 恋爱纪念日：若已匹配，同步更新对方的 loveDate，两人共用同一天
-      if (body.loveDate !== undefined && user.isMatched && user.matchedUserId) {
-        const matchedUser = await User.findByPk(user.matchedUserId);
-        if (matchedUser) {
-          await matchedUser.update({ loveDate: body.loveDate });
+      if (Object.prototype.hasOwnProperty.call(updates, 'loveDate')) {
+        const { couple } = await getActiveMembership(current.id, { transaction, lock: transaction.LOCK.UPDATE });
+        if (couple) {
+          await couple.update({ loveDate: updates.loveDate }, { transaction });
+          await User.update({ loveDate: updates.loveDate }, { where: { coupleId: couple.id }, transaction });
+        } else {
+          await current.update({ loveDate: updates.loveDate }, { transaction });
         }
       }
-
-      res.json({
-        success: true,
-        message: '更新成功',
-        data: {
-          currentName: user.currentName,
-          currentAvatar: normalizeUrl(user.currentAvatar),
-          loveDate: user.loveDate,
-          functionOrder: user.functionOrder
-        }
-      });
-    } catch (error) {
-      return res.status(401).json({ success: false, message: 'Token无效' });
-    }
-  } catch (error) {
-    console.error('更新用户信息失败:', error);
+      return current;
+    });
+    if (!user) return res.status(404).json({ success: false, message: '用户不存在' });
+    const { couple } = await getActiveMembership(user.id);
+    res.json({
+      success: true,
+      message: '更新成功',
+      data: {
+        currentName: user.currentName,
+        currentAvatar: normalizeUrl(user.currentAvatar),
+        loveDate: couple?.loveDate || user.loveDate,
+        functionOrder: user.functionOrder
+      }
+    });
+  } catch (caught) {
+    console.error('更新用户信息失败:', caught);
     res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
 
-// 更新功能排序
 router.post('/function-order', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    const { functionOrder } = req.body;
-    
-    if (!token) {
-      return res.status(401).json({ success: false, message: '未登录' });
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
-      const user = await User.findByPk(decoded.userId);
-      
-      if (!user) {
-        return res.status(404).json({ success: false, message: '用户不存在' });
-      }
-
-      await user.update({ functionOrder });
-      
-      res.json({
-        success: true,
-        message: '排序已更新',
-        data: user
-      });
-    } catch (error) {
-      return res.status(401).json({ success: false, message: 'Token无效' });
-    }
-  } catch (error) {
-    console.error('更新排序失败:', error);
-    res.status(500).json({ success: false, message: '服务器错误' });
-  }
+  const { updates, error } = validateProfileUpdate({ functionOrder: req.body?.functionOrder });
+  if (error) return res.status(400).json({ success: false, message: error });
+  await User.update(updates, { where: { id: req.userId } });
+  res.json({ success: true, message: '排序已更新', data: updates.functionOrder });
 });
 
-// 绑定手机号（通过微信 getPhoneNumber 返回的 encryptedData + iv 解密）
 router.post('/bind-phone', async (req, res) => {
+  const code = String(req.body?.code || '').trim();
+  if (!code) return res.status(400).json({ success: false, message: '缺少手机号授权 code' });
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    const { encryptedData, iv } = req.body;
-
-    if (!token) {
-      return res.status(401).json({ success: false, message: '未登录' });
-    }
-
-    if (!encryptedData || !iv) {
-      return res.status(400).json({ success: false, message: '缺少encryptedData或iv' });
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
-      const user = await User.findByPk(decoded.userId);
-
-      if (!user) {
-        return res.status(404).json({ success: false, message: '用户不存在' });
-      }
-
-      if (!user.sessionKey) {
-        // 开发模式下可能没有配置 appid/secret，此时无法解密手机号
-        return res.status(400).json({
-          success: false,
-          message: '当前环境未配置微信appid/secret，无法解密手机号'
-        });
-      }
-
-      // 解密手机号
-      try {
-        const sessionKey = Buffer.from(user.sessionKey, 'base64');
-        const ivBuffer = Buffer.from(iv, 'base64');
-        const encryptedBuffer = Buffer.from(encryptedData, 'base64');
-
-        const decipher = crypto.createDecipheriv('aes-128-cbc', sessionKey, ivBuffer);
-        decipher.setAutoPadding(true);
-        let decodedStr = decipher.update(encryptedBuffer, 'binary', 'utf8');
-        decodedStr += decipher.final('utf8');
-
-        const phoneInfo = JSON.parse(decodedStr);
-        const phoneNumber = phoneInfo.phoneNumber || phoneInfo.purePhoneNumber;
-
-        if (!phoneNumber) {
-          return res.status(400).json({ success: false, message: '解密手机号失败' });
-        }
-
-        await user.update({ phone: phoneNumber });
-
-        res.json({
-          success: true,
-          message: '手机号绑定成功',
-          data: {
-            phone: phoneNumber
-          }
-        });
-      } catch (error) {
-        console.error('解密手机号失败:', error);
-        return res.status(500).json({ success: false, message: '解密手机号失败' });
-      }
-    } catch (error) {
-      return res.status(401).json({ success: false, message: 'Token无效' });
-    }
+    const phone = await getPhoneNumber(code);
+    if (!phone) return res.status(400).json({ success: false, message: '获取手机号失败' });
+    await User.update({ phone }, { where: { id: req.userId } });
+    res.json({ success: true, message: '手机号绑定成功', data: { phone } });
   } catch (error) {
-    console.error('绑定手机号失败:', error);
-    res.status(500).json({ success: false, message: '服务器错误' });
+    console.error('绑定手机号失败:', error.message);
+    res.status(502).json({ success: false, message: '获取手机号失败，请重试' });
   }
 });
 
-// 解绑匹配关系
+router.post('/logout', async (req, res) => {
+  await User.increment('tokenVersion', { by: 1, where: { id: req.userId } });
+  res.json({ success: true, message: '已退出登录' });
+});
+
+async function endRelationship(currentUser, transaction) {
+  let members = [currentUser];
+  if (currentUser.coupleId) {
+    members = await User.findAll({
+      where: { coupleId: currentUser.coupleId },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+  } else if (currentUser.matchedUserId) {
+    const legacyPartner = await User.findOne({
+      where: {
+        id: currentUser.matchedUserId,
+        matchedUserId: currentUser.id,
+        isMatched: true
+      },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+    if (legacyPartner) members.push(legacyPartner);
+  }
+
+  if (currentUser.coupleId) {
+    await Couple.update(
+      { status: 'ended', endedAt: new Date() },
+      { where: { id: currentUser.coupleId, status: 'active' }, transaction }
+    );
+  }
+
+  for (const member of members) {
+    await member.update({
+      coupleId: null,
+      isMatched: false,
+      matchedUserId: null,
+      loveDate: null,
+      functionOrder: DEFAULT_FUNCTION_ORDER
+    }, { transaction });
+    await issueMatchCode(member, transaction);
+  }
+  return members.find((member) => member.id !== currentUser.id) || null;
+}
+
 router.post('/unmatch', async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({ success: false, message: '未登录' });
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
-      const currentUser = await User.findByPk(decoded.userId);
-      
-      if (!currentUser) {
-        return res.status(404).json({ success: false, message: '用户不存在' });
-      }
-
-      if (!currentUser.isMatched) {
-        return res.status(400).json({ success: false, message: '当前未匹配，无需解绑' });
-      }
-
-      // 获取匹配的用户
-      const matchedUser = currentUser.matchedUserId
-        ? await User.findByPk(currentUser.matchedUserId)
-        : null;
-
-      const defaultFunctionOrder = { '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6 };
-
-      // 为当前用户生成新匹配码（旧匹配码作废）
-      let newCodeA = generateMatchCode();
-      while (await User.findOne({ where: { matchCode: newCodeA } })) {
-        newCodeA = generateMatchCode();
-      }
-      await currentUser.update({
-        isMatched: false,
-        matchedUserId: null,
-        loveDate: null,
-        functionOrder: defaultFunctionOrder,
-        matchCode: newCodeA
-      });
-
-      // 如果匹配的用户存在，也解除其匹配关系、清空其匹配相关数据，并为其生成新匹配码
-      if (matchedUser && matchedUser.isMatched && matchedUser.matchedUserId === currentUser.id) {
-        let newCodeB = generateMatchCode();
-        while (await User.findOne({ where: { matchCode: newCodeB } }) || newCodeB === newCodeA) {
-          newCodeB = generateMatchCode();
-        }
-        await matchedUser.update({
-          isMatched: false,
-          matchedUserId: null,
-          loveDate: null,
-          functionOrder: defaultFunctionOrder,
-          matchCode: newCodeB
-        });
-      }
-
-      // 清空两人已有的业务数据（纪念日、经期等），重新匹配后需重新开始
-      await Anniversary.destroy({ where: {} });
-      await Menstrual.destroy({ where: {} });
-      await MoodDiaryComment.destroy({ where: {} });
-      await MoodDiary.destroy({ where: {} });
-
-      res.json({
-        success: true,
-        message: '解绑成功',
-        data: {
-          isMatched: false,
-          matchedUserId: null
-        }
-      });
-    } catch (error) {
-      return res.status(401).json({ success: false, message: 'Token无效' });
-    }
+    const result = await sequelize.transaction(async (transaction) => {
+      const currentUser = await User.findByPk(req.userId, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!currentUser) return { status: 404, message: '用户不存在' };
+      if (!currentUser.coupleId && !currentUser.isMatched) return { status: 409, message: '当前未匹配' };
+      await endRelationship(currentUser, transaction);
+      return {};
+    });
+    if (result.status) return res.status(result.status).json({ success: false, message: result.message });
+    res.json({ success: true, message: '解绑成功，历史数据已保留', data: { isMatched: false, matchedUserId: null } });
   } catch (error) {
     console.error('解绑失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+router.get('/export-data', async (req, res) => {
+  try {
+    const [user, anniversaries, menstrual, diaries, comments, moments] = await Promise.all([
+      User.findByPk(req.userId, { attributes: { exclude: ['sessionKey', 'tokenVersion'] } }),
+      Anniversary.findAll({ where: { userId: req.userId } }),
+      Menstrual.findAll({ where: { userId: req.userId } }),
+      MoodDiary.findAll({ where: { userId: req.userId } }),
+      MoodDiaryComment.findAll({ where: { userId: req.userId } }),
+      Moment.findAll({ where: { userId: req.userId } })
+    ]);
+    res.json({
+      success: true,
+      data: { exportedAt: new Date().toISOString(), user, anniversaries, menstrual, diaries, comments, moments }
+    });
+  } catch (error) {
+    console.error('导出数据失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+router.post('/delete-account', async (req, res) => {
+  if (req.body?.confirmation !== 'DELETE') {
+    return res.status(400).json({ success: false, message: '请确认删除账号' });
+  }
+  try {
+    await deleteUserUploads(req.userId);
+    await sequelize.transaction(async (transaction) => {
+      const user = await User.findByPk(req.userId, { transaction, lock: transaction.LOCK.UPDATE });
+      if (!user) return;
+      if (user.coupleId || user.isMatched) await endRelationship(user, transaction);
+      const diaries = await MoodDiary.findAll({ where: { userId: user.id }, attributes: ['id'], transaction });
+      const diaryIds = diaries.map((diary) => diary.id);
+      if (diaryIds.length) {
+        await MoodDiaryComment.destroy({ where: { moodDiaryId: { [Op.in]: diaryIds } }, transaction });
+      }
+      await MoodDiaryComment.destroy({ where: { userId: user.id }, transaction });
+      await Promise.all([
+        Anniversary.destroy({ where: { userId: user.id }, transaction }),
+        Menstrual.destroy({ where: { userId: user.id }, transaction }),
+        MoodDiary.destroy({ where: { userId: user.id }, transaction }),
+        Moment.destroy({ where: { userId: user.id }, transaction })
+      ]);
+      await user.destroy({ transaction });
+    });
+    res.json({ success: true, message: '账号及个人数据已删除' });
+  } catch (error) {
+    console.error('删除账号失败:', error);
     res.status(500).json({ success: false, message: '服务器错误' });
   }
 });

@@ -127,6 +127,11 @@
       }
 
       .item-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .edit-btn,
         .delete-btn {
           padding: 10px 24px;
           background: #FFF2F7;
@@ -141,6 +146,12 @@
             transform: scale(0.95);
             opacity: 0.8;
           }
+        }
+
+        .edit-btn {
+          color: #6D5C66;
+          background: #F8F5F7;
+          border-color: #E8DFE4;
         }
       }
     }
@@ -162,5 +173,110 @@
         display: block;
       }
     }
+  }
+
+  .form-mask {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgba(36, 25, 31, 0.48);
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .form-sheet {
+    width: 100%;
+    padding: 34px 28px calc(28px + env(safe-area-inset-bottom));
+    background: #FFFFFF;
+    border-radius: 28px 28px 0 0;
+    box-sizing: border-box;
+  }
+
+  .form-title {
+    display: block;
+    font-size: 34px;
+    font-weight: 700;
+    color: #2B2B32;
+    margin-bottom: 28px;
+  }
+
+  .form-field {
+    margin-bottom: 24px;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 25px;
+    color: #6D5C66;
+    margin-bottom: 12px;
+  }
+
+  .form-input,
+  .date-picker {
+    min-height: 82px;
+    padding: 20px 22px;
+    border-radius: 12px;
+    border: 1px solid #E8DFE4;
+    background: #FCFAFB;
+    box-sizing: border-box;
+    font-size: 28px;
+    color: #2B2B32;
+  }
+
+  .date-picker.placeholder {
+    color: #A99BA3;
+  }
+
+  .type-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .type-option {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #E8DFE4;
+    border-radius: 12px;
+    background: #FCFAFB;
+    color: #6D5C66;
+    font-size: 25px;
+
+    &.active {
+      border-color: #D94F7F;
+      background: #FFF0F5;
+      color: #B83D69;
+    }
+  }
+
+  .switch-row {
+    min-height: 74px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #F0E9ED;
+    color: #4B4147;
+    font-size: 27px;
+  }
+
+  .form-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 30px;
+
+    .cancel-btn,
+    .save-btn {
+      width: 100%;
+      border-radius: 12px;
+      font-size: 28px;
+
+      &::after { border: none; }
+    }
+
+    .cancel-btn { background: #F4F0F2; color: #6D5C66; }
+    .save-btn { background: #D94F7F; color: #FFFFFF; }
   }
 }

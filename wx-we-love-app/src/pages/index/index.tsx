@@ -15,14 +15,6 @@ const ROW1_FUNCTIONS = [
   { id: 'anniversary', name: '纪念日', icon: '🎂', path: '/pages/anniversary/index' },
   { id: 'menstrual', name: '经期记录', icon: '🌸', path: '/pages/menstrual/index' },
 ]
-// 第二行：2 个功能，卡片样式（左标题右图标）
-const ROW2_FUNCTIONS = [
-  { id: 'piggy-bank', name: '一起Better', icon: '🌱', path: '/pages/piggy-bank/index' },
-  { id: 'wishlist', name: '恋爱惊喜', icon: '🎁', path: '/pages/wishlist/index' },
-]
-// 点击时仅提示「功能正在开发中」、不跳转的入口
-const DEVELOPING_IDS = ['piggy-bank', 'wishlist']
-
 export default function Index() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [loveDate, setLoveDate] = useState<string | null>(null)
@@ -113,11 +105,7 @@ export default function Index() {
     }
   }
 
-  const handleFunctionClick = (id: string, path: string) => {
-    if (DEVELOPING_IDS.includes(id)) {
-      Taro.showToast({ title: '功能正在开发中', icon: 'none' })
-      return
-    }
+  const handleFunctionClick = (path: string) => {
     Taro.navigateTo({ url: path })
   }
 
@@ -207,29 +195,12 @@ export default function Index() {
               <View
                 key={item.id}
                 className='function-item-top'
-                onClick={() => handleFunctionClick(item.id, item.path)}
+                onClick={() => handleFunctionClick(item.path)}
               >
                 <View className='function-icon-wrapper function-icon-circle'>
                   <Text className='function-icon'>{item.icon}</Text>
                 </View>
                 <Text className='function-name'>{item.name}</Text>
-              </View>
-            ))}
-          </View>
-          {/* 第二行 2 个（卡片：左标题右图标） */}
-          <View className='function-row function-row-2'>
-            {ROW2_FUNCTIONS.map((item) => (
-              <View
-                key={item.id}
-                className='function-item-card'
-                onClick={() => handleFunctionClick(item.id, item.path)}
-              >
-                <View className='function-content'>
-                  <Text className='function-name'>{item.name}</Text>
-                </View>
-                <View className='function-icon-wrapper function-icon-circle'>
-                  <Text className='function-icon'>{item.icon}</Text>
-                </View>
               </View>
             ))}
           </View>

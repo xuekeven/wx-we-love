@@ -12,6 +12,11 @@ const MoodDiary = sequelize.define('MoodDiary', {
     allowNull: false,
     comment: '用户 id'
   },
+  coupleId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    comment: '创建时所属情侣关系 id'
+  },
   date: {
     type: DataTypes.DATEONLY,
     allowNull: false,
