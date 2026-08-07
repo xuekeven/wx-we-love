@@ -139,7 +139,7 @@ export default function BaseCalendar(props: BaseCalendarProps) {
       {showNavArrows && (
         <View className='base-cal-nav'>
           <View className='base-cal-arrow' onClick={onPrevMonth}>
-            <Text className='base-cal-arrow-text'>‹</Text>
+            <View className='base-cal-chevron base-cal-chevron-left' />
           </View>
           <View className='base-cal-nav-center'>
             {headerLeft ?? <Text className='base-cal-month-label'>{year}年{month + 1}月</Text>}
@@ -149,7 +149,7 @@ export default function BaseCalendar(props: BaseCalendarProps) {
             className={`base-cal-arrow ${!canGoNext ? 'base-cal-arrow-disabled' : ''}`}
             onClick={canGoNext ? onNextMonth : undefined}
           >
-            <Text className='base-cal-arrow-text'>›</Text>
+            <View className='base-cal-chevron base-cal-chevron-right' />
           </View>
         </View>
       )}

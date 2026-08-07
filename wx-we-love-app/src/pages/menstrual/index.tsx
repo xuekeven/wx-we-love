@@ -16,29 +16,31 @@ const ENABLE_FERTILE_WINDOW = false
 const PHASE_INFOS = [
   {
     name: '月经期',
-    desc: '子宫内膜脱落形成月经，可能伴随腹痛、疲惫、腰酸或情绪变化。'
+    desc: '从出血第 1 天开始。子宫内膜脱落并排出，可能出现腹痛、疲惫或腰酸等感受，程度因人而异。'
   },
   {
     name: '卵泡期',
-    desc: '月经结束后，卵泡逐渐发育、雌激素通常开始上升，但精力和感受因人而异。'
+    desc: '本页将经期结束后至预计排卵前标记为卵泡期。卵泡逐渐发育，子宫内膜也在为下一阶段做准备。'
   },
   {
     name: '排卵期',
-    desc: '接近排卵时，分泌物可能发生变化，部分人会有轻微腹胀或一侧下腹不适，也可能没有明显感觉。'
+    desc: '表示预计排卵附近的时间。部分人会发现分泌物更清亮润滑或一侧轻微不适，也可能没有明显感觉；仅凭日期不能确认排卵。'
   },
   {
     name: '黄体期',
-    desc: '排卵后到月经来潮前，激素水平发生变化，部分人可能出现疲惫、乳房胀痛、食欲或情绪变化。'
+    desc: '排卵后至下次月经前。部分人可能出现乳房胀、疲惫、食欲或情绪变化，也可能没有明显不适。'
   },
   {
     name: '等待中',
-    desc: '距离预测经期还有一段时间，当前阶段会随着记录增多而更准确。'
+    desc: '最近一次记录的开始日期晚于今天，暂时无法判断当前阶段。请检查记录日期是否正确。'
   },
   {
-    name: '可能延迟',
-    desc: '当前日期已经超过常规预测范围，可能受压力、作息、疾病或旅行等因素影响。'
+    name: '已延迟',
+    desc: '今天已超过根据历史周期估算的经期开始日。预测不等于诊断；如持续未至、存在怀孕可能或对此担心，建议咨询专业医务人员。'
   }
 ]
+
+const CYCLE_PHASE_NAMES = new Set(['月经期', '卵泡期', '排卵期', '黄体期'])
 
 function toYMD(d: Date): string {
   const y = d.getFullYear()
@@ -134,25 +136,33 @@ export default function Menstrual() {
     }
   }
 
-  const avgCycle = useMemo(() => {
-    if (records.length < 2) return 28
+  const cycleStats = useMemo(() => {
+    if (records.length < 2) return { days: 28, isHistorical: false }
     const diffs: number[] = []
     for (let i = 0; i < records.length - 1; i++) {
       const diff = daysBetween(records[i + 1].startDate, records[i].startDate)
       if (diff >= 15 && diff <= 60) diffs.push(diff)
     }
-    if (!diffs.length) return 28
-    return Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length)
+    if (!diffs.length) return { days: 28, isHistorical: false }
+    return {
+      days: Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length),
+      isHistorical: true
+    }
   }, [records])
+  const avgCycle = cycleStats.days
 
-  const avgDuration = useMemo(() => {
+  const durationStats = useMemo(() => {
     const withEnd = records.filter(r => r.endDate)
-    if (!withEnd.length) return 5
+    if (!withEnd.length) return { days: 5, isHistorical: false }
     const total = withEnd.reduce((sum, r) => {
       return sum + daysBetween(r.startDate, r.endDate) + 1
     }, 0)
-    return Math.round(total / withEnd.length)
+    return {
+      days: Math.round(total / withEnd.length),
+      isHistorical: true
+    }
   }, [records])
+  const avgDuration = durationStats.days
 
   // Map dateStr → { record, dayNum }，dayNum = 该日期是这次月经第几天
   const periodMap = useMemo<Record<string, { record: any; dayNum: number }>>(() => {
@@ -208,20 +218,22 @@ export default function Menstrual() {
     const s = parseYMD(r.startDate); s.setHours(0, 0, 0, 0)
     const e = r.endDate ? parseYMD(r.endDate) : addDays(s, avgDuration - 1)
     e.setHours(23, 59, 59, 999)
-    const t = new Date(todayDate); t.setHours(12, 0, 0, 0)
+    const t = new Date(todayDate)
+    const expectedStart = addDays(s, avgCycle)
     if (t < s) return '等待中'
     if (t <= e) return '月经期'
+    if (t > expectedStart) return '已延迟'
     const days = Math.floor((t.getTime() - s.getTime()) / 86400000)
     if (days <= 13) return '卵泡期'
     if (days <= 16) return '排卵期'
-    if (days <= 28) return '黄体期'
-    return '可能延迟'
-  }, [records, avgDuration, todayDate])
+    return '黄体期'
+  }, [records, avgCycle, avgDuration, todayDate])
 
   const nextPred = useMemo(() => {
     if (!records.length) return null
     const lastStart = parseYMD(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
     const predDate = addDays(lastStart, avgCycle)
+    const predEndDate = addDays(predDate, avgDuration - 1)
     const daysUntil = Math.ceil((predDate.getTime() - todayDate.getTime()) / 86400000)
     // 可育窗口开始（排卵日 - 4 天）
     const ovDate = addDays(predDate, -14)
@@ -229,10 +241,11 @@ export default function Menstrual() {
     return {
       daysUntil,
       dateStr: toYMD(predDate),
+      endDateStr: toYMD(predEndDate),
       fertileStartStr: toYMD(fertileStart),
       ovulationStr: toYMD(ovDate),
     }
-  }, [records, avgCycle, todayDate])
+  }, [records, avgCycle, avgDuration, todayDate])
 
   const prevMonth = () => {
     if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11) }
@@ -273,6 +286,8 @@ export default function Menstrual() {
       cls.push('predicted')
       if (cell.colIndex > 0 && predictedSet.has(prevDs)) cls.push('pred-has-prev')
       if (cell.colIndex < 6 && predictedSet.has(nextDs)) cls.push('pred-has-next')
+      if (!predictedSet.has(prevDs)) cls.push('pred-start')
+      if (!predictedSet.has(nextDs)) cls.push('pred-end')
     }
     if (fertileType) {
       cls.push(fertileType === 'peak' ? 'fertile-peak' : 'fertile')
@@ -352,6 +367,11 @@ export default function Menstrual() {
     return daysBetween(r.startDate, r.endDate) + 1
   }
 
+  const currentPhaseInfo = PHASE_INFOS.find(item => item.name === phase)
+  const otherPhaseInfos = PHASE_INFOS.filter(
+    item => item.name !== phase && CYCLE_PHASE_NAMES.has(item.name)
+  )
+
   return (
     <View className='menstrual-page'>
       {isPreview && (
@@ -408,7 +428,7 @@ export default function Menstrual() {
         <View className='pred-stats-row'>
           <View className='pred-stat-item'>
             <View className='phase-title-row'>
-              <Text className={`pred-stat-val ${phase === '月经期' ? 'phase-pink' : ''}`}>{phase || '--'}</Text>
+              <Text className={`pred-stat-val ${phase === '月经期' ? 'phase-pink' : ''} ${phase === '已延迟' ? 'phase-delayed' : ''}`}>{phase || '--'}</Text>
               {phase && (
                 <View className='phase-help-btn' onClick={() => setShowPhaseInfo(true)}>
                   <Text className='phase-help-icon'>?</Text>
@@ -420,12 +440,12 @@ export default function Menstrual() {
           <View className='pred-stat-sep' />
           <View className='pred-stat-item'>
             <Text className='pred-stat-val'>{avgCycle}</Text>
-            <Text className='pred-stat-lbl'>周期(天)</Text>
+            <Text className='pred-stat-lbl'>{cycleStats.isHistorical ? '平均周期（天）' : '参考周期（天）'}</Text>
           </View>
           <View className='pred-stat-sep' />
           <View className='pred-stat-item'>
             <Text className='pred-stat-val'>{avgDuration}</Text>
-            <Text className='pred-stat-lbl'>经期(天)</Text>
+            <Text className='pred-stat-lbl'>{durationStats.isHistorical ? '平均经期（天）' : '参考经期（天）'}</Text>
           </View>
         </View>
 
@@ -438,13 +458,15 @@ export default function Menstrual() {
             <View className='pred-item'>
               <Text className='pred-icon'>🌸</Text>
               <View className='pred-main'>
-                <Text className='pred-label'>预计下次月经</Text>
-                <Text className='pred-value'>{fmtShort(nextPred.dateStr)}</Text>
+                <Text className='pred-label'>预计经期</Text>
+                <Text className='pred-value'>{fmtRange(nextPred.dateStr, nextPred.endDateStr)}</Text>
               </View>
               {nextPred.daysUntil > 0 ? (
                 <Text className='pred-badge'>{nextPred.daysUntil}天后</Text>
+              ) : nextPred.daysUntil === 0 ? (
+                <Text className='pred-badge pred-badge-soon'>预计今天</Text>
               ) : (
-                <Text className='pred-badge pred-badge-soon'>即将到来</Text>
+                <Text className='pred-badge pred-badge-delayed'>已延迟{Math.abs(nextPred.daysUntil)}天</Text>
               )}
             </View>
           </View>
@@ -579,12 +601,26 @@ export default function Menstrual() {
               </View>
             </View>
 
-            <ScrollView scrollY className='phase-sheet-body'>
-              {PHASE_INFOS.slice(0, 4).map(item => (
-                <View key={item.name} className={`phase-info-item ${item.name === phase ? 'active' : ''}`}>
+            <ScrollView scrollY enhanced showScrollbar={false} className='phase-sheet-body'>
+              {currentPhaseInfo && (
+                <View className='phase-info-item phase-current-item active'>
+                  <View className='phase-info-head'>
+                    <Text className='phase-info-name'>{currentPhaseInfo.name}</Text>
+                    <Text className='phase-info-tag'>当前阶段</Text>
+                  </View>
+                  <Text className='phase-info-desc'>{currentPhaseInfo.desc}</Text>
+                </View>
+              )}
+
+              <View className='phase-list-heading'>
+                <Text className='phase-list-title'>其他阶段</Text>
+                <Text className='phase-list-note'>根据历史记录估算，仅供日常参考</Text>
+              </View>
+
+              {otherPhaseInfos.map(item => (
+                <View key={item.name} className='phase-info-item'>
                   <View className='phase-info-head'>
                     <Text className='phase-info-name'>{item.name}</Text>
-                    {item.name === phase && <Text className='phase-info-tag'>当前</Text>}
                   </View>
                   <Text className='phase-info-desc'>{item.desc}</Text>
                 </View>

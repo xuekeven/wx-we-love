@@ -46,16 +46,20 @@
   }
 }
 
-.base-cal-arrow-text {
-  font-size: 40rpx;
-  color: #2D2D2D;
-  line-height: 64rpx;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+.base-cal-chevron {
+  width: 16rpx;
+  height: 16rpx;
+  border-right: 3rpx solid #2D2D2D;
+  border-bottom: 3rpx solid #2D2D2D;
+  box-sizing: border-box;
+}
+
+.base-cal-chevron-left {
+  transform: rotate(135deg);
+}
+
+.base-cal-chevron-right {
+  transform: rotate(-45deg);
 }
 
 /* 星期表头 */

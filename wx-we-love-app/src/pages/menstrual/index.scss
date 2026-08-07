@@ -44,7 +44,7 @@
   }
 
   &.period::before { background: rgba(255, 107, 157, 0.16); }
-  &.predicted::before { background: rgba(255, 107, 157, 0.07); }
+  &.predicted::before { background: #FFF0F5; }
 
   &.period.period-has-prev.period-has-next::before,
   &.predicted.pred-has-prev.pred-has-next::before { display: block; left: 0; right: 0; }
@@ -118,8 +118,14 @@
 
 /* 预测经期 */
 .day-cell.predicted:not(.period) .day-circle {
-  border: 2rpx dashed #FF6B9D;
+  background: #FFF0F5;
   .day-num { color: #FF6B9D; }
+}
+
+.day-cell.predicted.pred-start:not(.period) .day-circle,
+.day-cell.predicted.pred-end:not(.period) .day-circle {
+  border: 2rpx dashed #FF6B9D;
+  box-sizing: border-box;
 }
 
 /* 可育窗口 */
@@ -220,6 +226,7 @@
     line-height: 1;
 
     &.phase-pink { font-size: 30rpx; color: #FF6B9D; }
+    &.phase-delayed { font-size: 30rpx; color: #C83F50; }
   }
 
   .phase-title-row {
@@ -257,6 +264,7 @@
     font-size: 22rpx;
     color: #8F7F89;
     display: block;
+    white-space: nowrap;
   }
 
   .pred-stat-sep {
@@ -320,6 +328,11 @@
   .pred-badge-soon {
     background: #FFF3E0;
     color: #E08A00;
+  }
+
+  .pred-badge-delayed {
+    background: #FFF0F2;
+    color: #C83F50;
   }
 }
 
@@ -542,6 +555,13 @@
   max-height: 66vh;
   padding: 24rpx 32rpx 32rpx;
   box-sizing: border-box;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 }
 
 .phase-info-desc {
@@ -564,6 +584,38 @@
       color: #FF6B9D;
     }
   }
+}
+
+.phase-current-item {
+  margin-bottom: 28rpx;
+  padding: 24rpx;
+  border: 1rpx solid rgba(255, 182, 207, 0.82);
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #FFF4F8 0%, #FFF9FB 100%);
+  box-shadow: 0 8rpx 22rpx rgba(217, 79, 127, 0.08);
+}
+
+.phase-list-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding: 0 0 10rpx;
+}
+
+.phase-list-title {
+  color: #2B2B32;
+  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.phase-list-note {
+  color: #A08E98;
+  font-size: 20rpx;
+  line-height: 1.4;
+  text-align: right;
 }
 
 .phase-info-head {

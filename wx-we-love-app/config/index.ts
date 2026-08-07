@@ -1,5 +1,13 @@
 import path from 'path';
 
+const productionBaseUrl = 'https://www.kaitool.top/welove';
+const configuredBaseUrl = process.env.TARO_APP_API_BASE_URL?.trim();
+const apiBaseUrl = (configuredBaseUrl || productionBaseUrl).replace(/\/$/, '');
+
+if (process.env.NODE_ENV === 'production' && !/^https:\/\//i.test(apiBaseUrl)) {
+  throw new Error('TARO_APP_API_BASE_URL must use HTTPS in production');
+}
+
 const config = {
   projectName: 'wx-we-love-app',
   date: '2025-10-11',
@@ -13,7 +21,9 @@ const config = {
   sourceRoot: 'src',
   outputRoot: 'dist',
   plugins: ['@tarojs/plugin-framework-react'],
-  defineConstants: {},
+  defineConstants: {
+    API_BASE_URL: JSON.stringify(apiBaseUrl)
+  },
   copy: {
     patterns: [],
     options: {}
@@ -92,4 +102,3 @@ export default function (merge) {
   }
   return merge({}, config, require('./prod'));
 }
-
