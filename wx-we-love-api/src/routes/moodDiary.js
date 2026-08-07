@@ -2,7 +2,7 @@ const express = require('express');
 const { Op, UniqueConstraintError } = require('sequelize');
 const { MoodDiary, MoodDiaryComment, User } = require('../models');
 const authMiddleware = require('../middleware/auth');
-const { getActiveMembership } = require('../services/couple');
+const { getRequestMembership } = require('../services/couple');
 const { normalizeUrl } = require('../utils/url');
 const { isValidDateOnly, parseDateOnly, validateOptionalText } = require('../utils/validation');
 
@@ -26,9 +26,9 @@ function formatCommentTime(value) {
   return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${time}`;
 }
 
-async function canAccessDiary(userId, diary) {
-  const membership = await getActiveMembership(userId);
-  if (diary.userId === userId && !diary.coupleId) return true;
+async function canAccessDiary(req, diary) {
+  const membership = await getRequestMembership(req);
+  if (diary.userId === req.userId && !diary.coupleId) return true;
   return !!membership.couple && diary.coupleId === membership.couple.id;
 }
 
@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
     }
     const start = `${year}-${String(month).padStart(2, '0')}-01`;
     const end = `${year}-${String(month).padStart(2, '0')}-${String(new Date(year, month, 0).getDate()).padStart(2, '0')}`;
-    const membership = await getActiveMembership(req.userId);
+    const membership = await getRequestMembership(req);
     const list = await MoodDiary.findAll({
       where: { ...diaryScope(membership, req.userId), date: { [Op.between]: [start, end] } },
       order: [['date', 'ASC']]
@@ -61,7 +61,7 @@ router.get('/', async (req, res) => {
 
 router.get('/all', async (req, res) => {
   try {
-    const membership = await getActiveMembership(req.userId);
+    const membership = await getRequestMembership(req);
     const list = await MoodDiary.findAll({
       where: diaryScope(membership, req.userId),
       order: [['date', 'DESC'], ['createdAt', 'DESC']]
@@ -125,7 +125,7 @@ router.get('/comments', async (req, res) => {
   try {
     const diary = await MoodDiary.findByPk(req.query.diaryId);
     if (!diary) return res.status(404).json({ success: false, message: '日记不存在' });
-    if (!(await canAccessDiary(req.userId, diary))) return res.status(403).json({ success: false, message: '无权查看' });
+    if (!(await canAccessDiary(req, diary))) return res.status(403).json({ success: false, message: '无权查看' });
     const comments = await MoodDiaryComment.findAll({ where: { moodDiaryId: diary.id }, order: [['createdAt', 'ASC']] });
     const users = comments.length
       ? await User.findAll({ where: { id: { [Op.in]: [...new Set(comments.map((item) => item.userId))] } }, attributes: ['id', 'currentName'] })
@@ -151,7 +151,7 @@ router.post('/comment', async (req, res) => {
     if (!req.body?.diaryId || !content.value) return res.status(400).json({ success: false, message: '缺少 diaryId 或 content' });
     const diary = await MoodDiary.findByPk(req.body.diaryId);
     if (!diary) return res.status(404).json({ success: false, message: '日记不存在' });
-    if (!(await canAccessDiary(req.userId, diary))) return res.status(403).json({ success: false, message: '无权评论' });
+    if (!(await canAccessDiary(req, diary))) return res.status(403).json({ success: false, message: '无权评论' });
     const row = await MoodDiaryComment.create({ moodDiaryId: diary.id, userId: req.userId, content: content.value });
     res.status(201).json({ success: true, message: '评论成功', data: row });
   } catch (error) {
@@ -163,7 +163,7 @@ router.post('/comment', async (req, res) => {
 router.get('/entry', async (req, res) => {
   const date = String(req.query.date || '');
   if (!isValidDateOnly(date)) return res.status(400).json({ success: false, message: 'date 参数无效' });
-  const membership = await getActiveMembership(req.userId);
+  const membership = await getRequestMembership(req);
   const entry = await MoodDiary.findOne({ where: { userId: req.userId, coupleId: membership.couple?.id || null, date } });
   res.json({ success: true, data: entry ? { date, moodId: entry.moodId, content: entry.content || '' } : null });
 });
@@ -175,7 +175,7 @@ router.post('/', async (req, res) => {
   if (content.error) return res.status(400).json({ success: false, message: '日记内容不能超过 5000 个字符' });
   if (!isValidDateOnly(date) || parseDateOnly(date) > new Date()) return res.status(400).json({ success: false, message: 'date 无效' });
   if (!MOOD_IDS.has(moodId)) return res.status(400).json({ success: false, message: 'moodId 无效' });
-  const membership = await getActiveMembership(req.userId);
+  const membership = await getRequestMembership(req);
   if (!membership.couple) return res.status(409).json({ success: false, message: '请先完成匹配' });
   try {
     const [entry, created] = await MoodDiary.findOrCreate({

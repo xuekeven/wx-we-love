@@ -19,7 +19,11 @@ const authMiddleware = async (req, res, next) => {
       audience: 'wx-we-love-app'
     });
     if (!Number.isInteger(decoded.userId)) throw new Error('Invalid token subject');
-    const user = await User.findByPk(decoded.userId, { attributes: ['id', 'tokenVersion'] });
+    // Load the fields used by protected routes once. The tokenVersion check is
+    // intentionally kept so logout/revocation remains effective.
+    const user = await User.findByPk(decoded.userId, {
+      attributes: { exclude: ['sessionKey'] }
+    });
     if (!user || decoded.tokenVersion !== user.tokenVersion) throw new Error('Revoked token');
     req.userId = decoded.userId;
     req.authUser = user;

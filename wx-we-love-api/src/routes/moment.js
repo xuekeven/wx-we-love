@@ -1,7 +1,7 @@
 const express = require('express');
 const { Moment, User } = require('../models');
 const authMiddleware = require('../middleware/auth');
-const { getActiveMembership } = require('../services/couple');
+const { getRequestMembership } = require('../services/couple');
 const { normalizeUrl } = require('../utils/url');
 const { validateOptionalText } = require('../utils/validation');
 
@@ -10,7 +10,7 @@ router.use(authMiddleware);
 
 router.get('/', async (req, res) => {
   try {
-    const { couple } = await getActiveMembership(req.userId);
+    const { couple } = await getRequestMembership(req);
     if (!couple) return res.json({ success: true, data: [] });
     const moments = await Moment.findAll({ where: { coupleId: couple.id }, order: [['occurredAt', 'DESC'], ['createdAt', 'DESC']], limit: 200 });
     const users = await User.findAll({ where: { coupleId: couple.id }, attributes: ['id', 'currentName', 'currentAvatar'] });
@@ -30,7 +30,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { couple } = await getActiveMembership(req.userId);
+    const { couple } = await getRequestMembership(req);
     if (!couple) return res.status(409).json({ success: false, message: '请先完成匹配' });
     const content = validateOptionalText(req.body?.content, 1000);
     const imageUrl = validateOptionalText(req.body?.imageUrl, 2048);

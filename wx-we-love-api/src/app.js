@@ -32,7 +32,7 @@ function createApp() {
       console.log(JSON.stringify({
         requestId: req.requestId,
         method: req.method,
-        path: req.path,
+        path: req.originalUrl,
         status: res.statusCode,
         durationMs: Date.now() - startedAt
       }));

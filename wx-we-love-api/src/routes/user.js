@@ -15,7 +15,7 @@ const {
   MoodDiaryComment,
   Moment
 } = require('../models');
-const { getActiveMembership } = require('../services/couple');
+const { getActiveMembership, getRequestMembership } = require('../services/couple');
 const { getPhoneNumber, getSessionByCode } = require('../services/wechat');
 const { deleteUserUploads } = require('../services/uploads');
 const { normalizeUrl } = require('../utils/url');
@@ -126,7 +126,7 @@ router.post('/login', loginRateLimit, async (req, res) => {
       }
     }
 
-    const membership = await getActiveMembership(user.id);
+    const membership = await getActiveMembership(user.id, { user });
     res.json({
       success: true,
       message: '登录成功',
@@ -158,9 +158,9 @@ router.use(authMiddleware);
 
 router.get('/info', async (req, res) => {
   try {
-    const user = await User.findByPk(req.userId);
+    const user = req.authUser || await User.findByPk(req.userId);
     if (!user) return res.status(404).json({ success: false, message: '用户不存在' });
-    const { couple, partner } = await getActiveMembership(user.id);
+    const { couple, partner } = await getRequestMembership(req);
     res.json({
       success: true,
       data: {
@@ -187,8 +187,8 @@ router.get('/info', async (req, res) => {
 
 router.post('/generate-match-code', matchRateLimit, async (req, res) => {
   try {
-    const user = await User.findByPk(req.userId);
-    const membership = await getActiveMembership(req.userId);
+    const user = req.authUser || await User.findByPk(req.userId);
+    const membership = await getRequestMembership(req);
     if (membership.couple) return res.status(409).json({ success: false, message: '已经匹配' });
     const code = await issueMatchCode(user);
     res.json({ success: true, message: '匹配码生成成功', data: code });
@@ -268,7 +268,7 @@ router.post('/info', async (req, res) => {
       await current.update(userUpdates, { transaction });
 
       if (Object.prototype.hasOwnProperty.call(updates, 'loveDate')) {
-        const { couple } = await getActiveMembership(current.id, { transaction, lock: transaction.LOCK.UPDATE });
+        const { couple } = await getActiveMembership(current.id, { user: current, transaction, lock: transaction.LOCK.UPDATE });
         if (couple) {
           await couple.update({ loveDate: updates.loveDate }, { transaction });
           await User.update({ loveDate: updates.loveDate }, { where: { coupleId: couple.id }, transaction });
@@ -279,7 +279,7 @@ router.post('/info', async (req, res) => {
       return current;
     });
     if (!user) return res.status(404).json({ success: false, message: '用户不存在' });
-    const { couple } = await getActiveMembership(user.id);
+    const { couple } = await getActiveMembership(user.id, { user });
     res.json({
       success: true,
       message: '更新成功',

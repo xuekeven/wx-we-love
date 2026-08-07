@@ -1,7 +1,7 @@
 const express = require('express');
 const { Anniversary } = require('../models');
 const authMiddleware = require('../middleware/auth');
-const { getActiveMembership } = require('../services/couple');
+const { getRequestMembership } = require('../services/couple');
 const { isValidDateOnly, validateOptionalText } = require('../utils/validation');
 
 const router = express.Router();
@@ -26,15 +26,16 @@ function validatePayload(data) {
   return null;
 }
 
-async function accessScope(userId) {
-  const { couple } = await getActiveMembership(userId);
+async function accessScope(req) {
+  const { couple } = await getRequestMembership(req);
+  const userId = req.userId;
   return couple ? { coupleId: couple.id } : { userId, coupleId: null };
 }
 
 router.get('/', async (req, res) => {
   try {
     const anniversaries = await Anniversary.findAll({
-      where: await accessScope(req.userId),
+      where: await accessScope(req),
       order: [['date', 'ASC']]
     });
     res.json({ success: true, data: anniversaries });
@@ -50,7 +51,7 @@ router.post('/', async (req, res) => {
     const validationMessage = validatePayload(data);
     if (validationMessage) return res.status(400).json({ success: false, message: validationMessage });
     delete data.error;
-    const { couple } = await getActiveMembership(req.userId);
+    const { couple } = await getRequestMembership(req);
     const anniversary = await Anniversary.create({ userId: req.userId, coupleId: couple?.id || null, ...data });
     res.status(201).json({ success: true, message: '添加成功', data: anniversary });
   } catch (error) {
@@ -65,7 +66,7 @@ router.put('/:id', async (req, res) => {
     const validationMessage = validatePayload(data);
     if (validationMessage) return res.status(400).json({ success: false, message: validationMessage });
     delete data.error;
-    const anniversary = await Anniversary.findOne({ where: { id: req.params.id, ...(await accessScope(req.userId)) } });
+    const anniversary = await Anniversary.findOne({ where: { id: req.params.id, ...(await accessScope(req)) } });
     if (!anniversary) return res.status(404).json({ success: false, message: '纪念日不存在' });
     await anniversary.update(data);
     res.json({ success: true, message: '更新成功', data: anniversary });
@@ -77,7 +78,7 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const deleted = await Anniversary.destroy({ where: { id: req.params.id, ...(await accessScope(req.userId)) } });
+    const deleted = await Anniversary.destroy({ where: { id: req.params.id, ...(await accessScope(req)) } });
     if (!deleted) return res.status(404).json({ success: false, message: '纪念日不存在' });
     res.json({ success: true, message: '删除成功' });
   } catch (error) {

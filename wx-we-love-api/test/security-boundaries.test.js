@@ -21,6 +21,7 @@ const menstrualRoutes = require('../src/routes/menstrual');
 const moodDiaryRoutes = require('../src/routes/moodDiary');
 const momentRoutes = require('../src/routes/moment');
 const { clearRateLimits } = require('../src/middleware/rateLimit');
+const { getRequestMembership } = require('../src/services/couple');
 const { validateEnvironment } = require('../src/config/env');
 const {
   sequelize,
@@ -171,6 +172,29 @@ test('authentication rejects malformed bearer headers and accepts the valid form
 
   assert.equal(malformedResponse.status, 401);
   assert.equal(validResponse.status, 200);
+});
+
+test('relationship lookup reuses the authenticated user and request promise', async () => {
+  const { userA, userB } = await createCouple('membership-cache-a', 'membership-cache-b');
+  const req = { userId: userA.id, authUser: userA };
+  const originalFindByPk = User.findByPk;
+  let userReloads = 0;
+  User.findByPk = function findByPk(...args) {
+    userReloads += 1;
+    return originalFindByPk.apply(this, args);
+  };
+
+  try {
+    const first = getRequestMembership(req);
+    const second = getRequestMembership(req);
+    assert.equal(first, second);
+    const membership = await first;
+    assert.equal(membership.user.id, userA.id);
+    assert.equal(membership.partner.id, userB.id);
+    assert.equal(userReloads, 0);
+  } finally {
+    User.findByPk = originalFindByPk;
+  }
 });
 
 test('logout revokes the token that authorized it', async () => {

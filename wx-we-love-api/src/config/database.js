@@ -13,7 +13,9 @@ const sequelize = process.env.DB_HOST
         logging: false,
         pool: {
           max: 5,
-          min: 0,
+          // Keep one warm connection so the first request after an idle
+          // period does not pay the MySQL connection setup cost.
+          min: 1,
           acquire: 30000,
           idle: 10000
         }

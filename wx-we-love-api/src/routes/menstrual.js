@@ -3,7 +3,7 @@ const { Op } = require('sequelize');
 const router = express.Router();
 const { Menstrual } = require('../models');
 const authMiddleware = require('../middleware/auth');
-const { getActiveMembership } = require('../services/couple');
+const { getRequestMembership } = require('../services/couple');
 const {
   daysBetween,
   isValidDateOnly,
@@ -14,13 +14,13 @@ const {
 
 router.use(authMiddleware);
 
-async function accessUserIds(userId) {
-  const { user, partner } = await getActiveMembership(userId);
-  return [...new Set([user?.id || userId, partner?.id].filter((id) => id !== undefined && id !== null))];
+async function accessUserIds(req) {
+  const { user, partner } = await getRequestMembership(req);
+  return [...new Set([user?.id || req.userId, partner?.id].filter((id) => id !== undefined && id !== null))];
 }
 
-async function accessScope(userId) {
-  return { userId: { [Op.in]: await accessUserIds(userId) } };
+async function accessScope(req) {
+  return { userId: { [Op.in]: await accessUserIds(req) } };
 }
 
 function normalizePayload(body = {}) {
@@ -87,7 +87,7 @@ async function recalculateCycles(userId) {
 router.get('/', async (req, res) => {
   try {
     const records = await Menstrual.findAll({
-      where: await accessScope(req.userId),
+      where: await accessScope(req),
       order: [['startDate', 'DESC']]
     });
     res.json({
@@ -103,7 +103,7 @@ router.get('/', async (req, res) => {
 router.get('/stats/cycle', async (req, res) => {
   try {
     const records = await Menstrual.findAll({
-      where: await accessScope(req.userId),
+      where: await accessScope(req),
       order: [['userId', 'ASC'], ['startDate', 'ASC']]
     });
 
@@ -149,7 +149,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const record = await Menstrual.findOne({
-      where: { id, ...(await accessScope(req.userId)) }
+      where: { id, ...(await accessScope(req)) }
     });
     if (!record) {
       return res.status(404).json({ success: false, message: '记录不存在' });
@@ -203,7 +203,7 @@ router.put('/:id', async (req, res) => {
     }
     
     const record = await Menstrual.findOne({
-      where: { id, ...(await accessScope(req.userId)) }
+      where: { id, ...(await accessScope(req)) }
     });
     if (!record) {
       return res.status(404).json({ success: false, message: '记录不存在' });
@@ -230,7 +230,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const record = await Menstrual.findOne({
-      where: { id, ...(await accessScope(req.userId)) }
+      where: { id, ...(await accessScope(req)) }
     });
     if (!record) {
       return res.status(404).json({ success: false, message: '记录不存在' });
