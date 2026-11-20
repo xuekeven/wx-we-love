@@ -59,8 +59,12 @@ export function fetchMomentFeed(token: string, force = false): Promise<MomentPag
       }
       return page
     })
-    .finally(() => {
+    .then((page) => {
       if (pending?.promise === promise) pending = null
+      return page
+    }, (error) => {
+      if (pending?.promise === promise) pending = null
+      throw error
     })
 
   pending = { token, promise }
