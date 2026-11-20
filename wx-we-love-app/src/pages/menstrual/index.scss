@@ -267,6 +267,26 @@
     flex-shrink: 0;
   }
 
+  .pred-upcoming {
+    padding: 24rpx 0 10rpx;
+    border-top: 1rpx solid $line;
+  }
+
+  .pred-heading {
+    display: block;
+    font-size: 28rpx;
+    font-weight: 700;
+    color: $ink;
+  }
+
+  .pred-upcoming-item {
+    padding: 18rpx 0;
+
+    + .pred-upcoming-item {
+      border-top: 1rpx solid $line;
+    }
+  }
+
   /* 预测行 */
   .pred-row {
     padding: 28rpx 0;
@@ -323,9 +343,11 @@
     color: #E08A00;
   }
 
-  .pred-badge-delayed {
-    background: #FFF0F2;
-    color: #C83F50;
+  .pred-overdue {
+    display: block;
+    margin-top: 10rpx;
+    color: #A4384A;
+    font-size: 24rpx;
   }
 }
 

@@ -10,6 +10,7 @@ import './index.scss'
 // ── 功能开关 ──────────────────────────────────────────
 // 可育窗口（排卵预测区间）：改为 true 开启在日历和预测卡片中展示
 const ENABLE_FERTILE_WINDOW = false
+const FORECAST_COUNT = 3
 // ────────────────────────────────────────────────────
 
 const PHASE_INFOS = [
@@ -54,13 +55,17 @@ function parseYMD(ds: string): Date {
 }
 
 function addDays(d: Date, n: number): Date {
-  return new Date(d.getTime() + n * 86400000)
+  const date = new Date(d)
+  date.setDate(date.getDate() + n)
+  return date
 }
 
 function daysBetween(startDs: string, endDs: string): number {
   const start = parseYMD(startDs)
   const end = parseYMD(endDs)
-  return Math.round((end.getTime() - start.getTime()) / 86400000)
+  const startDay = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())
+  const endDay = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate())
+  return (endDay - startDay) / 86400000
 }
 
 function sortRecords(list: any[]): any[] {
@@ -84,14 +89,40 @@ function fmtRange(startDs: string, endDs: string): string {
   return `${fmtShort(startDs)} - ${fmtShort(endDs)}`
 }
 
+function getPeriodForecast(lastStartDate: string, cycleDays: number, durationDays: number, today: string) {
+  const firstStart = addDays(parseYMD(lastStartDate), cycleDays)
+  const daysSinceFirstStart = daysBetween(toYMD(firstStart), today)
+  const skippedCycles = Math.max(0, Math.ceil(daysSinceFirstStart / cycleDays))
+
+  const upcoming = Array.from({ length: FORECAST_COUNT }, (_, index) => {
+    const start = addDays(firstStart, (skippedCycles + index) * cycleDays)
+    const dateStr = toYMD(start)
+    return {
+      start,
+      dateStr,
+      endDateStr: toYMD(addDays(start, durationDays - 1)),
+      daysUntil: daysBetween(today, dateStr)
+    }
+  })
+
+  return { firstStart, daysOverdue: Math.max(0, daysSinceFirstStart), upcoming }
+}
+
+function fmtForecastRange(start: string, end: string, currentYear: string): string {
+  const startYear = start.slice(0, 4)
+  const endYear = end.slice(0, 4)
+  if (startYear !== endYear) return `${startYear}年${fmtShort(start)} - ${endYear}年${fmtShort(end)}`
+  const range = fmtRange(start, end)
+  return startYear === currentYear ? range : `${startYear}年${range}`
+}
+
 export default function Menstrual() {
   const todayDate = new Date()
   todayDate.setHours(0, 0, 0, 0)
   const todayStr = toYMD(todayDate)
 
   const [records, setRecords] = useState<any[]>([])
-  const [calYear, setCalYear] = useState(todayDate.getFullYear())
-  const [calMonth, setCalMonth] = useState(todayDate.getMonth())
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date(todayDate.getFullYear(), todayDate.getMonth(), 1))
   const [sheetRecord, setSheetRecord] = useState<any>(null)
   const [showPhaseInfo, setShowPhaseInfo] = useState(false)
   const isPreview = usePreviewMode()
@@ -179,27 +210,28 @@ export default function Menstrual() {
     return map
   }, [records, avgDuration])
 
-  // 预测下次经期日期集合
-  const predictedSet = useMemo<Set<string>>(() => {
+  const lastStartDate = records[0]?.startDate
+  const forecast = useMemo(() => {
+    if (!lastStartDate) return null
+    return getPeriodForecast(lastStartDate, avgCycle, avgDuration, todayStr)
+  }, [lastStartDate, avgCycle, avgDuration, todayStr])
+
+  const predictedSet = useMemo(() => {
     const set = new Set<string>()
-    if (!records.length) return set
-    const lastStart = parseYMD(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
-    const predStart = addDays(lastStart, avgCycle)
-    const predEnd = addDays(predStart, avgDuration - 1)
-    for (let d = new Date(predStart); d <= predEnd; d = addDays(d, 1)) {
-      const s = toYMD(d)
-      if (!periodMap[s]) set.add(s)
+    for (const period of forecast?.upcoming ?? []) {
+      for (let day = 0; day < avgDuration; day++) {
+        const date = toYMD(addDays(period.start, day))
+        if (!periodMap[date]) set.add(date)
+      }
     }
     return set
-  }, [records, avgCycle, avgDuration, periodMap])
+  }, [forecast, avgDuration, periodMap])
 
   // 可育窗口：排卵日前 4 天到排卵日后 1 天（共 6 天）
   // 排卵日 = 下次经期开始 - 14 天；受 ENABLE_FERTILE_WINDOW 开关控制
   const fertileMap = useMemo<Record<string, 'fertile' | 'peak'>>(() => {
-    if (!ENABLE_FERTILE_WINDOW || !records.length) return {}
-    const lastStart = parseYMD(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
-    const nextPeriodStart = addDays(lastStart, avgCycle)
-    const ovDate = addDays(nextPeriodStart, -14)
+    if (!ENABLE_FERTILE_WINDOW || !forecast) return {}
+    const ovDate = addDays(forecast.firstStart, -14)
     const map: Record<string, 'fertile' | 'peak'> = {}
     for (let i = -4; i <= 1; i++) {
       const d = addDays(ovDate, i)
@@ -209,7 +241,7 @@ export default function Menstrual() {
       }
     }
     return map
-  }, [records, avgCycle, periodMap, predictedSet])
+  }, [forecast, periodMap, predictedSet])
 
   const phase = useMemo(() => {
     if (!records.length) return ''
@@ -222,38 +254,16 @@ export default function Menstrual() {
     if (t < s) return '等待中'
     if (t <= e) return '月经期'
     if (t > expectedStart) return '已延迟'
-    const days = Math.floor((t.getTime() - s.getTime()) / 86400000)
+    const days = daysBetween(r.startDate, todayStr)
     if (days <= 13) return '卵泡期'
     if (days <= 16) return '排卵期'
     return '黄体期'
-  }, [records, avgCycle, avgDuration, todayDate])
+  }, [records, avgCycle, avgDuration, todayDate, todayStr])
 
-  const nextPred = useMemo(() => {
-    if (!records.length) return null
-    const lastStart = parseYMD(records[0].startDate); lastStart.setHours(0, 0, 0, 0)
-    const predDate = addDays(lastStart, avgCycle)
-    const predEndDate = addDays(predDate, avgDuration - 1)
-    const daysUntil = Math.ceil((predDate.getTime() - todayDate.getTime()) / 86400000)
-    // 可育窗口开始（排卵日 - 4 天）
-    const ovDate = addDays(predDate, -14)
-    const fertileStart = addDays(ovDate, -4)
-    return {
-      daysUntil,
-      dateStr: toYMD(predDate),
-      endDateStr: toYMD(predEndDate),
-      fertileStartStr: toYMD(fertileStart),
-      ovulationStr: toYMD(ovDate),
-    }
-  }, [records, avgCycle, avgDuration, todayDate])
+  const ovulationDate = ENABLE_FERTILE_WINDOW && forecast ? addDays(forecast.firstStart, -14) : null
 
-  const prevMonth = () => {
-    if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11) }
-    else setCalMonth(m => m - 1)
-  }
-
-  const nextMonth = () => {
-    if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0) }
-    else setCalMonth(m => m + 1)
+  const shiftMonth = (step: number) => {
+    setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() + step, 1))
   }
 
   // renderCell：将 BaseCalendar 提供的基础 cell 转换成经期日历的具体 UI
@@ -380,11 +390,12 @@ export default function Menstrual() {
       {/* 日历卡片 */}
       <View className='calendar-card'>
         <BaseCalendar
-          year={calYear}
-          month={calMonth}
-          onPrevMonth={prevMonth}
-          onNextMonth={nextMonth}
+          year={calendarMonth.getFullYear()}
+          month={calendarMonth.getMonth()}
+          onPrevMonth={() => shiftMonth(-1)}
+          onNextMonth={() => shiftMonth(1)}
           weekStartsSunday
+          enableSwipe
           showAdjacentDays={false}
           renderCell={renderMenstrualCell}
           footer={
@@ -441,31 +452,30 @@ export default function Menstrual() {
           </View>
         </View>
 
-        {/* 分隔线 */}
-        {nextPred && <View className='pred-divider' />}
-
-        {/* 下次月经预测 */}
-        {nextPred && (
-          <View className='pred-row'>
-            <View className='pred-item'>
-              <Text className='pred-icon'>🌸</Text>
-              <View className='pred-main'>
-                <Text className='pred-label'>预计经期</Text>
-                <Text className='pred-value'>{fmtRange(nextPred.dateStr, nextPred.endDateStr)}</Text>
+        {forecast && (
+          <View className='pred-upcoming'>
+            <Text className='pred-heading'>接下来 {FORECAST_COUNT} 次预计经期</Text>
+            {forecast.daysOverdue > 0 && phase === '已延迟' && (
+              <Text className='pred-overdue'>距首次预计开始日已过 {forecast.daysOverdue} 天</Text>
+            )}
+            {forecast.upcoming.map((period, index) => (
+              <View key={period.dateStr} className='pred-item pred-upcoming-item'>
+                <View className='pred-main'>
+                  <Text className='pred-label'>第 {index + 1} 次</Text>
+                  <Text className='pred-value'>{fmtForecastRange(period.dateStr, period.endDateStr, todayStr.slice(0, 4))}</Text>
+                </View>
+                {period.daysUntil === 0 ? (
+                  <Text className='pred-badge pred-badge-soon'>预计今天</Text>
+                ) : (
+                  <Text className='pred-badge'>{period.daysUntil} 天后</Text>
+                )}
               </View>
-              {nextPred.daysUntil > 0 ? (
-                <Text className='pred-badge'>{nextPred.daysUntil}天后</Text>
-              ) : nextPred.daysUntil === 0 ? (
-                <Text className='pred-badge pred-badge-soon'>预计今天</Text>
-              ) : (
-                <Text className='pred-badge pred-badge-delayed'>已延迟{Math.abs(nextPred.daysUntil)}天</Text>
-              )}
-            </View>
+            ))}
           </View>
         )}
 
         {/* 可育窗口（受开关控制）*/}
-        {ENABLE_FERTILE_WINDOW && nextPred && (
+        {ovulationDate && (
           <>
             <View className='pred-divider' />
             <View className='pred-row'>
@@ -473,7 +483,7 @@ export default function Menstrual() {
                 <Text className='pred-icon'>🥚</Text>
                 <View>
                   <Text className='pred-label'>预测可育窗口</Text>
-                  <Text className='pred-value'>{fmtShort(nextPred.fertileStartStr)} - {fmtShort(nextPred.ovulationStr)}</Text>
+                  <Text className='pred-value'>{fmtShort(toYMD(addDays(ovulationDate, -4)))} - {fmtShort(toYMD(ovulationDate))}</Text>
                 </View>
               </View>
             </View>

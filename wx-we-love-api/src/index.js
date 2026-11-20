@@ -3,6 +3,7 @@ const { createApp } = require('./app');
 const { validateEnvironment } = require('./config/env');
 const { initializeDatabase, markDatabaseNotReady } = require('./database');
 const { sequelize } = require('./models');
+const { scheduleUploadCleanup } = require('./services/uploadCleanup');
 
 async function startServer() {
   validateEnvironment();
@@ -13,10 +14,16 @@ async function startServer() {
     console.log(`[startup] wx-we-love-api listening on ${port}`);
   });
 
+  const stopUploadCleanup = process.env.NODE_ENV === 'production' && process.env.UPLOAD_CLEANUP_ENABLED !== 'false'
+    ? scheduleUploadCleanup()
+    : null;
+
   async function shutdown(signal) {
     console.log(`[shutdown] received ${signal}`);
     markDatabaseNotReady();
+    const cleanupFinished = stopUploadCleanup?.();
     server.close(async () => {
+      await cleanupFinished;
       await sequelize.close();
       process.exit(0);
     });

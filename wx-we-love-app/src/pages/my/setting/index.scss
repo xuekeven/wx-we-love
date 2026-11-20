@@ -17,6 +17,16 @@
     font-size: 24px;
   }
 
+  .setting-btn,
+  .cancel-btn,
+  .confirm-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    line-height: 1.4;
+  }
+
   .setting-btn {
     width: 100%;
     min-height: 84px;
@@ -84,6 +94,7 @@
     .cancel-btn,
     .confirm-btn {
       width: 100%;
+      min-height: 80px;
       border-radius: 18px;
       font-size: 27px;
       &::after { border: none; }

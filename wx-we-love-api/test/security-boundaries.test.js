@@ -23,6 +23,7 @@ const momentRoutes = require('../src/routes/moment');
 const { clearRateLimits } = require('../src/middleware/rateLimit');
 const { getRequestMembership } = require('../src/services/couple');
 const { validateEnvironment } = require('../src/config/env');
+const { CURRENT_BASE_URL } = require('../src/utils/url');
 const {
   sequelize,
   User,
@@ -354,6 +355,63 @@ test('moments are relationship-scoped and only their author can delete them', as
   assert.deepEqual(unrelatedBody.data, []);
   assert.equal(unauthorizedDeleteResponse.status, 404);
   assert.equal(authorDeleteResponse.status, 200);
+});
+
+test('moments support a three-item first page and five-item continuations', async () => {
+  const owner = await createCouple('paged-a', 'paged-b');
+  const other = await createCouple('paged-c', 'paged-d');
+  const identicalTimestamp = new Date('2026-04-12T16:00:00.123Z');
+  const ids = Array.from({ length: 9 }, (_, index) => `10000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`);
+  await Moment.bulkCreate(ids.map((id) => ({
+    id,
+    coupleId: owner.couple.id,
+    userId: owner.userA.id,
+    content: id,
+    occurredAt: identicalTimestamp,
+    createdAt: identicalTimestamp
+  })));
+  await Moment.create({
+    coupleId: other.couple.id, userId: other.userA.id, content: 'other couple'
+  });
+
+  const headers = authHeaders(owner.userB);
+  const firstResponse = await request('/api/moments?limit=3', { headers });
+  assert.equal(firstResponse.status, 200);
+  const first = (await firstResponse.json()).data;
+  assert.deepEqual(first.items.map(({ id }) => id), ids.slice(6).reverse());
+  assert.ok(first.nextCursor);
+
+  await Moment.destroy({ where: { id: first.items.at(-1).id } });
+  await Moment.create({ coupleId: owner.couple.id, userId: owner.userA.id, content: 'inserted after first page' });
+  const secondResponse = await request(`/api/moments?limit=5&cursor=${first.nextCursor}`, { headers });
+  assert.equal(secondResponse.status, 200);
+  const second = (await secondResponse.json()).data;
+  assert.deepEqual(second.items.map(({ id }) => id), ids.slice(1, 6).reverse());
+
+  const thirdResponse = await request(`/api/moments?limit=5&cursor=${second.nextCursor}`, { headers });
+  const third = (await thirdResponse.json()).data;
+  assert.deepEqual(third.items.map(({ id }) => id), ids.slice(0, 1));
+  assert.equal(third.nextCursor, null);
+
+  assert.equal((await request('/api/moments?limit=1000', { headers })).status, 400);
+  assert.equal((await request('/api/moments?cursor=invalid', { headers })).status, 400);
+});
+
+test('expired uploads cannot be attached to a moment or an avatar', async () => {
+  const { userA } = await createCouple('expired-image-a', 'expired-image-b');
+  const url = `${CURRENT_BASE_URL.replace(/\/$/, '')}/uploads/${userA.id}/01234567-89ab-4cde-8123-456789abcdef.png`;
+  const headers = { ...authHeaders(userA), 'Content-Type': 'application/json' };
+  const moment = await request('/api/moments', {
+    method: 'POST', headers, body: JSON.stringify({ content: 'draft', imageUrl: url })
+  });
+  const avatar = await request('/api/user/info', {
+    method: 'POST', headers, body: JSON.stringify({ currentAvatar: url })
+  });
+
+  assert.equal(moment.status, 410);
+  assert.equal(avatar.status, 410);
+  assert.equal(await Moment.count(), 0);
+  assert.equal((await userA.reload()).currentAvatar, null);
 });
 
 test('mood diaries remain tied to the relationship in which they were written', async () => {

@@ -185,10 +185,12 @@ export default function Anniversary() {
         <Text className='page-subtitle'>铭记每一个重要时刻</Text>
       </View>
 
-      <Button className='add-btn' onClick={openAdd}>
-        <Text className='add-icon'>+</Text>
-        <Text>添加纪念日</Text>
-      </Button>
+      <View className='add-action'>
+        <Button className='add-btn' onClick={openAdd}>
+          <Text className='add-icon' aria-hidden>+</Text>
+          <Text>添加纪念日</Text>
+        </Button>
+      </View>
 
       <ScrollView scrollY className='anniversary-list'>
         {anniversaries.map((item) => (

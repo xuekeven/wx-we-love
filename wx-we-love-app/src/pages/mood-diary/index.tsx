@@ -10,8 +10,9 @@ import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
 export default function MoodDiary() {
-  const [displayYear, setDisplayYear] = useState(new Date().getFullYear())
-  const [displayMonth, setDisplayMonth] = useState(new Date().getMonth() + 1)
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date())
+  const displayYear = calendarMonth.getFullYear()
+  const displayMonth = calendarMonth.getMonth() + 1
   const [showMoodModal, setShowMoodModal] = useState(false)
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false)
   const [monthEntriesSelf, setMonthEntriesSelf] = useState<Record<string, { moodId: string }>>({})
@@ -19,6 +20,7 @@ export default function MoodDiary() {
   const [selectedDateForModal, setSelectedDateForModal] = useState('')
   const isPreview = usePreviewMode()
   const hasShownRef = useRef(false)
+  const monthLoadId = useRef(0)
 
   const today = useMemo(() => {
     const d = new Date()
@@ -26,6 +28,7 @@ export default function MoodDiary() {
   }, [])
 
   const loadMonthEntries = async () => {
+    const loadId = ++monthLoadId.current
     try {
       const token = Taro.getStorageSync('token')
       if (!token) {
@@ -40,6 +43,7 @@ export default function MoodDiary() {
       }
       setPreviewMode(false)
       const res = await get('/api/mood-diary', { year: displayYear, month: displayMonth })
+      if (loadId !== monthLoadId.current) return
       const selfList = Array.isArray(res?.data?.self) ? res.data.self : []
       const matchedList = Array.isArray(res?.data?.matched) ? res.data.matched : []
       const selfMap: Record<string, { moodId: string }> = {}
@@ -66,6 +70,7 @@ export default function MoodDiary() {
       setMonthEntriesSelf(selfMap)
       setMonthEntriesMatched(matchedMap)
     } catch (e) {
+      if (loadId !== monthLoadId.current) return
       setMonthEntriesSelf({})
       setMonthEntriesMatched({})
     }
@@ -83,28 +88,11 @@ export default function MoodDiary() {
     }
   })
 
-  const goPrevMonth = () => {
-    if (displayMonth === 1) {
-      setDisplayYear((y) => y - 1)
-      setDisplayMonth(12)
-    } else {
-      setDisplayMonth((m) => m - 1)
-    }
+  const shiftMonth = (step: number) => {
+    setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() + step, 1))
   }
 
-  const goNextMonth = () => {
-    if (displayMonth === 12) {
-      setDisplayYear((y) => y + 1)
-      setDisplayMonth(1)
-    } else {
-      setDisplayMonth((m) => m + 1)
-    }
-  }
-
-  const goToday = () => {
-    setDisplayYear(today.year)
-    setDisplayMonth(today.month)
-  }
+  const goToday = () => setCalendarMonth(new Date(today.year, today.month - 1, 1))
 
   const todayDateStr = useMemo(() => {
     const d = new Date()
@@ -273,13 +261,15 @@ export default function MoodDiary() {
           className='mood-calendar'
           year={displayYear}
           month={displayMonth - 1}
-          onPrevMonth={goPrevMonth}
-          onNextMonth={goNextMonth}
+          onPrevMonth={() => shiftMonth(-1)}
+          onNextMonth={() => shiftMonth(1)}
           weekStartsSunday
           enableSwipe
           showAdjacentDays={false}
-          headerRight={
-            <Button className='calendar-today-btn' onClick={goToday}>今天</Button>
+          footer={
+            <View className='calendar-footer'>
+              <Button className='calendar-today-btn' onClick={goToday}>回到今天</Button>
+            </View>
           }
           renderCell={renderMoodCell}
         />

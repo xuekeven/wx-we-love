@@ -1,22 +1,55 @@
 import { View, Text, Image, Input, Textarea, Button } from '@tarojs/components'
-import Taro, { useDidShow } from '@tarojs/taro'
-import { useState } from 'react'
+import Taro, { useDidShow, useReachBottom } from '@tarojs/taro'
+import { useRef, useState } from 'react'
 import config from '../../config'
 import type { ApiResponse } from '../../utils/request'
-import { del, get, post } from '../../utils/request'
+import { ApiError, del, post } from '../../utils/request'
 import PreviewBanner from '../../components/PreviewBanner'
-import { setPreviewMode, usePreviewMode } from '../../store/global'
+import { setPreviewMode } from '../../store/global'
+import { fetchMomentFeed, fetchMoreMoments, readMomentFeed, removeCachedMoment } from '../../store/moments'
+import type { MomentItem, MomentPage } from '../../store/moments'
 import './index.scss'
 
-interface MomentItem {
-  id: string
-  content: string
-  imageUrl?: string | null
-  location?: string | null
-  occurredAt: string
-  authorName: string
-  authorAvatar?: string
-  isBySelf: boolean
+const PREVIEW_MOMENTS: MomentItem[] = [
+  {
+    id: 'preview-1',
+    content: '下班后绕路去看了晚霞，风很舒服。',
+    location: '江边步道',
+    occurredAt: '2026-08-05T11:20:00.000Z',
+    authorName: '小满',
+    isBySelf: true
+  }
+]
+
+interface MomentFeed {
+  token: string
+  page: MomentPage | null
+  loadedMore: boolean
+}
+
+function refreshFirstPage(current: MomentFeed | null, token: string, page: MomentPage): MomentFeed {
+  if (current?.token === token && current.page === page) return current
+
+  // Keep the previously loaded tail if the new first page still joins it.
+  const lastItem = page.items[page.items.length - 1]
+  if (current?.token === token && current.loadedMore && current.page && page.nextCursor && lastItem) {
+    const index = current.page.items.findIndex((item) => item.id === lastItem.id)
+    if (index >= 0) {
+      const tail = current.page.items.slice(index + 1)
+      if (tail.length) {
+        return {
+          token,
+          page: { items: [...page.items, ...tail], nextCursor: current.page.nextCursor },
+          loadedMore: true
+        }
+      }
+    }
+  }
+  return { token, page, loadedMore: false }
+}
+
+function readToken() {
+  return Taro.getStorageSync<string>('token') || ''
 }
 
 function formatMomentTime(value: string): string {
@@ -26,44 +59,96 @@ function formatMomentTime(value: string): string {
 }
 
 export default function Moment() {
-  const [moments, setMoments] = useState<MomentItem[]>([])
+  const [token, setToken] = useState(readToken)
+  const [feed, setFeed] = useState<MomentFeed | null>(() => {
+    const page = readMomentFeed(token)
+    return page ? { token, page, loadedMore: false } : null
+  })
+  const loadVersion = useRef(0)
+  const pendingMore = useRef<symbol | null>(null)
+  const [moreStatus, setMoreStatus] = useState<'idle' | 'loading' | 'failed'>('idle')
   const [content, setContent] = useState('')
   const [location, setLocation] = useState('')
   const [imageUrl, setImageUrl] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [uploading, setUploading] = useState(false)
+  const [pendingImagePath, setPendingImagePath] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const isPreview = usePreviewMode()
+  const isPreview = !token
+  const currentFeed = feed?.token === token ? feed : null
+  const moments = isPreview ? PREVIEW_MOMENTS : currentFeed?.page?.items
+  const nextCursor = currentFeed?.page?.nextCursor
+  const uploading = Boolean(pendingImagePath)
+  const previewImage = pendingImagePath || imageUrl
 
   useDidShow(() => {
     loadMoments()
   })
 
-  const loadMoments = async () => {
-    setLoading(true)
+  useReachBottom(() => {
+    if (moreStatus === 'idle') void loadMore()
+  })
+
+  const loadMoments = async (force = false) => {
+    const currentToken = readToken()
+    const version = ++loadVersion.current
+    if (currentToken !== token) {
+      pendingMore.current = null
+      setMoreStatus('idle')
+      setToken(currentToken)
+    }
+    setPreviewMode(!currentToken)
+    if (!currentToken) {
+      setFeed(null)
+      return
+    }
+
+    const showFirstPage = (page: MomentPage) => {
+      setFeed((current) => refreshFirstPage(current, currentToken, page))
+    }
+    const cachedPage = readMomentFeed(currentToken)
+    if (cachedPage) {
+      setFeed((current) => current?.token === currentToken && current.page
+        ? current
+        : { token: currentToken, page: cachedPage, loadedMore: false })
+    }
+
+    const isCurrentRequest = () => version === loadVersion.current && currentToken === readToken()
     try {
-      if (!Taro.getStorageSync('token')) {
-        setPreviewMode(true)
-        setMoments([
-          {
-            id: 'preview-1',
-            content: '下班后绕路去看了晚霞，风很舒服。',
-            location: '江边步道',
-            occurredAt: '2026-08-05T11:20:00.000Z',
-            authorName: '小满',
-            isBySelf: true
-          }
-        ])
-        return
-      }
-      setPreviewMode(false)
-      const response = await get<MomentItem[]>('/api/moments')
-      setMoments(Array.isArray(response.data) ? response.data : [])
+      const page = await fetchMomentFeed(currentToken, force)
+      if (isCurrentRequest()) showFirstPage(page)
     } catch (error) {
+      if (!isCurrentRequest()) return
       console.error('加载瞬间失败:', error)
-      setMoments([])
+      setFeed((current) => current?.token === currentToken
+        ? current
+        : { token: currentToken, page: null, loadedMore: false })
+    }
+  }
+
+  const loadMore = async () => {
+    if (!token || token !== readToken() || !nextCursor || pendingMore.current) return
+    const request = Symbol()
+    pendingMore.current = request
+    setMoreStatus('loading')
+    try {
+      const page = await fetchMoreMoments(token, nextCursor)
+      if (pendingMore.current !== request || token !== readToken()) return
+      setFeed((current) => {
+        if (current?.token !== token || current.page?.nextCursor !== nextCursor) return current
+        const ids = new Set(current.page.items.map((item) => item.id))
+        return {
+          token,
+          page: { items: [...current.page.items, ...page.items.filter((item) => !ids.has(item.id))], nextCursor: page.nextCursor },
+          loadedMore: true
+        }
+      })
+      setMoreStatus('idle')
+    } catch (error) {
+      if (pendingMore.current === request && token === readToken()) {
+        console.error('加载更多瞬间失败:', error)
+        setMoreStatus('failed')
+      }
     } finally {
-      setLoading(false)
+      if (pendingMore.current === request) pendingMore.current = null
     }
   }
 
@@ -85,7 +170,7 @@ export default function Moment() {
       const selected = await Taro.chooseImage({ count: 1, sizeType: ['compressed'], sourceType: ['album', 'camera'] })
       const filePath = selected.tempFilePaths?.[0]
       if (!filePath) return
-      setUploading(true)
+      setPendingImagePath(filePath)
       const token = Taro.getStorageSync<string>('token')
       const upload = await Taro.uploadFile({
         url: `${config.apiBaseUrl}/api/upload`,
@@ -107,7 +192,7 @@ export default function Moment() {
       const errMsg = (error as { errMsg?: string }).errMsg || ''
       if (!errMsg.includes('cancel')) Taro.showToast({ title: '图片上传失败', icon: 'none' })
     } finally {
-      setUploading(false)
+      setPendingImagePath('')
     }
   }
 
@@ -134,10 +219,15 @@ export default function Moment() {
       setContent('')
       setLocation('')
       setImageUrl('')
-      await loadMoments()
+      await loadMoments(true)
       Taro.showToast({ title: '已记录', icon: 'success' })
     } catch (error) {
-      Taro.showToast({ title: '记录失败，请重试', icon: 'none' })
+      if (error instanceof ApiError && error.statusCode === 410) {
+        setImageUrl('')
+        Taro.showToast({ title: error.message, icon: 'none' })
+      } else {
+        Taro.showToast({ title: '记录失败，请重试', icon: 'none' })
+      }
     } finally {
       setSubmitting(false)
     }
@@ -152,7 +242,14 @@ export default function Moment() {
         if (!result.confirm) return
         try {
           await del(`/api/moments/${id}`)
-          setMoments((current) => current.filter((item) => item.id !== id))
+          if (token !== readToken()) return
+          ++loadVersion.current
+          pendingMore.current = null
+          setMoreStatus('idle')
+          removeCachedMoment(token, id)
+          setFeed((current) => current?.token === token && current.page
+            ? { ...current, page: { ...current.page, items: current.page.items.filter((item) => item.id !== id) } }
+            : current)
           Taro.showToast({ title: '已删除', icon: 'success' })
         } catch (error) {
           Taro.showToast({ title: '删除失败', icon: 'none' })
@@ -163,7 +260,7 @@ export default function Moment() {
 
   return (
     <View className='moment-page'>
-      <PreviewBanner />
+      <PreviewBanner visible={isPreview} />
 
       <View className='moment-header'>
         <Text className='moment-title'>瞬间</Text>
@@ -178,10 +275,14 @@ export default function Moment() {
           placeholder='今天发生了什么？'
           onInput={(event) => setContent(event.detail.value)}
         />
-        {imageUrl && (
+        {previewImage && (
           <View className='image-preview-wrap'>
-            <Image className='image-preview' src={imageUrl} mode='aspectFill' />
-            <View className='remove-image' onClick={() => setImageUrl('')}><Text>×</Text></View>
+            <Image className='image-preview' src={previewImage} mode='aspectFill' />
+            {!uploading && !submitting && (
+              <Button className='remove-image' aria-label='移除照片' onClick={() => setImageUrl('')}>
+                <Text aria-hidden>×</Text>
+              </Button>
+            )}
           </View>
         )}
         <Input
@@ -192,19 +293,25 @@ export default function Moment() {
           onInput={(event) => setLocation(event.detail.value)}
         />
         <View className='composer-actions'>
-          <Button className='image-btn' loading={uploading} disabled={uploading} onClick={chooseImage}>
-            {imageUrl ? '更换照片' : '添加照片'}
+          <Button className='image-btn' disabled={submitting || uploading} onClick={chooseImage}>
+            {uploading && <View className='action-spinner' aria-hidden />}
+            <Text>{uploading ? '上传中' : imageUrl ? '更换照片' : '添加照片'}</Text>
           </Button>
-          <Button className='publish-btn' loading={submitting} disabled={submitting || uploading} onClick={submitMoment}>发布</Button>
+          <Button className='publish-btn' disabled={submitting || uploading} onClick={submitMoment}>
+            {submitting && <View className='action-spinner' aria-hidden />}
+            <Text>{submitting ? '发布中' : '发布'}</Text>
+          </Button>
         </View>
       </View>
 
       <View className='timeline'>
-        {loading ? (
-          <Text className='state-text'>加载中...</Text>
-        ) : moments.length === 0 ? (
+        {!isPreview && currentFeed?.page === null && (
+          <Button className='state-retry' onClick={() => loadMoments()}>加载失败，点击重试</Button>
+        )}
+        {moments?.length === 0 && !nextCursor && (
           <Text className='state-text'>还没有瞬间，从今天开始记录吧</Text>
-        ) : moments.map((item) => (
+        )}
+        {moments?.map((item) => (
           <View key={item.id} className='timeline-item'>
             <View className='timeline-meta'>
               <View className='author'>
@@ -221,6 +328,11 @@ export default function Moment() {
             </View>
           </View>
         ))}
+        {!isPreview && nextCursor && (
+          <Button className='state-retry' disabled={moreStatus === 'loading'} onClick={loadMore}>
+            {moreStatus === 'loading' ? '加载中…' : moreStatus === 'failed' ? '加载失败，点击重试' : '加载更多'}
+          </Button>
+        )}
       </View>
     </View>
   )

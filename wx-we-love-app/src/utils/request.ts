@@ -16,6 +16,7 @@ export interface RequestOptions<TBody extends RequestData = Record<string, unkno
   data?: TBody
   header?: Record<string, string>
   token?: string
+  silent?: boolean
 }
 
 export class ApiError<T = unknown> extends Error {
@@ -48,7 +49,7 @@ function networkMessage(error: NetworkError): string {
 export async function request<T = unknown, TBody extends RequestData = Record<string, unknown>>(
   options: RequestOptions<TBody>
 ): Promise<ApiResponse<T>> {
-  const { url, method = 'GET', data, header = {}, token: tokenOverride } = options
+  const { url, method = 'GET', data, header = {}, token: tokenOverride, silent = false } = options
   const token = tokenOverride !== undefined ? tokenOverride : Taro.getStorageSync<string>('token')
 
   try {
@@ -72,7 +73,7 @@ export async function request<T = unknown, TBody extends RequestData = Record<st
     if (process.env.NODE_ENV === 'development') {
       console.error('请求失败:', `${config.apiBaseUrl}${url}`, error)
     }
-    Taro.showToast({ title: message, icon: 'none', duration: 2500 })
+    if (!silent) Taro.showToast({ title: message, icon: 'none', duration: 2500 })
     throw error
   }
 }

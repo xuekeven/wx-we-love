@@ -3,9 +3,9 @@ import Taro from '@tarojs/taro'
 import { usePreviewMode } from '../../store/global'
 import './index.scss'
 
-export default function PreviewBanner() {
+export default function PreviewBanner({ visible }: { visible?: boolean }) {
   const isPreview = usePreviewMode()
-  if (!isPreview) return null
+  if (!(visible ?? isPreview)) return null
 
   return (
     <View className='preview-banner'>

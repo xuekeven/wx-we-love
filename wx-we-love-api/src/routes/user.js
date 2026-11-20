@@ -17,7 +17,7 @@ const {
 } = require('../models');
 const { getActiveMembership, getRequestMembership } = require('../services/couple');
 const { getPhoneNumber, getSessionByCode } = require('../services/wechat');
-const { deleteUserUploads } = require('../services/uploads');
+const { deleteUserUploads, withUploadReference } = require('../services/uploads');
 const { normalizeUrl } = require('../utils/url');
 const {
   isValidDateOnly,
@@ -260,7 +260,7 @@ router.post('/info', async (req, res) => {
   if (error) return res.status(400).json({ success: false, message: error });
 
   try {
-    const user = await sequelize.transaction(async (transaction) => {
+    const user = await withUploadReference(updates.currentAvatar, () => sequelize.transaction(async (transaction) => {
       const current = await User.findByPk(req.userId, { transaction, lock: transaction.LOCK.UPDATE });
       if (!current) return null;
       const userUpdates = { ...updates };
@@ -277,7 +277,7 @@ router.post('/info', async (req, res) => {
         }
       }
       return current;
-    });
+    }));
     if (!user) return res.status(404).json({ success: false, message: '用户不存在' });
     const { couple } = await getActiveMembership(user.id, { user });
     res.json({
@@ -291,6 +291,9 @@ router.post('/info', async (req, res) => {
       }
     });
   } catch (caught) {
+    if (caught.code === 'UPLOAD_EXPIRED') {
+      return res.status(410).json({ success: false, message: caught.message });
+    }
     console.error('更新用户信息失败:', caught);
     res.status(500).json({ success: false, message: '服务器错误' });
   }

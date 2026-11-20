@@ -5,6 +5,7 @@
 
 import { get } from '../utils/request'
 import { useEffect, useState } from 'react'
+import { clearMomentFeed } from './moments'
 
 /** /api/user/info 返回的 data 结构 */
 export interface UserInfoData {
@@ -100,6 +101,7 @@ export function setUserData(data: Partial<Pick<UserInfoData, 'loveDate'>> & { co
 
 /** 退出登录时清空缓存 */
 export function clearUserData() {
+  clearMomentFeed()
   userInfoCache = null
   fetchPromise = null
 }

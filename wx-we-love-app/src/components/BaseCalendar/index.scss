@@ -82,7 +82,25 @@
   &.weekend { color: $accent; }
 }
 
-/* 格子网格 */
+/* 保留六周的高度，短月份切到长月份时日历不会跳动。 */
+.base-cal-swiper {
+  width: 100%;
+  height: 596rpx;
+}
+
+.base-cal-slide {
+  display: flex;
+  flex-direction: column;
+}
+
+.base-cal-grid-preview {
+  pointer-events: none;
+}
+
+.base-cal-footer {
+  flex-shrink: 0;
+}
+
 .base-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);

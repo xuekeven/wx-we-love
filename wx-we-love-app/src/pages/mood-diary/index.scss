@@ -60,6 +60,12 @@
     }
   }
 
+  .base-cal-swiper {
+    flex: 1;
+    min-height: 0;
+    height: 0;
+  }
+
   .base-cal-grid {
     flex: 1;
     min-height: 0;
@@ -70,17 +76,22 @@
   }
 }
 
+.calendar-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8rpx 24rpx 0;
+}
+
 .calendar-today-btn {
   height: 56rpx;
   line-height: 56rpx;
   padding: 0 22rpx;
   margin: 0;
   border-radius: 999rpx;
-  background: $accent;
-  color: #FFFFFF;
+  background: $accent-soft;
+  color: $accent-deep;
   font-size: 24rpx;
   font-weight: 600;
-  border: none;
 
   &::after {
     border: none;

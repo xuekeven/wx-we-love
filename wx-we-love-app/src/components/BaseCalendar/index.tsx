@@ -4,8 +4,9 @@
  * 负责：月份导航（可选箭头）、星期表头、格子生成、触摸滑动（可选）。
  * 格子内容完全由父组件通过 renderCell 控制，实现差异化展示。
  */
-import { View, Text } from '@tarojs/components'
-import { useMemo, useRef } from 'react'
+import { Swiper, SwiperItem, View, Text } from '@tarojs/components'
+import type { SwiperProps } from '@tarojs/components'
+import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import './index.scss'
 
@@ -33,11 +34,9 @@ export type BaseCalendarProps = {
   showAdjacentDays?: boolean
   /** 渲染每个格子的内容，返回 null 则空白 */
   renderCell: (cell: CalCell, idx: number) => ReactNode
-  /** 导航行右侧插槽（如"回到今天"按钮）*/
-  headerRight?: ReactNode
   /** 导航行左侧插槽（如自定义标题，不传则默认渲染 Year年Month月）*/
   headerLeft?: ReactNode
-  /** 日历底部插槽（如图例）*/
+  /** 日历底部插槽（如图例或回到今天按钮）*/
   footer?: ReactNode
   /** 是否显示顶部导航箭头，默认 true */
   showNavArrows?: boolean
@@ -48,6 +47,9 @@ export type BaseCalendarProps = {
 
 const WEEKDAYS_MON = ['一', '二', '三', '四', '五', '六', '日']
 const WEEKDAYS_SUN = ['日', '一', '二', '三', '四', '五', '六']
+const MONTH_SLIDE_MS = 260
+
+const wrapSlot = (index: number) => ((index % 3) + 3) % 3
 
 export default function BaseCalendar(props: BaseCalendarProps) {
   const {
@@ -59,7 +61,6 @@ export default function BaseCalendar(props: BaseCalendarProps) {
     weekStartsSunday = false,
     showAdjacentDays = false,
     renderCell,
-    headerRight,
     headerLeft,
     footer,
     showNavArrows = true,
@@ -67,7 +68,11 @@ export default function BaseCalendar(props: BaseCalendarProps) {
     className = '',
   } = props
 
-  const touchStartX = useRef(0)
+  const [request, setRequest] = useState<{ month: number; slot: number } | null>(null)
+  const monthIndex = year * 12 + month
+  // 连续月份轮换占用固定的三个槽，只替换远离当前页的月份。
+  const centerSlot = canGoNext ? wrapSlot(monthIndex) : 1
+  const requestedSlot = request?.month === monthIndex ? request.slot : null
 
   const todayStr = useMemo(() => {
     const d = new Date()
@@ -77,60 +82,51 @@ export default function BaseCalendar(props: BaseCalendarProps) {
     return `${y}-${m}-${day}`
   }, [])
 
-  const cells = useMemo((): CalCell[] => {
-    const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
-    const totalDays = lastDay.getDate()
-
-    // 计算前缀偏移（从周日/周一开始）
-    const rawFirstDow = firstDay.getDay()  // 0=Sun
-    const startOffset = weekStartsSunday ? rawFirstDow : (rawFirstDow + 6) % 7
-
-    const arr: CalCell[] = []
-
-    // 前缀：上月溢出日 或 空格
-    if (showAdjacentDays && startOffset > 0) {
-      const prevMonthIdx = month === 0 ? 11 : month - 1
-      const prevYear = month === 0 ? year - 1 : year
-      const prevLastDay = new Date(prevYear, prevMonthIdx + 1, 0).getDate()
-      for (let i = startOffset - 1; i >= 0; i--) {
-        arr.push({ type: 'prev', day: prevLastDay - i, dateStr: '', isToday: false, colIndex: startOffset - 1 - i })
+  const monthPanels = useMemo(() => {
+    const offsets = enableSwipe ? (canGoNext ? [-1, 0, 1] : [-1, 0]) : [0]
+    return offsets.map(offset => {
+      const date = new Date(year, month + offset, 1)
+      const slot = canGoNext ? wrapSlot(centerSlot + offset) : centerSlot + offset
+      return {
+        slot,
+        cells: createMonthCells(date.getFullYear(), date.getMonth(), weekStartsSunday, showAdjacentDays, todayStr)
       }
-    } else {
-      for (let i = 0; i < startOffset; i++) {
-        arr.push({ type: 'empty', day: 0, dateStr: '', isToday: false, colIndex: i })
-      }
-    }
+    }).sort((a, b) => a.slot - b.slot)
+  }, [year, month, centerSlot, weekStartsSunday, showAdjacentDays, todayStr, enableSwipe, canGoNext])
 
-    // 当月日期
-    for (let d = 1; d <= totalDays; d++) {
-      const m2 = String(month + 1).padStart(2, '0')
-      const day = String(d).padStart(2, '0')
-      const dateStr = `${year}-${m2}-${day}`
-      const colIndex = (startOffset + d - 1) % 7
-      arr.push({ type: 'curr', day: d, dateStr, isToday: dateStr === todayStr, colIndex })
-    }
-
-    // 后缀：下月溢出日（mood diary 需要填满 6 行）
-    if (showAdjacentDays) {
-      const trailing = arr.length % 7 === 0 ? 0 : 7 - (arr.length % 7)
-      for (let i = 1; i <= trailing; i++) {
-        arr.push({ type: 'next', day: i, dateStr: '', isToday: false, colIndex: (arr.length) % 7 })
-      }
-    }
-
-    return arr
-  }, [year, month, weekStartsSunday, showAdjacentDays, todayStr])
+  const renderGrid = (cells: CalCell[], isCurrent: boolean) => (
+    <View
+      className={`base-cal-grid${isCurrent ? '' : ' base-cal-grid-preview'}`}
+      aria-hidden={!isCurrent}
+    >
+      {cells.map((cell, idx) => renderCell(cell, idx))}
+    </View>
+  )
 
   const weekdays = weekStartsSunday ? WEEKDAYS_SUN : WEEKDAYS_MON
 
-  const handleTouchStart = (e: any) => {
-    touchStartX.current = e.touches[0].clientX
+  const goToMonth = (direction: -1 | 1) => {
+    if (direction === 1) onNextMonth()
+    else onPrevMonth()
   }
-  const handleTouchEnd = (e: any) => {
-    const delta = e.changedTouches[0].clientX - touchStartX.current
-    if (delta > 60) onPrevMonth()
-    else if (delta < -60) onNextMonth()
+
+  const changeMonth = (direction: -1 | 1) => {
+    if (requestedSlot !== null || (direction === 1 && !canGoNext)) return
+    if (enableSwipe) {
+      setRequest({ month: monthIndex, slot: wrapSlot(centerSlot + direction) })
+    } else {
+      goToMonth(direction)
+    }
+  }
+
+  const handleSlideChange: NonNullable<SwiperProps['onChange']> = ({ detail }) => {
+    const { current, source } = detail
+    if (current === centerSlot || (source !== 'touch' && current !== requestedSlot)) return
+
+    const direction = current === wrapSlot(centerSlot - 1) ? -1 : 1
+    if (direction === 1 && !canGoNext) return
+    goToMonth(direction)
+    setRequest(null)
   }
 
   return (
@@ -138,16 +134,15 @@ export default function BaseCalendar(props: BaseCalendarProps) {
       {/* 月份导航行 */}
       {showNavArrows && (
         <View className='base-cal-nav'>
-          <View className='base-cal-arrow' onClick={onPrevMonth}>
+          <View className='base-cal-arrow' onClick={() => changeMonth(-1)}>
             <View className='base-cal-chevron base-cal-chevron-left' />
           </View>
           <View className='base-cal-nav-center'>
             {headerLeft ?? <Text className='base-cal-month-label'>{year}年{month + 1}月</Text>}
-            {headerRight}
           </View>
           <View
             className={`base-cal-arrow ${!canGoNext ? 'base-cal-arrow-disabled' : ''}`}
-            onClick={canGoNext ? onNextMonth : undefined}
+            onClick={() => changeMonth(1)}
           >
             <View className='base-cal-chevron base-cal-chevron-right' />
           </View>
@@ -164,16 +159,69 @@ export default function BaseCalendar(props: BaseCalendarProps) {
         })}
       </View>
 
-      {/* 格子网格 */}
-      <View
-        className='base-cal-grid'
-        onTouchStart={enableSwipe ? handleTouchStart : undefined}
-        onTouchEnd={enableSwipe ? handleTouchEnd : undefined}
-      >
-        {cells.map((cell, idx) => renderCell(cell, idx))}
-      </View>
+      {enableSwipe ? (
+        <Swiper
+          key={canGoNext ? 'cyclic' : monthIndex}
+          className='base-cal-swiper'
+          current={requestedSlot ?? centerSlot}
+          circular={canGoNext}
+          duration={MONTH_SLIDE_MS}
+          onChange={handleSlideChange}
+        >
+          {monthPanels.map(({ slot, cells }) => (
+            <SwiperItem key={slot} className='base-cal-slide'>
+              {renderGrid(cells, slot === centerSlot)}
+            </SwiperItem>
+          ))}
+        </Swiper>
+      ) : renderGrid(monthPanels[0].cells, true)}
 
-      {footer}
+      {footer && <View className='base-cal-footer'>{footer}</View>}
     </View>
   )
+}
+
+function createMonthCells(year: number, month: number, weekStartsSunday: boolean, showAdjacentDays: boolean, todayStr: string): CalCell[] {
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const totalDays = lastDay.getDate()
+
+  // 计算前缀偏移（从周日/周一开始）
+  const rawFirstDow = firstDay.getDay()  // 0=Sun
+  const startOffset = weekStartsSunday ? rawFirstDow : (rawFirstDow + 6) % 7
+
+  const arr: CalCell[] = []
+
+  // 前缀：上月溢出日 或 空格
+  if (showAdjacentDays && startOffset > 0) {
+    const prevMonthIdx = month === 0 ? 11 : month - 1
+    const prevYear = month === 0 ? year - 1 : year
+    const prevLastDay = new Date(prevYear, prevMonthIdx + 1, 0).getDate()
+    for (let i = startOffset - 1; i >= 0; i--) {
+      arr.push({ type: 'prev', day: prevLastDay - i, dateStr: '', isToday: false, colIndex: startOffset - 1 - i })
+    }
+  } else {
+    for (let i = 0; i < startOffset; i++) {
+      arr.push({ type: 'empty', day: 0, dateStr: '', isToday: false, colIndex: i })
+    }
+  }
+
+  // 当月日期
+  for (let d = 1; d <= totalDays; d++) {
+    const m2 = String(month + 1).padStart(2, '0')
+    const day = String(d).padStart(2, '0')
+    const dateStr = `${year}-${m2}-${day}`
+    const colIndex = (startOffset + d - 1) % 7
+    arr.push({ type: 'curr', day: d, dateStr, isToday: dateStr === todayStr, colIndex })
+  }
+
+  // 后缀：下月溢出日（mood diary 需要填满 6 行）
+  if (showAdjacentDays) {
+    const trailing = arr.length % 7 === 0 ? 0 : 7 - (arr.length % 7)
+    for (let i = 1; i <= trailing; i++) {
+      arr.push({ type: 'next', day: i, dateStr: '', isToday: false, colIndex: (arr.length) % 7 })
+    }
+  }
+
+  return arr
 }

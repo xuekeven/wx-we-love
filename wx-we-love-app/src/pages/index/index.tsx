@@ -5,6 +5,7 @@ import { getWeekDay, getDaysDiff, getWeekOfYear } from '../../utils/date'
 import { post } from '../../utils/request'
 import ProfileForm from '../../components/ProfileForm'
 import PreviewBanner from '../../components/PreviewBanner'
+import { clearMomentFeed, fetchMomentFeed } from '../../store/moments'
 import { fetchUserInfo, getUserInfo, setUserData, setUserInfoPartial, getLoveDate, getCoupleNames, setPreviewMode, usePreviewMode } from '../../store/global'
 import diaryIcon from '../../assets/icons/diary.png'
 import anniversaryIcon from '../../assets/icons/anniversary.png'
@@ -61,9 +62,10 @@ export default function Index() {
   const loadUserData = async () => {
     setIsLoading(true)
     try {
-      const token = Taro.getStorageSync('token')
+      const token = Taro.getStorageSync<string>('token')
       if (!token) {
         // 未登录：进入浏览模式，不强制跳转登录
+        clearMomentFeed()
         setPreviewMode(true)
         setIsMatched(true)
         setLoveDate(PREVIEW_LOVE_DATE)
@@ -89,6 +91,9 @@ export default function Index() {
         const name2 = userData.matchedName || '李四'
         setCoupleNames({ name1, name2 })
         setUserData({ loveDate: loveDateVal, coupleNames: { name1, name2 } })
+        if (token === Taro.getStorageSync<string>('token')) {
+          void fetchMomentFeed(token).catch(() => {})
+        }
       } else {
         setIsMatched(false)
       }
@@ -96,6 +101,7 @@ export default function Index() {
       console.error('加载用户数据失败:', error)
       if (error.statusCode === 401 || error.statusCode === 404) {
         Taro.removeStorageSync('token')
+        clearMomentFeed()
         setIsLoading(false)
         Taro.redirectTo({ url: '/pages/login/index' })
         return
@@ -147,13 +153,18 @@ export default function Index() {
       <PreviewBanner />
 
       <View className='home-header'>
-        <View className='home-date'>
-          <Text>{currentDate.getFullYear()}年{currentDate.getMonth() + 1}月{currentDate.getDate()}日</Text>
-          <Text>第{getWeekOfYear(currentDate)}周 {getWeekDay(currentDate)}</Text>
+        <View className='home-heading'>
+          <Text className='home-title'>
+            {coupleNames.name1}<Text className='home-title-joiner'> 和 </Text>{coupleNames.name2}
+          </Text>
         </View>
-        <Text className='home-title'>
-          {coupleNames.name1}和{coupleNames.name2}的恋爱空间
-        </Text>
+
+        <View className='home-date'>
+          <Text className='home-date-main'>{currentDate.getMonth() + 1}月{currentDate.getDate()}日</Text>
+          <Text className='home-date-meta'>
+            {currentDate.getFullYear()}年 · 第{getWeekOfYear(currentDate)}周 · {getWeekDay(currentDate)}
+          </Text>
+        </View>
       </View>
 
       <View className='love-days-section'>
