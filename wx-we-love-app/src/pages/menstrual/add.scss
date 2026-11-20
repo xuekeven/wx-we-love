@@ -1,8 +1,8 @@
+@use '../../styles/theme' as *;
+
 .menstrual-add-page {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(255, 218, 232, 0.62), transparent 34%),
-    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
+  background: $canvas;
   padding-bottom: 160px;
 
   .page-header {
@@ -14,13 +14,13 @@
       font-weight: 700;
       display: block;
       margin-bottom: 12px;
-      color: #2B2B32;
+      color: $ink;
       letter-spacing: 0;
     }
 
     .page-subtitle {
       font-size: 26px;
-      color: #8F7F89;
+      color: $muted;
       display: block;
     }
   }
@@ -29,24 +29,24 @@
     padding: 0 24px 24px;
 
     .form-section {
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid rgba(244, 220, 230, 0.86);
+      background: $surface;
+      border: 1px solid $line;
       border-radius: 26px;
       padding: 28px;
       margin-bottom: 20px;
-      box-shadow: 0 12px 30px rgba(84, 44, 60, 0.06);
+      box-shadow: $card-shadow;
 
       .section-title {
         font-size: 30px;
         font-weight: 600;
-        color: #2B2B32;
+        color: $ink;
         display: block;
         margin-bottom: 12px;
       }
 
       .section-desc {
         font-size: 24px;
-        color: #8F7F89;
+        color: $muted;
         display: block;
         margin-bottom: 20px;
       }
@@ -76,25 +76,25 @@
           }
 
           .optional {
-            color: #8F7F89;
+            color: $muted;
             font-size: 22px;
             margin-left: 6px;
           }
         }
 
         .picker-value {
-          background: #FFF8FA;
+          background: $canvas;
           border-radius: 20px;
           padding: 20px;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          border: 1px solid rgba(244, 220, 230, 0.92);
+          border: 1px solid $line;
           transition: all 0.2s ease;
 
           .value-text {
             font-size: 28px;
-            color: #2B2B32;
+            color: $ink;
           }
 
           .placeholder-text {
@@ -115,7 +115,7 @@
         align-items: center;
         gap: 10px;
         padding: 12px 20px;
-        background: #FFF2F7;
+        background: $accent-soft;
         border-radius: 16px;
         margin-top: 12px;
 
@@ -125,7 +125,7 @@
 
         .tip-text {
           font-size: 24px;
-          color: #D94F7F;
+          color: $accent-deep;
           font-weight: 500;
         }
       }
@@ -138,14 +138,14 @@
 
         .symptom-item {
           position: relative;
-          background: #FFF8FA;
+          background: $canvas;
           border-radius: 18px;
           padding: 20px 12px;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 8px;
-          border: 1px solid rgba(244, 220, 230, 0.82);
+          border: 1px solid $line;
           transition: all 0.2s ease;
 
           .symptom-icon {
@@ -154,7 +154,7 @@
 
           .symptom-name {
             font-size: 22px;
-            color: #2B2B32;
+            color: $ink;
             text-align: center;
           }
 
@@ -164,7 +164,7 @@
             right: 6px;
             width: 28px;
             height: 28px;
-            background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%);
+            background: $accent;
             border-radius: 50%;
             color: #fff;
             font-size: 18px;
@@ -175,11 +175,11 @@
           }
 
           &.selected {
-            background: #FFF2F7;
-            border-color: rgba(255, 107, 157, 0.58);
+            background: $accent-soft;
+            border-color: rgba($accent, 0.58);
 
             .symptom-name {
-              color: #D94F7F;
+              color: $accent-deep;
               font-weight: 500;
             }
           }
@@ -193,18 +193,18 @@
       .selected-count {
         text-align: center;
         padding: 10px;
-        background: #FFF8FA;
+        background: $canvas;
         border-radius: 16px;
-        border: 1px solid rgba(244, 220, 230, 0.72);
+        border: 1px solid $line;
 
         .count-text {
           font-size: 24px;
-          color: #8F7F89;
+          color: $muted;
         }
       }
 
       .note-input {
-        background: #FFF8FA;
+        background: $canvas;
         border-radius: 20px;
         padding: 20px;
         font-size: 28px;
@@ -212,13 +212,13 @@
         min-height: 180px;
         width: 100%;
         box-sizing: border-box;
-        border: 1px solid rgba(244, 220, 230, 0.92);
+        border: 1px solid $line;
         transition: all 0.2s ease;
 
         &:focus {
           background: #FFFFFF;
-          border-color: #FF6B9D;
-          box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+          border-color: $accent;
+          box-shadow: 0 0 0 3px rgba($accent, 0.1);
         }
       }
 
@@ -229,7 +229,7 @@
 
       .char-count {
         font-size: 22px;
-        color: #8F7F89;
+        color: $muted;
         display: block;
         text-align: right;
         margin-top: 10px;
@@ -242,20 +242,20 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.96);
+    background: $surface;
     padding: 20px 24px;
     padding-bottom: calc(20px + env(safe-area-inset-bottom));
     box-shadow: 0 -10px 30px rgba(84, 44, 60, 0.08);
     display: flex;
     gap: 12px;
-    border-top: 1px solid rgba(244, 220, 230, 0.86);
+    border-top: 1px solid $line;
 
     .cancel-btn {
       flex: 1;
-      background: #FFF4F8;
+      background: $accent-soft;
       color: #5D5158;
       border-radius: 999px;
-      border: 1px solid rgba(244, 220, 230, 0.86);
+      border: 1px solid $line;
       font-size: 30px;
       font-weight: 600;
       border: none;
@@ -273,13 +273,12 @@
 
     .submit-btn {
       flex: 2;
-      background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%);
+      background: $accent;
       color: #fff;
       border-radius: 999px;
       font-size: 30px;
       font-weight: 600;
       border: none;
-      box-shadow: 0 10px 24px rgba(217, 79, 127, 0.20);
       transition: all 0.2s ease;
 
       &::after {
@@ -292,7 +291,7 @@
 
       &:active:not([disabled]) {
         transform: scale(0.98);
-        box-shadow: 0 1px 4px rgba(255, 107, 157, 0.2);
+        box-shadow: 0 1px 4px rgba($accent, 0.2);
       }
     }
   }

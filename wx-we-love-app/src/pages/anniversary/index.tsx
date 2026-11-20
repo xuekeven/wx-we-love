@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { del, get, post, put } from '../../utils/request'
 import { formatDate } from '../../utils/date'
 import PreviewBanner from '../../components/PreviewBanner'
-import { PREVIEW } from '../../config/preview'
 import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
@@ -180,14 +179,7 @@ export default function Anniversary() {
 
   return (
     <View className='anniversary-page'>
-      {isPreview && (
-        <PreviewBanner
-          className='preview-banner-inset'
-          text={PREVIEW.anniversary}
-          buttonText={PREVIEW.loginButtonText}
-          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
-        />
-      )}
+      <PreviewBanner />
       <View className='page-header'>
         <Text className='page-title'>纪念日</Text>
         <Text className='page-subtitle'>铭记每一个重要时刻</Text>
@@ -260,11 +252,11 @@ export default function Anniversary() {
             </View>
             <View className='switch-row'>
               <Text>每年重复</Text>
-              <Switch color='#D94F7F' checked={draft.isYearly} onChange={(event) => setDraft((value) => ({ ...value, isYearly: event.detail.value }))} />
+              <Switch color='#94605A' checked={draft.isYearly} onChange={(event) => setDraft((value) => ({ ...value, isYearly: event.detail.value }))} />
             </View>
             <View className='switch-row'>
               <Text>开启提醒</Text>
-              <Switch color='#D94F7F' checked={draft.reminder} onChange={(event) => setDraft((value) => ({ ...value, reminder: event.detail.value }))} />
+              <Switch color='#94605A' checked={draft.reminder} onChange={(event) => setDraft((value) => ({ ...value, reminder: event.detail.value }))} />
             </View>
             <View className='form-actions'>
               <Button className='cancel-btn' disabled={saving} onClick={() => setShowForm(false)}>取消</Button>

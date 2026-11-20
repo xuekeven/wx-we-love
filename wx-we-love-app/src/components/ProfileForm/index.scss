@@ -1,3 +1,5 @@
+@use '../../styles/theme' as *;
+
 .profile-form-mask {
   position: fixed;
   inset: 0;
@@ -14,22 +16,22 @@
     max-height: 80vh;
     overflow-y: auto;
     background: #FFFFFF;
-    border: 1px solid rgba(244, 220, 230, 0.86);
+    border: 1px solid $line;
     border-radius: 30px;
     padding: 42px 34px 34px;
-    box-shadow: 0 24px 70px rgba(84, 44, 60, 0.18);
+    box-shadow: $sheet-shadow;
 
     .modal-title {
       font-size: 34px;
       font-weight: 700;
-      color: #2B2B32;
+      color: $ink;
       display: block;
       margin-bottom: 14px;
     }
 
     .modal-subtitle {
       font-size: 24px;
-      color: #8F7F89;
+      color: $muted;
       display: block;
       margin-bottom: 32px;
     }
@@ -50,10 +52,10 @@
         height: 78px;
         padding: 0 24px;
         border-radius: 20px;
-        background: #FFF8FA;
-        border: 1px solid rgba(244, 220, 230, 0.92);
+        background: $canvas;
+        border: 1px solid $line;
         font-size: 28px;
-        color: #2B2B32;
+        color: $ink;
       }
 
       .form-picker {
@@ -61,10 +63,10 @@
         line-height: 78px;
         padding: 0 24px;
         border-radius: 20px;
-        background: #FFF8FA;
-        border: 1px solid rgba(244, 220, 230, 0.92);
+        background: $canvas;
+        border: 1px solid $line;
         font-size: 28px;
-        color: #2B2B32;
+        color: $ink;
 
         &.placeholder {
           color: #B19EA9;
@@ -80,8 +82,8 @@
           width: 96px;
           height: 96px;
           border-radius: 50%;
-          background: #FFF8FA;
-          border: 1px solid rgba(244, 220, 230, 0.92);
+          background: $canvas;
+          border: 1px solid $line;
         }
 
         .upload-avatar-btn {
@@ -90,9 +92,9 @@
           padding: 0 28px;
           border-radius: 999px;
           font-size: 26px;
-          background: #FFF4F8;
-          color: #FF6B9D;
-          border: 1px solid rgba(255, 107, 157, 0.34);
+          background: $accent-soft;
+          color: $accent;
+          border: 1px solid rgba($accent, 0.34);
           margin: 0;
 
           &::after {
@@ -120,14 +122,13 @@
         }
 
         &.cancel {
-          background: #FFF4F8;
+          background: $accent-soft;
           color: #5D5158;
         }
 
         &.confirm {
-          background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%);
+          background: $accent;
           color: #FFFFFF;
-          box-shadow: 0 10px 24px rgba(217, 79, 127, 0.20);
         }
 
         &[disabled] {

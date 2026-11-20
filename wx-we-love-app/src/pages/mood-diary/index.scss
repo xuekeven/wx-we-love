@@ -1,16 +1,12 @@
+@use '../../styles/theme' as *;
+
 .mood-diary-page {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(255, 218, 232, 0.62), transparent 34%),
-    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
+  background: $canvas;
   box-sizing: border-box;
-  padding: 0 0 calc(220rpx + env(safe-area-inset-bottom));
-}
-
-.preview-banner-inset {
-  margin: 24px 24px 0;
+  padding: $page-top $page-gutter calc(220rpx + env(safe-area-inset-bottom));
 }
 
 /* 与经期记录共用 BaseCalendar 结构，仅格子内容不同 */
@@ -19,12 +15,11 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.92);
-  margin: 24rpx 24rpx 0;
+  background: $surface;
   border-radius: 32rpx;
   padding: 0 0 24rpx;
-  border: 1rpx solid rgba(244, 220, 230, 0.86);
-  box-shadow: 0 14rpx 34rpx rgba(84, 44, 60, 0.07);
+  border: 1rpx solid $line;
+  box-shadow: $card-shadow;
   overflow: hidden;
   box-sizing: border-box;
 
@@ -34,12 +29,12 @@
   }
 
   .base-cal-month-label {
-    color: #2B2B32;
+    color: $ink;
   }
 
   .base-cal-arrow {
-    background: #FFF4F8;
-    border: 1rpx solid rgba(244, 220, 230, 0.86);
+    background: $accent-soft;
+    border: 1rpx solid $line;
 
     &:active {
       background: #FFEAF2;
@@ -57,11 +52,11 @@
 
   .base-cal-weekday {
     font-size: 24rpx;
-    color: #8F7F89;
+    color: $muted;
     padding: 8rpx 0;
 
     &.weekend {
-      color: #FF6B9D;
+      color: $accent;
     }
   }
 
@@ -81,12 +76,11 @@
   padding: 0 22rpx;
   margin: 0;
   border-radius: 999rpx;
-  background: #FF6B9D;
+  background: $accent;
   color: #FFFFFF;
   font-size: 24rpx;
   font-weight: 600;
   border: none;
-  box-shadow: 0 8rpx 22rpx rgba(217, 79, 127, 0.18);
 
   &::after {
     border: none;
@@ -127,7 +121,7 @@
 
   .day-num {
     font-size: 28rpx;
-    color: #2B2B32;
+    color: $ink;
     line-height: 1;
   }
 
@@ -162,7 +156,7 @@
       width: 18rpx;
       height: 18rpx;
       border-radius: 50%;
-      background: #FFF8FA;
+      background: $canvas;
       border: 2rpx solid #E9CCD8;
       box-sizing: border-box;
     }
@@ -179,26 +173,26 @@
   }
 
   &.today .day-circle {
-    border: 2rpx solid #FF6B9D;
+    border: 2rpx solid $accent;
 
     .day-num {
-      color: #FF6B9D;
+      color: $accent;
       font-weight: 700;
     }
   }
 
   &:not(.future) .day-mood-circle {
-    background: #FFF2F7;
+    background: $accent-soft;
     border-color: #FFB6CF;
   }
 
   &.has-mood .day-circle {
-    background: #FFF2F7;
+    background: $accent-soft;
   }
 
   &.has-mood.today .day-circle {
-    background: #FF6B9D;
-    border-color: #FF6B9D;
+    background: $accent;
+    border-color: $accent;
 
     .day-num {
       color: #FFFFFF;
@@ -223,8 +217,7 @@
     width: 100rpx;
     height: 100rpx;
     border-radius: 50%;
-    background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%);
-    box-shadow: 0 14rpx 30rpx rgba(217, 79, 127, 0.26);
+    background: $accent;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -255,7 +248,7 @@
   width: 100%;
   max-width: 640rpx;
   background: #fff;
-  border: 1rpx solid rgba(244, 220, 230, 0.86);
+  border: 1rpx solid $line;
   border-radius: 32rpx;
   padding: 48rpx 40rpx 56rpx;
   box-sizing: border-box;
@@ -273,12 +266,12 @@
     display: block;
     font-size: 32rpx;
     font-weight: 600;
-    color: #2B2B32;
+    color: $ink;
   }
   .mood-modal-week {
     display: block;
     font-size: 24rpx;
-    color: #8F7F89;
+    color: $muted;
     margin-top: 8rpx;
   }
 }
@@ -291,7 +284,7 @@
   justify-content: center;
   .mood-modal-close-x {
     font-size: 48rpx;
-    color: #8F7F89;
+    color: $muted;
     line-height: 1;
   }
 }
@@ -301,7 +294,7 @@
   text-align: center;
   font-size: 36rpx;
   font-weight: 600;
-  color: #2B2B32;
+  color: $ink;
   margin-bottom: 40rpx;
 }
 
@@ -320,7 +313,7 @@
     height: 100rpx;
     border-radius: 24rpx;
     background: #FFF6FA;
-    border: 1rpx solid rgba(244, 220, 230, 0.86);
+    border: 1rpx solid $line;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -331,7 +324,7 @@
   }
   .mood-modal-name {
     font-size: 26rpx;
-    color: #2B2B32;
+    color: $ink;
     font-weight: 500;
   }
 }
@@ -341,7 +334,7 @@
   width: 100%;
   max-width: 560rpx;
   background: #fff;
-  border: 1rpx solid rgba(244, 220, 230, 0.86);
+  border: 1rpx solid $line;
   border-radius: 32rpx;
   padding: 48rpx 40rpx 32rpx;
   box-sizing: border-box;
@@ -351,7 +344,7 @@
   display: block;
   text-align: center;
   font-size: 32rpx;
-  color: #2B2B32;
+  color: $ink;
   line-height: 1.5;
   margin-bottom: 48rpx;
 }
@@ -379,11 +372,11 @@
 }
 
 .edit-confirm-cancel {
-  background: #FFF4F8;
-  color: #8F7F89;
+  background: $accent-soft;
+  color: $muted;
 }
 
 .edit-confirm-ok {
-  background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%);
+  background: $accent;
   color: #fff;
 }

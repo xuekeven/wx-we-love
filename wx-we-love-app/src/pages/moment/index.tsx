@@ -1,11 +1,10 @@
-import { View, Text, Image, Input, Textarea, Button, ScrollView } from '@tarojs/components'
+import { View, Text, Image, Input, Textarea, Button } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
 import config from '../../config'
 import type { ApiResponse } from '../../utils/request'
 import { del, get, post } from '../../utils/request'
 import PreviewBanner from '../../components/PreviewBanner'
-import { PREVIEW } from '../../config/preview'
 import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
@@ -164,13 +163,7 @@ export default function Moment() {
 
   return (
     <View className='moment-page'>
-      {isPreview && (
-        <PreviewBanner
-          text={PREVIEW.moment || '登录后记录只属于你们的瞬间'}
-          buttonText={PREVIEW.loginButtonText}
-          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
-        />
-      )}
+      <PreviewBanner />
 
       <View className='moment-header'>
         <Text className='moment-title'>瞬间</Text>
@@ -206,7 +199,7 @@ export default function Moment() {
         </View>
       </View>
 
-      <ScrollView scrollY className='timeline'>
+      <View className='timeline'>
         {loading ? (
           <Text className='state-text'>加载中...</Text>
         ) : moments.length === 0 ? (
@@ -228,7 +221,7 @@ export default function Moment() {
             </View>
           </View>
         ))}
-      </ScrollView>
+      </View>
     </View>
   )
 }

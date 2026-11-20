@@ -5,8 +5,7 @@ import { post } from '../../utils/request'
 import { getDaysDiff } from '../../utils/date'
 import ProfileForm from '../../components/ProfileForm'
 import PreviewBanner from '../../components/PreviewBanner'
-import { PREVIEW } from '../../config/preview'
-import { fetchUserInfo, getUserInfo, setUserInfoPartial, setPreviewMode, usePreviewMode } from '../../store/global'
+import { fetchUserInfo, getUserInfo, setUserInfoPartial, setPreviewMode } from '../../store/global'
 import './index.scss'
 
 // 展示用：当前用户 name1/avatar1，匹配对象 name2/avatar2（来自接口 current*/matched*）
@@ -25,7 +24,6 @@ export default function My() {
   const [daysTogether, setDaysTogether] = useState(0)
   const [showEditProfileModal, setShowEditProfileModal] = useState(false)
   const [isSavingProfile, setIsSavingProfile] = useState(false)
-  const isPreview = usePreviewMode()
 
   useEffect(() => {
     loadUserInfo()
@@ -113,13 +111,7 @@ export default function My() {
 
   return (
     <View className='my-page'>
-      {isPreview && (
-        <PreviewBanner
-          text={PREVIEW.my}
-          buttonText={PREVIEW.loginButtonText}
-          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
-        />
-      )}
+      <PreviewBanner />
       {/* 顶部卡片 */}
       <View className='profile-card'>
         <View className='couple-avatars'>
@@ -128,7 +120,7 @@ export default function My() {
             <Text className='name'>{userInfo.name1}</Text>
           </View>
           <View className='heart-icon'>
-            <Text className='heart'>💕</Text>
+            <Text className='heart' aria-hidden>♥</Text>
           </View>
           <View className='avatar-container'>
             <Image className='avatar' src={userInfo.avatar2} mode='aspectFill' />

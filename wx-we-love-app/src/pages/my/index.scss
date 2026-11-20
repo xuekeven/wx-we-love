@@ -1,202 +1,117 @@
+@use '../../styles/theme' as *;
+
 .my-page {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 10% 0%, rgba(255, 218, 232, 0.62), transparent 34%),
-    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
-  padding: 28px;
-  padding-bottom: 20px;
+  padding: $page-top $page-gutter 44px;
 
   .profile-card {
-    background:
-      linear-gradient(135deg, rgba(255, 107, 157, 0.94) 0%, rgba(217, 79, 127, 0.94) 100%);
-    border-radius: 32px;
-    padding: 44px 32px 36px;
-    margin-bottom: 28px;
-    box-shadow: 0 18px 42px rgba(217, 79, 127, 0.20);
+    @include card;
+    margin-bottom: 26px;
+    padding: 40px 30px 30px;
+    background: $accent-soft;
+  }
 
-    .couple-avatars {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 28px;
-      margin-bottom: 32px;
+  .couple-avatars {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-bottom: 30px;
+  }
 
-      .avatar-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
+  .avatar-container {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 
-        .avatar {
-          width: 140px;
-          height: 140px;
-          border-radius: 50%;
-          border: 5px solid rgba(255, 255, 255, 0.92);
-          box-shadow: 0 10px 26px rgba(84, 44, 60, 0.14);
-        }
-
-        .name {
-          font-size: 26px;
-          color: #FFFFFF;
-          font-weight: 600;
-          line-height: 1.35;
-        }
-      }
-
-      .heart-icon {
-        width: 76px;
-        height: 76px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.18);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        .heart {
-          font-size: 44px;
-          animation: heartBeat 1.5s ease-in-out infinite;
-        }
-      }
+    .avatar {
+      width: 118px;
+      height: 118px;
+      border-radius: 50%;
+      border: 4px solid $surface;
+      background: $accent-soft;
     }
 
-    .love-days {
+    .name {
+      max-width: 100%;
+      overflow-wrap: anywhere;
       text-align: center;
-      padding: 24px 0 0;
-      border-top: 1px solid rgba(255, 255, 255, 0.24);
+      font-size: 27px;
+      font-weight: 600;
+    }
+  }
 
-      .days-label,
-      .days-unit {
-        font-size: 26px;
-        color: rgba(255, 255, 255, 0.9);
-      }
+  .heart-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: $accent-soft;
+    color: $accent;
+  }
 
-      .days-number {
-        font-size: 64px;
-        font-weight: 700;
-        color: #FFFFFF;
-        margin: 0 12px;
-        letter-spacing: 0;
-      }
+  .heart {
+    font-family: Georgia, serif;
+    font-size: 38px;
+    line-height: 1;
+  }
+
+  .love-days {
+    padding-top: 22px;
+    border-top: 1px solid $line;
+    text-align: center;
+
+    .days-label,
+    .days-unit { font-size: 26px; color: $muted; }
+
+    .days-number {
+      margin: 0 14px;
+      font-family: Georgia, serif;
+      font-size: 62px;
+      color: $accent-deep;
+      line-height: 1.1;
     }
   }
 
   .menu-section {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(244, 220, 230, 0.82);
-    border-radius: 26px;
-    padding: 8px 0;
-    margin-bottom: 24px;
-    box-shadow: 0 10px 28px rgba(84, 44, 60, 0.055);
-
-    .menu-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 28px 32px;
-      border-bottom: 1px solid rgba(244, 220, 230, 0.72);
-      transition: all 0.2s ease;
-
-      &:last-child {
-        border-bottom: none;
-      }
-
-      &:active {
-        background: #FFF3F7;
-      }
-
-      .menu-item-left {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-
-        .menu-icon {
-          width: 56px;
-          height: 56px;
-          border-radius: 18px;
-          background: #FFF2F7;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 30px;
-        }
-
-        .menu-title {
-          font-size: 28px;
-          color: #2B2B32;
-          font-weight: 500;
-        }
-      }
-
-      .arrow {
-        font-size: 32px;
-        color: #BFAEB7;
-        font-weight: 300;
-      }
-    }
+    @include card;
+    padding: 0 24px;
   }
 
-  .unmatch-section {
-    margin-bottom: 24px;
+  .menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 100px;
+    padding: 18px 4px;
+    border-bottom: 1px solid $line;
 
-    .unmatch-btn {
-      background: #FFFFFF;
-      color: #FF9500;
-      border-radius: 20px;
-      padding: 24px;
-      font-size: 30px;
-      font-weight: 600;
-      border: none;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      transition: all 0.2s ease;
-      width: 100%;
-
-      &::after {
-        border: none;
-      }
-
-      &:active {
-        transform: scale(0.98);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      }
-
-      &:disabled {
-        opacity: 0.6;
-      }
-    }
+    &:last-child { border-bottom: none; }
   }
 
-  .logout-section {
-    .logout-btn {
-      background: #FFFFFF;
-      color: #FF4757;
-      border-radius: 20px;
-      padding: 24px;
-      font-size: 30px;
-      font-weight: 600;
-      border: none;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      transition: all 0.2s ease;
+  .menu-item-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
 
-      &::after {
-        border: none;
-      }
+  .menu-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 17px;
+    background: $accent-soft;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 29px;
+  }
 
-      &:active {
-        transform: scale(0.98);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      }
-    }
-  }
-}
-
-@keyframes heartBeat {
-  0%, 100% {
-    transform: scale(1);
-  }
-  10%, 30% {
-    transform: scale(1.1);
-  }
-  20%, 40% {
-    transform: scale(1);
-  }
+  .menu-title { color: $ink; font-size: 28px; font-weight: 500; }
+  .arrow { color: $muted; font-size: 36px; line-height: 1; }
 }

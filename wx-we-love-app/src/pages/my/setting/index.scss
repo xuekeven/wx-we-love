@@ -1,8 +1,10 @@
+@use '../../../styles/theme' as *;
+
 .setting-page {
   min-height: 100vh;
-  padding: 28px;
+  padding: $page-top $page-gutter;
   box-sizing: border-box;
-  background: linear-gradient(180deg, #FFF8FA 0%, #FFFFFF 55%, #FFF8FA 100%);
+  background: $canvas;
 
   .setting-group {
     margin-bottom: 34px;
@@ -20,7 +22,7 @@
     min-height: 84px;
     margin-bottom: 14px;
     border: 1px solid #E9E1E5;
-    border-radius: 8px;
+    border-radius: 18px;
     background: #FFFFFF;
     color: #4E444A;
     font-size: 28px;
@@ -45,14 +47,13 @@
 
   .delete-dialog {
     width: 100%;
+    @include card;
     padding: 30px;
-    border-radius: 8px;
-    background: #FFFFFF;
   }
 
   .delete-title {
     display: block;
-    color: #2B2B32;
+    color: $ink;
     font-size: 32px;
     font-weight: 700;
   }
@@ -69,8 +70,8 @@
     margin-top: 22px;
     padding: 0 18px;
     border: 1px solid #E1D5DB;
-    border-radius: 8px;
-    background: #FCFAFB;
+    border-radius: 18px;
+    background: $canvas;
     font-size: 28px;
   }
 
@@ -83,7 +84,7 @@
     .cancel-btn,
     .confirm-btn {
       width: 100%;
-      border-radius: 8px;
+      border-radius: 18px;
       font-size: 27px;
       &::after { border: none; }
     }

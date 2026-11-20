@@ -1,4 +1,4 @@
 export default {
-  navigationBarTitleText: 'Moment'
+  navigationBarTitleText: '瞬间'
 }
 

@@ -1,14 +1,17 @@
+@use '../../styles/theme' as *;
+
 .preview-banner {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(244, 220, 230, 0.86);
+  background: $surface;
+  border: 1px solid $line;
   border-radius: 22px;
   padding: 18px 20px 18px 24px;
-  margin: 24px;
+  margin: 0 0 20px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  box-shadow: 0 10px 28px rgba(84, 44, 60, 0.055);
+  box-shadow: $card-shadow;
 
   .preview-text {
     font-size: 25px;
@@ -18,10 +21,11 @@
   }
 
   .preview-login-btn {
+    flex-shrink: 0;
     height: 64px;
     line-height: 64px;
     padding: 0 26px;
-    background: #FF6B9D;
+    background: $accent;
     color: #fff;
     border-radius: 999px;
     font-size: 26px;

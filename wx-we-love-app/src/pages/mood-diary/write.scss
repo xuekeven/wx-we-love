@@ -1,8 +1,8 @@
+@use '../../styles/theme' as *;
+
 .write-page {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(255, 218, 232, 0.62), transparent 34%),
-    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 48%, #FFF8FA 100%);
+  background: $canvas;
   padding-top: 24rpx;
   padding-bottom: 80rpx;
   box-sizing: border-box;
@@ -11,11 +11,11 @@
 .write-content {
   margin: 0 24rpx;
   padding: 32rpx;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1rpx solid rgba(244, 220, 230, 0.86);
+  background: $surface;
+  border: 1rpx solid $line;
   border-radius: 30rpx;
   min-height: 40vh;
-  box-shadow: 0 14rpx 34rpx rgba(84, 44, 60, 0.07);
+  box-shadow: $card-shadow;
   box-sizing: border-box;
 }
 
@@ -24,11 +24,11 @@
   .write-date-day {
     font-size: 48rpx;
     font-weight: 700;
-    color: #2B2B32;
+    color: $ink;
   }
   .write-date-rest {
     font-size: 28rpx;
-    color: #8F7F89;
+    color: $muted;
   }
 }
 
@@ -43,7 +43,7 @@
     height: 72rpx;
     border-radius: 16rpx;
     background: #FFF6FA;
-    border: 1rpx solid rgba(244, 220, 230, 0.86);
+    border: 1rpx solid $line;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -53,12 +53,12 @@
   }
   .write-mood-chip {
     padding: 12rpx 24rpx;
-    background: #FFF2F7;
+    background: $accent-soft;
     border-radius: 32rpx;
   }
   .write-mood-name {
     font-size: 26rpx;
-    color: #D94F7F;
+    color: $accent-deep;
     font-weight: 500;
   }
 }
@@ -74,7 +74,7 @@
   width: 100%;
   min-height: 320rpx;
   font-size: 30rpx;
-  color: #2B2B32;
+  color: $ink;
   line-height: 1.6;
   box-sizing: border-box;
 }
@@ -103,16 +103,15 @@
 
   .write-cancel-btn {
     flex: 1;
-    background: #FFF4F8;
-    color: #8F7F89;
-    border: 1rpx solid rgba(244, 220, 230, 0.86);
+    background: $accent-soft;
+    color: $muted;
+    border: 1rpx solid $line;
   }
 
   .write-complete-btn {
     flex: 1;
-    background: linear-gradient(135deg, #FF6B9D 0%, #D94F7F 100%);
+    background: $accent;
     color: #fff;
-    box-shadow: 0 10rpx 24rpx rgba(217, 79, 127, 0.20);
   }
 }
 
@@ -130,7 +129,7 @@
   }
   .write-add-icon {
     font-size: 48rpx;
-    color: #8E8E93;
+    color: $muted;
     font-weight: 300;
   }
 }

@@ -14,16 +14,17 @@ export default {
     'pages/my/setting/index'
   ],
   window: {
-    backgroundTextStyle: 'light',
-    navigationBarBackgroundColor: '#FF6B9D',
+    backgroundTextStyle: 'dark',
+    backgroundColor: '#FBF8F4',
+    navigationBarBackgroundColor: '#FBF8F4',
     navigationBarTitleText: '恋爱空间',
-    navigationBarTextStyle: 'white'
+    navigationBarTextStyle: 'black'
   },
   tabBar: {
     custom: false,
-    color: '#999999',
-    selectedColor: '#FF6B9D',
-    backgroundColor: '#ffffff',
+    color: '#756960',
+    selectedColor: '#94605A',
+    backgroundColor: '#FFFEFD',
     borderStyle: 'white',
     list: [
       {

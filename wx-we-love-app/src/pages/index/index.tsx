@@ -1,19 +1,20 @@
-import { View, Text, Button } from '@tarojs/components'
+import { View, Text, Button, Image } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState, useEffect } from 'react'
 import { getWeekDay, getDaysDiff, getWeekOfYear } from '../../utils/date'
 import { post } from '../../utils/request'
 import ProfileForm from '../../components/ProfileForm'
 import PreviewBanner from '../../components/PreviewBanner'
-import { PREVIEW } from '../../config/preview'
 import { fetchUserInfo, getUserInfo, setUserData, setUserInfoPartial, getLoveDate, getCoupleNames, setPreviewMode, usePreviewMode } from '../../store/global'
+import diaryIcon from '../../assets/icons/diary.png'
+import anniversaryIcon from '../../assets/icons/anniversary.png'
+import cycleIcon from '../../assets/icons/cycle.png'
 import './index.scss'
 
-// 第一行：3 个功能，图标在上、名称在下
-const ROW1_FUNCTIONS = [
-  { id: 'mood-diary', name: '心情日记', icon: '📔', path: '/pages/mood-diary/index' },
-  { id: 'anniversary', name: '纪念日', icon: '🎂', path: '/pages/anniversary/index' },
-  { id: 'menstrual', name: '经期记录', icon: '🌸', path: '/pages/menstrual/index' },
+const FEATURES = [
+  { id: 'mood-diary', name: '心情日记', icon: diaryIcon, path: '/pages/mood-diary/index' },
+  { id: 'anniversary', name: '纪念日', icon: anniversaryIcon, path: '/pages/anniversary/index' },
+  { id: 'menstrual', name: '经期记录', icon: cycleIcon, path: '/pages/menstrual/index' },
 ]
 export default function Index() {
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -143,68 +144,46 @@ export default function Index() {
 
   return (
     <View className='index-page'>
-      {/* 顶部标题区域 */}
-      <View className='topbar'>
-        <View className='topbar-content'>
-        <Text className='heart-icon'>💗</Text>
-          <Text className='title' numberOfLines={1}>
-            {coupleNames.name1}和{coupleNames.name2}的恋爱空间
-          </Text>
+      <PreviewBanner />
+
+      <View className='home-header'>
+        <View className='home-date'>
+          <Text>{currentDate.getFullYear()}年{currentDate.getMonth() + 1}月{currentDate.getDate()}日</Text>
+          <Text>第{getWeekOfYear(currentDate)}周 {getWeekDay(currentDate)}</Text>
+        </View>
+        <Text className='home-title'>
+          {coupleNames.name1}和{coupleNames.name2}的恋爱空间
+        </Text>
+      </View>
+
+      <View className='love-days-section'>
+        <View className='day-count'>
+          <Text className='day-label'>今天是我们在一起的第</Text>
+          <View className='day-value'>
+            <Text className='day-number'>{daysTogether}</Text>
+            <Text className='day-unit'>天</Text>
+          </View>
+        </View>
+        <View className='heart-stamp' aria-hidden>
+          <Text>♥</Text>
+          <Text>✦</Text>
         </View>
       </View>
 
-      <View className='content'>
-        {isPreview && (
-          <PreviewBanner
-            className='preview-banner-inset'
-            text={PREVIEW.home}
-            buttonText={PREVIEW.loginButtonText}
-            onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
-          />
-        )}
-        {/* 相识天数 */}
-        <View className='love-days-section'>
-          <View className='love-date-meta'>
-            <Text className='love-date-text'>
-              {currentDate.getFullYear()}年{String(currentDate.getMonth() + 1).padStart(2, '0')}月{String(currentDate.getDate()).padStart(2, '0')}日
-            </Text>
-            <Text className='love-date-sub'>
-              第{getWeekOfYear(currentDate)}周 {getWeekDay(currentDate)}
-            </Text>
-          </View>
-          <View className='love-days-content'>
-            <View className='love-text-container'>
-              <Text className='love-text'>今天是在一起的第</Text>
-              <Text className='days-number'>{daysTogether}</Text>
-              <Text className='love-text'>天</Text>
+      <View className='feature-list'>
+        {FEATURES.map((item) => (
+          <Button
+            key={item.id}
+            className='feature-item'
+            onClick={() => handleFunctionClick(item.path)}
+          >
+            <View className={`feature-icon-tile ${item.id}`}>
+              <Image className='feature-icon' src={item.icon} mode='aspectFit' />
             </View>
-          </View>
-          <View className='love-animation'>
-            <View className='bear-container'>
-              <Text className='bear bear-left'>🐻</Text>
-              <Text className='heart-beat'>💕</Text>
-              <Text className='bear bear-right'>🐻</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* 功能区：第一行 3 个（图标上、名称下） */}
-        <View className='function-section'>
-          <View className='function-row function-row-1'>
-            {ROW1_FUNCTIONS.map((item) => (
-              <View
-                key={item.id}
-                className='function-item-top'
-                onClick={() => handleFunctionClick(item.path)}
-              >
-                <View className='function-icon-wrapper function-icon-circle'>
-                  <Text className='function-icon'>{item.icon}</Text>
-                </View>
-                <Text className='function-name'>{item.name}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+            <Text className='feature-name'>{item.name}</Text>
+            <View className='feature-chevron' aria-hidden />
+          </Button>
+        ))}
       </View>
 
       {/* 完善纪念日弹层：匹配成功且未设置恋爱纪念日时弹出 */}

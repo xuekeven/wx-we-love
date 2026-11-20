@@ -1,0 +1,20 @@
+$canvas: #fbf8f4;
+$surface: #fffefd;
+$ink: #352b28;
+$muted: #756960;
+$accent: #94605a;
+$accent-deep: #784b45;
+$accent-soft: #f8ebe5;
+$line: #ede3da;
+$radius: 26px;
+$page-top: 28px;
+$page-gutter: 32px;
+$card-shadow: 0 6px 20px rgba(72, 50, 37, 0.045);
+$sheet-shadow: 0 16px 48px rgba(72, 50, 37, 0.12);
+
+@mixin card {
+  background: $surface;
+  border: 1px solid $line;
+  border-radius: $radius;
+  box-shadow: $card-shadow;
+}

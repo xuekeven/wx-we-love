@@ -1,6 +1,6 @@
 import path from 'path';
 
-const productionBaseUrl = 'https://www.kaitool.top/welove';
+const productionBaseUrl = 'https://www.xuekai.online/welove';
 const configuredBaseUrl = process.env.TARO_APP_API_BASE_URL?.trim();
 const apiBaseUrl = (configuredBaseUrl || productionBaseUrl).replace(/\/$/, '');
 

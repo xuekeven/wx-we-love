@@ -1,16 +1,18 @@
+@use '../../styles/theme' as *;
+
 .moment-page {
   min-height: 100vh;
-  padding: 24px 28px 0;
+  padding: $page-top $page-gutter 0;
   box-sizing: border-box;
-  background: linear-gradient(180deg, #FFF8FA 0%, #FFFFFF 45%, #FFF8FA 100%);
+  background: $canvas;
 
   .moment-header {
-    padding: 24px 0 20px;
+    padding: 8px 0 24px;
   }
 
   .moment-title {
     display: block;
-    color: #2B2B32;
+    color: $ink;
     font-size: 42px;
     font-weight: 700;
   }
@@ -18,17 +20,13 @@
   .moment-subtitle {
     display: block;
     margin-top: 8px;
-    color: #8F7F89;
+    color: $muted;
     font-size: 25px;
   }
 
   .composer {
     padding: 28px;
-    overflow: hidden;
-    border: 1px solid rgba(238, 213, 224, 0.9);
-    border-radius: 28px;
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 14px 34px rgba(84, 44, 60, 0.07);
+    @include card;
   }
 
   .composer-input {
@@ -36,16 +34,16 @@
     min-height: 126px;
     font-size: 28px;
     line-height: 1.55;
-    color: #2B2B32;
+    color: $ink;
   }
 
   .location-input {
     min-height: 68px;
     margin-top: 18px;
     padding: 0 18px;
-    border: 1px solid #ECE4E8;
+    border: 1px solid $line;
     border-radius: 18px;
-    background: #FFF9FB;
+    background: $canvas;
     font-size: 25px;
   }
 
@@ -72,7 +70,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: #2B2B32;
+    background: $ink;
     color: #FFFFFF;
     font-size: 32px;
   }
@@ -87,22 +85,21 @@
     .publish-btn {
       width: 180px;
       margin: 0;
-      border-radius: 999px;
+      border-radius: 18px;
       font-size: 26px;
+      line-height: 72px;
 
       &::after { border: none; }
     }
 
-    .image-btn { background: #F8F1F5; color: #655660; }
+    .image-btn { background: $accent-soft; color: $accent-deep; }
     .publish-btn {
-      background: linear-gradient(135deg, #EB5A8D 0%, #D94F7F 100%);
+      background: $accent;
       color: #FFFFFF;
-      box-shadow: 0 8px 18px rgba(217, 79, 127, 0.18);
     }
   }
 
   .timeline {
-    height: calc(100vh - 520px);
     margin-top: 22px;
     padding-bottom: calc(24px + env(safe-area-inset-bottom));
     box-sizing: border-box;
@@ -111,10 +108,7 @@
   .timeline-item {
     margin-bottom: 18px;
     padding: 24px;
-    border: 1px solid #EEE4E9;
-    border-radius: 24px;
-    background: #FFFFFF;
-    box-shadow: 0 10px 24px rgba(84, 44, 60, 0.05);
+    @include card;
   }
 
   .timeline-meta,
@@ -151,10 +145,11 @@
   .timeline-content {
     display: block;
     margin-top: 20px;
-    color: #2B2B32;
+    color: $ink;
     font-size: 29px;
     line-height: 1.65;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
   .timeline-image {
@@ -165,7 +160,7 @@
 
   .timeline-footer {
     margin-top: 18px;
-    color: #9A8C94;
+    color: $muted;
     font-size: 22px;
   }
 
@@ -173,7 +168,7 @@
     display: block;
     padding: 70px 0;
     text-align: center;
-    color: #9A8C94;
+    color: $muted;
     font-size: 26px;
   }
 }

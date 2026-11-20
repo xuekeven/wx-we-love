@@ -1,18 +1,18 @@
+@use '../../styles/theme' as *;
+
 .match-page {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 18% 8%, rgba(255, 204, 222, 0.86), transparent 34%),
-    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 52%, #FFF8FA 100%);
+  background: $canvas;
   padding: 44px 28px;
 
   .match-container {
     max-width: 600px;
     margin: 0 auto;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(244, 220, 230, 0.88);
+    background: $surface;
+    border: 1px solid $line;
     border-radius: 34px;
     padding: 60px 40px;
-    box-shadow: 0 24px 70px rgba(84, 44, 60, 0.13);
+    box-shadow: $sheet-shadow;
 
     .match-header {
       text-align: center;
@@ -21,14 +21,14 @@
       .match-title {
         font-size: 48px;
         font-weight: 700;
-        color: #2B2B32;
+        color: $ink;
         display: block;
         margin-bottom: 16px;
       }
 
       .match-subtitle {
         font-size: 28px;
-        color: #8F7F89;
+        color: $muted;
         display: block;
       }
     }
@@ -37,12 +37,12 @@
       margin-bottom: 50px;
       padding: 32px;
       background: #FFF7FA;
-      border: 1px solid rgba(244, 220, 230, 0.82);
+      border: 1px solid $line;
       border-radius: 24px;
 
       .section-title {
         font-size: 28px;
-        color: #2B2B32;
+        color: $ink;
         font-weight: 600;
         display: block;
         margin-bottom: 24px;
@@ -56,19 +56,19 @@
         padding: 24px;
         background: #FFFFFF;
         border-radius: 20px;
-        border: 1px solid rgba(255, 107, 157, 0.42);
+        border: 1px solid rgba($accent, 0.42);
 
         .match-code-text {
           font-size: 48px;
           font-weight: 700;
-          color: #D94F7F;
+          color: $accent-deep;
           letter-spacing: 12px;
           text-align: center;
           font-family: monospace;
         }
 
         .copy-btn {
-          background: #FF6B9D;
+          background: $accent;
           color: #fff;
           border-radius: 12px;
           font-size: 28px;
@@ -89,13 +89,12 @@
         width: 100%;
         height: 80px;
         line-height: 80px;
-        background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
+        background: $accent;
         color: #fff;
         border-radius: 999px;
         font-size: 28px;
         font-weight: 600;
         border: none;
-        box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
 
         &::after {
           border: none;
@@ -143,12 +142,12 @@
       margin-bottom: 50px;
       padding: 32px;
       background: #FFF7FA;
-      border: 1px solid rgba(244, 220, 230, 0.82);
+      border: 1px solid $line;
       border-radius: 24px;
 
       .section-title {
         font-size: 28px;
-        color: #2B2B32;
+        color: $ink;
         font-weight: 600;
         display: block;
         margin-bottom: 24px;
@@ -160,7 +159,7 @@
         padding: 0 24px;
         border-radius: 20px;
         background: #FFFFFF;
-        border: 1px solid rgba(244, 220, 230, 0.92);
+        border: 1px solid $line;
         font-size: 36px;
         text-align: center;
         letter-spacing: 12px;
@@ -172,8 +171,8 @@
 
         &:focus {
           background: #FFFFFF;
-          border-color: #FF6B9D;
-          box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+          border-color: $accent;
+          box-shadow: 0 0 0 3px rgba($accent, 0.1);
         }
       }
 
@@ -181,13 +180,12 @@
         width: 100%;
         height: 88px;
         line-height: 88px;
-        background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
+        background: $accent;
         color: #fff;
         border-radius: 999px;
         font-size: 28px;
         font-weight: 600;
         border: none;
-        box-shadow: 0 8px 24px rgba(255, 107, 157, 0.3);
         transition: all 0.2s ease;
 
         &::after {
@@ -196,7 +194,6 @@
 
         &:active {
           transform: scale(0.98);
-          box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
         }
 
         &[disabled] {
@@ -208,12 +205,12 @@
     .match-tips {
       padding: 32px;
       background: #FFF7FA;
-      border: 1px solid rgba(244, 220, 230, 0.82);
+      border: 1px solid $line;
       border-radius: 24px;
 
       .tips-title {
         font-size: 28px;
-        color: #2B2B32;
+        color: $ink;
         font-weight: 600;
         display: block;
         margin-bottom: 20px;
@@ -221,7 +218,7 @@
 
       .tips-item {
         font-size: 26px;
-        color: #8F7F89;
+        color: $muted;
         line-height: 1.8;
         display: block;
         margin-bottom: 12px;

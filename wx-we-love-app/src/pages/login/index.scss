@@ -1,135 +1,77 @@
+@use '../../styles/theme' as *;
+
 .login-page {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 18% 8%, rgba(255, 204, 222, 0.86), transparent 34%),
-    linear-gradient(180deg, #FFF8FA 0%, #FFFDFE 52%, #FFF8FA 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 44px 28px;
+  padding: calc(48px + env(safe-area-inset-top)) 32px calc(48px + env(safe-area-inset-bottom));
+  background: radial-gradient(ellipse at 50% 22%, $accent-soft, transparent 62%), $canvas;
 
   .login-container {
+    @include card;
     width: 100%;
-    max-width: 600px;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(244, 220, 230, 0.88);
-    border-radius: 34px;
-    padding: 80px 40px 60px;
-    box-shadow: 0 24px 70px rgba(84, 44, 60, 0.13);
+    max-width: 620px;
+    padding: 54px 40px 42px;
+  }
 
-    .login-header {
-      text-align: center;
-      margin-bottom: 60px;
+  .login-header {
+    margin-bottom: 54px;
+    text-align: center;
+  }
 
-      .login-title {
-        font-size: 48px;
-        font-weight: 700;
-        color: #2B2B32;
-        display: block;
-        margin-bottom: 16px;
-      }
+  .login-mark {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 40px;
+    background: $accent-soft;
+    color: $accent;
+    font-family: Georgia, serif;
+    font-size: 72px;
+    line-height: 1;
+  }
 
-      .login-subtitle {
-        font-size: 28px;
-        color: #8F7F89;
-        display: block;
-      }
-    }
+  .login-title {
+    display: block;
+    font-size: 50px;
+    font-weight: 700;
+    line-height: 1.25;
+  }
 
-    .login-content {
-      text-align: center;
+  .login-subtitle {
+    display: block;
+    margin-top: 14px;
+    color: $muted;
+    font-size: 28px;
+  }
 
-      .login-icon {
-        margin-bottom: 40px;
+  .wechat-login-btn,
+  .skip-login-btn {
+    margin: 0;
+    border-radius: 20px;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 86px;
+  }
 
-        .icon-emoji {
-          font-size: 120px;
-          display: block;
-        }
-      }
+  .wechat-login-btn {
+    background: $accent;
+    color: $surface;
 
-      .login-desc {
-        margin-bottom: 60px;
+    &:active { background: $accent-deep; }
+    &[disabled] { opacity: 0.62; }
+  }
 
-        .desc-text {
-          font-size: 32px;
-          font-weight: 600;
-          color: #2D2D2D;
-          display: block;
-          margin-bottom: 16px;
-        }
+  .skip-login-btn {
+    margin-top: 18px;
+    border: 1px solid $line;
+    background: $canvas;
+    color: $ink;
 
-        .desc-tip {
-          font-size: 26px;
-          color: #8E8E93;
-          display: block;
-        }
-      }
-
-      .wechat-login-btn {
-        width: 100%;
-        height: 80px;
-        background: linear-gradient(135deg, #07C160 0%, #06AD56 100%);
-        color: #fff;
-        border-radius: 999px;
-        font-size: 32px;
-        font-weight: 600;
-        border: none;
-        box-shadow: 0 8px 24px rgba(7, 193, 96, 0.3);
-        transition: all 0.2s ease;
-
-        &::after {
-          border: none;
-        }
-
-        &:active {
-          transform: scale(0.98);
-          box-shadow: 0 4px 12px rgba(7, 193, 96, 0.3);
-        }
-
-        &[disabled] {
-          opacity: 0.6;
-        }
-      }
-
-      .skip-login-btn {
-        margin-top: 24px;
-        width: 100%;
-        height: 80px;
-        background: #FFF4F8;
-        color: #6B5A63;
-        border-radius: 999px;
-        font-size: 30px;
-        font-weight: 500;
-        border: 1px solid rgba(244, 220, 230, 0.92);
-
-        &::after {
-          border: none;
-        }
-      }
-
-      .login-tips {
-        padding: 32px;
-        background: #F8F8F8;
-        border-radius: 20px;
-        text-align: left;
-
-        .tips-text {
-          font-size: 28px;
-          font-weight: 600;
-          color: #2D2D2D;
-          display: block;
-          margin-bottom: 16px;
-        }
-
-        .tips-item {
-          font-size: 26px;
-          color: #8E8E93;
-          line-height: 1.8;
-          display: block;
-          margin-bottom: 12px;
-        }
-      }
-    }
+    &:active { background: $accent-soft; }
   }
 }

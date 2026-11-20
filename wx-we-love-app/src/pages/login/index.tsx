@@ -165,7 +165,8 @@ export default function Login() {
     <View className='login-page'>
       <View className='login-container'>
         <View className='login-header'>
-          <Text className='login-title'>💕 欢迎来到恋爱空间</Text>
+          <View className='login-mark' aria-hidden><Text>♥</Text></View>
+          <Text className='login-title'>恋爱空间</Text>
           <Text className='login-subtitle'>记录你们的美好时光</Text>
         </View>
 

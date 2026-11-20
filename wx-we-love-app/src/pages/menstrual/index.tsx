@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { get, del } from '../../utils/request'
 import PreviewBanner from '../../components/PreviewBanner'
 import BaseCalendar, { type CalCell } from '../../components/BaseCalendar'
-import { PREVIEW } from '../../config/preview'
 import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
@@ -374,14 +373,7 @@ export default function Menstrual() {
 
   return (
     <View className='menstrual-page'>
-      {isPreview && (
-        <PreviewBanner
-          className='preview-banner-inset'
-          text={PREVIEW.menstrual}
-          buttonText={PREVIEW.loginButtonText}
-          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
-        />
-      )}
+      <PreviewBanner />
 
       {/* 顶部占位，让内容不被导航栏遮挡 */}
 

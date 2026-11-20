@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { get, post } from '../../../utils/request'
 import { getUserInfo, fetchUserInfo, clearUserData, setPreviewMode, usePreviewMode } from '../../../store/global'
 import PreviewBanner from '../../../components/PreviewBanner'
-import { PREVIEW } from '../../../config/preview'
 import './index.scss'
 
 function clearLocalSession() {
@@ -144,13 +143,7 @@ export default function Setting() {
 
   return (
     <View className='setting-page'>
-      {isPreview && (
-        <PreviewBanner
-          text={PREVIEW.setting}
-          buttonText={PREVIEW.loginButtonText}
-          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
-        />
-      )}
+      <PreviewBanner />
 
       {!isPreview && (
         <>

@@ -1,3 +1,5 @@
+@use '../../styles/theme' as *;
+
 /* ── BaseCalendar 基础布局样式 ───────────────────── */
 /* 这里只提供骨架样式，具体颜色/间距由各页面通过 className 覆盖 */
 
@@ -25,7 +27,7 @@
 .base-cal-month-label {
   font-size: 32rpx;
   font-weight: 700;
-  color: #2D2D2D;
+  color: $ink;
 }
 
 .base-cal-arrow {
@@ -49,8 +51,8 @@
 .base-cal-chevron {
   width: 16rpx;
   height: 16rpx;
-  border-right: 3rpx solid #2D2D2D;
-  border-bottom: 3rpx solid #2D2D2D;
+  border-right: 3rpx solid $ink;
+  border-bottom: 3rpx solid $ink;
   box-sizing: border-box;
 }
 
@@ -73,11 +75,11 @@
 .base-cal-weekday {
   text-align: center;
   font-size: 24rpx;
-  color: #8E8E93;
+  color: $muted;
   display: block;
   padding: 8rpx 0;
 
-  &.weekend { color: #FF6B9D; }
+  &.weekend { color: $accent; }
 }
 
 /* 格子网格 */

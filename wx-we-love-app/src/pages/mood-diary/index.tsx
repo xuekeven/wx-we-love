@@ -6,7 +6,6 @@ import { getWeekDayLong } from '../../utils/date'
 import { MOODS } from './constants'
 import PreviewBanner from '../../components/PreviewBanner'
 import BaseCalendar, { type CalCell } from '../../components/BaseCalendar'
-import { PREVIEW } from '../../config/preview'
 import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './index.scss'
 
@@ -268,14 +267,7 @@ export default function MoodDiary() {
 
   return (
     <View className='mood-diary-page'>
-      {isPreview && (
-        <PreviewBanner
-          className='preview-banner-inset'
-          text={PREVIEW.moodDiary}
-          buttonText={PREVIEW.loginButtonText}
-          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
-        />
-      )}
+      <PreviewBanner />
       <View className='calendar-card'>
         <BaseCalendar
           className='mood-calendar'

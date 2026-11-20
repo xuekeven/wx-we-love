@@ -14,11 +14,12 @@
 
 ## 2. 部署后端
 
-以下示例假设仓库位于 `/var/www/wx-we-love`，API 对外地址为 `https://api.example.com`。
+以下示例使用 SSH 别名 `txserver`。仓库位于 `/var/www/wx-we-love`，前后端的 API 基址均为 `https://www.xuekai.online/welove`。
 
 ### 2.1 安装依赖
 
 ```bash
+ssh txserver
 cd /var/www/wx-we-love/wx-we-love-api
 pnpm install --frozen-lockfile
 ```
@@ -45,7 +46,7 @@ DB_NAME=wx_we_love
 DB_USER=wx_we_love
 DB_PASSWORD=your_database_password
 
-API_BASE_URL=https://api.example.com
+API_BASE_URL=https://www.xuekai.online/welove
 CORS_ORIGINS=https://admin.example.com
 UPLOAD_DIR=/var/lib/wx-we-love/uploads
 
@@ -114,24 +115,26 @@ pm2 startup
 
 ## 3. Nginx 反向代理
 
+将 `/welove/` 转发到后端根路径。`proxy_pass` 末尾的斜杠会去掉请求中的 `/welove/` 前缀。
+
 ```nginx
 server {
     listen 80;
-    server_name api.example.com;
+    server_name www.xuekai.online;
     return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name api.example.com;
+    server_name www.xuekai.online;
 
-    ssl_certificate /etc/letsencrypt/live/api.example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.example.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/www.xuekai.online/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/www.xuekai.online/privkey.pem;
 
     client_max_body_size 6m;
 
-    location / {
-        proxy_pass http://127.0.0.1:4000;
+    location /welove/ {
+        proxy_pass http://127.0.0.1:4000/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -145,7 +148,7 @@ server {
 ```bash
 nginx -t
 systemctl reload nginx
-curl --fail https://api.example.com/health/ready
+curl --fail https://www.xuekai.online/welove/health/ready
 ```
 
 应用上传限制为 5 MB，Nginx 预留少量 multipart 开销即可，无需开放到 20 MB。
@@ -157,8 +160,8 @@ curl --fail https://api.example.com/health/ready
 ```bash
 cd /var/www/wx-we-love/wx-we-love-app
 pnpm install --frozen-lockfile
-TARO_APP_API_BASE_URL=https://api.example.com pnpm typecheck
-TARO_APP_API_BASE_URL=https://api.example.com pnpm build:weapp
+TARO_APP_API_BASE_URL=https://www.xuekai.online/welove pnpm typecheck
+TARO_APP_API_BASE_URL=https://www.xuekai.online/welove pnpm build:weapp
 ```
 
 生产构建会拒绝非 HTTPS 地址。产物位于 `wx-we-love-app/dist/`。
@@ -170,7 +173,7 @@ TARO_APP_API_BASE_URL=https://api.example.com pnpm build:weapp
 3. 编译并验证登录、上传、匹配和数据访问。
 4. 上传版本并在微信公众平台提交审核。
 
-微信公众平台的 request 合法域名填写 `https://api.example.com`，不要填写 URL 路径。
+微信公众平台的 request 合法域名填写 `https://www.xuekai.online`，不要填写 URL 路径。
 
 ## 5. 发布流程
 
@@ -190,7 +193,7 @@ git pull --ff-only
 cd wx-we-love-api
 pnpm install --frozen-lockfile
 pm2 restart wx-we-love-api --update-env
-curl --fail https://api.example.com/health/ready
+curl --fail https://www.xuekai.online/welove/health/ready
 ```
 
 ## 6. 备份与删除保留

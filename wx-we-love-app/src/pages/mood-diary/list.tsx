@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import { get, post, del } from '../../utils/request'
 import { MOODS } from './constants'
 import PreviewBanner from '../../components/PreviewBanner'
-import { PREVIEW } from '../../config/preview'
 import { setPreviewMode, usePreviewMode } from '../../store/global'
 import './list.scss'
 
@@ -193,13 +192,7 @@ export default function MoodDiaryList() {
 
   return (
     <View className='mood-diary-list-page'>
-      {isPreview && (
-        <PreviewBanner
-          text={PREVIEW.moodDiaryList}
-          buttonText={PREVIEW.loginButtonText}
-          onLogin={() => Taro.navigateTo({ url: '/pages/login/index' })}
-        />
-      )}
+      <PreviewBanner />
       {loading ? (
         <View className='list-loading'>
           <Text className='list-loading-text'>加载中...</Text>

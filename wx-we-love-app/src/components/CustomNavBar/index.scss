@@ -1,7 +1,8 @@
-/* 与纪念日、经期记录等页面的系统导航栏一致：粉底、白字返回 */
+@use '../../styles/theme' as *;
+
 .custom-nav-bar {
   flex-shrink: 0;
-  background: linear-gradient(135deg, #FF6B9D 0%, #E85A8A 100%);
+  background: $canvas;
   padding-bottom: 24rpx;
   z-index: 10;
 }
@@ -24,7 +25,7 @@
   .custom-nav-bar-back {
     font-size: 56rpx;
     font-weight: 300;
-    color: #fff;
+    color: $ink;
     line-height: 1;
     margin-left: -8rpx;
   }
@@ -37,12 +38,12 @@
   align-items: center;
   justify-content: center;
   padding: 0 16rpx;
-  color: #fff;
+  color: $ink;
 
   .custom-nav-bar-title {
     font-size: 36rpx;
     font-weight: 600;
-    color: #fff;
+    color: $ink;
   }
 }
 
@@ -51,5 +52,5 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  color: #fff;
+  color: $ink;
 }
