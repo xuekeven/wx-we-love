@@ -5,7 +5,7 @@ import { getWeekDay, getDaysDiff, getWeekOfYear } from '../../utils/date'
 import { post } from '../../utils/request'
 import ProfileForm from '../../components/ProfileForm'
 import PreviewBanner from '../../components/PreviewBanner'
-import { clearMomentFeed, fetchMomentFeed } from '../../store/moments'
+import { clearMomentFeed, preloadMomentFeed } from '../../store/moments'
 import { fetchUserInfo, getUserInfo, setUserData, setUserInfoPartial, getLoveDate, getCoupleNames, setPreviewMode, usePreviewMode } from '../../store/global'
 import diaryIcon from '../../assets/icons/diary.png'
 import anniversaryIcon from '../../assets/icons/anniversary.png'
@@ -92,7 +92,7 @@ export default function Index() {
         setCoupleNames({ name1, name2 })
         setUserData({ loveDate: loveDateVal, coupleNames: { name1, name2 } })
         if (token === Taro.getStorageSync<string>('token')) {
-          void fetchMomentFeed(token).catch(() => {})
+          void preloadMomentFeed(token).catch(() => {})
         }
       } else {
         setIsMatched(false)

@@ -5,6 +5,7 @@ import { post } from '../../utils/request'
 import { getDaysDiff } from '../../utils/date'
 import ProfileForm from '../../components/ProfileForm'
 import PreviewBanner from '../../components/PreviewBanner'
+import heartIcon from '../../assets/icons/home-active.png'
 import { fetchUserInfo, getUserInfo, setUserInfoPartial, setPreviewMode } from '../../store/global'
 import './index.scss'
 
@@ -119,8 +120,8 @@ export default function My() {
             <Image className='avatar' src={userInfo.avatar1} mode='aspectFill' />
             <Text className='name'>{userInfo.name1}</Text>
           </View>
-          <View className='heart-icon'>
-            <Text className='heart' aria-hidden>♥</Text>
+          <View className='heart-icon' aria-hidden>
+            <Image className='heart' src={heartIcon} mode='aspectFit' />
           </View>
           <View className='avatar-container'>
             <Image className='avatar' src={userInfo.avatar2} mode='aspectFill' />
